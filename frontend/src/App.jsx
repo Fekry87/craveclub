@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -9,57 +10,65 @@ import Login from './pages/Login';
 import ClubLogin from './pages/ClubLogin';
 import ClubPage from './pages/public/ClubPage';
 
+// Registration context (structural — must stay eager)
+import { RegistrationProvider } from './contexts/RegistrationContext';
+
 // Corporate (Platform Admin)
-import CorporateDashboard from './pages/corporate/Dashboard';
-import CorporateClubs from './pages/corporate/Clubs';
-import CorporateClubDetail from './pages/corporate/ClubDetail';
-import CorporateSettings from './pages/corporate/Settings';
+const CorporateDashboard = lazy(() => import('./pages/corporate/Dashboard'));
+const CorporateClubs = lazy(() => import('./pages/corporate/Clubs'));
+const CorporateClubDetail = lazy(() => import('./pages/corporate/ClubDetail'));
+const CorporateSettings = lazy(() => import('./pages/corporate/Settings'));
 
 // Legacy Platform (backward compat)
-import PlatformDashboard from './pages/platform/Dashboard';
-import Clubs from './pages/platform/Clubs';
+const PlatformDashboard = lazy(() => import('./pages/platform/Dashboard'));
+const Clubs = lazy(() => import('./pages/platform/Clubs'));
 
 // Club Manager
-import ClubDashboard from './pages/club/Dashboard';
-import Plans from './pages/club/Plans';
-import Skills from './pages/club/Skills';
-import Coaches from './pages/club/Coaches';
-import Swimmers from './pages/club/Swimmers';
-import Groups from './pages/club/Groups';
-import Sessions from './pages/club/Sessions';
-import Registrations from './pages/club/Registrations';
-import Settings from './pages/club/Settings';
-import ClubLeaderboard from './pages/club/Leaderboard';
-import BranchesPage from './pages/club/BranchesPage';
-import BranchDetail from './pages/club/BranchDetail';
-import SubscriptionPlansPage from './pages/club/SubscriptionPlansPage';
+const ClubDashboard = lazy(() => import('./pages/club/Dashboard'));
+const Plans = lazy(() => import('./pages/club/Plans'));
+const Skills = lazy(() => import('./pages/club/Skills'));
+const Coaches = lazy(() => import('./pages/club/Coaches'));
+const Swimmers = lazy(() => import('./pages/club/Swimmers'));
+const Groups = lazy(() => import('./pages/club/Groups'));
+const Sessions = lazy(() => import('./pages/club/Sessions'));
+const Registrations = lazy(() => import('./pages/club/Registrations'));
+const Settings = lazy(() => import('./pages/club/Settings'));
+const ClubLeaderboard = lazy(() => import('./pages/club/Leaderboard'));
+const BranchesPage = lazy(() => import('./pages/club/BranchesPage'));
+const BranchDetail = lazy(() => import('./pages/club/BranchDetail'));
+const SubscriptionPlansPage = lazy(() => import('./pages/club/SubscriptionPlansPage'));
 
 // Coach
-import CoachDashboard from './pages/coach/Dashboard';
-import CoachSessions from './pages/coach/Sessions';
-import SessionLive from './pages/coach/SessionLive';
-import CoachGroups from './pages/coach/Groups';
-import CoachSwimmers from './pages/coach/Swimmers';
-import CoachSwimmerDetail from './pages/coach/SwimmerDetail';
-import CoachSettings from './pages/coach/Settings';
+const CoachDashboard = lazy(() => import('./pages/coach/Dashboard'));
+const CoachSessions = lazy(() => import('./pages/coach/Sessions'));
+const SessionLive = lazy(() => import('./pages/coach/SessionLive'));
+const CoachGroups = lazy(() => import('./pages/coach/Groups'));
+const CoachSwimmers = lazy(() => import('./pages/coach/Swimmers'));
+const CoachSwimmerDetail = lazy(() => import('./pages/coach/SwimmerDetail'));
+const CoachSettings = lazy(() => import('./pages/coach/Settings'));
 
 // Swimmer
-import SwimmerDashboard from './pages/swimmer/Dashboard';
-import SwimmerSessions from './pages/swimmer/Sessions';
-import SwimmerEvaluations from './pages/swimmer/Evaluations';
-import SwimmerLeaderboard from './pages/swimmer/Leaderboard';
+const SwimmerDashboard = lazy(() => import('./pages/swimmer/Dashboard'));
+const SwimmerSessions = lazy(() => import('./pages/swimmer/Sessions'));
+const SwimmerEvaluations = lazy(() => import('./pages/swimmer/Evaluations'));
+const SwimmerLeaderboard = lazy(() => import('./pages/swimmer/Leaderboard'));
 
 // Registration Wizard
-import { RegistrationProvider } from './contexts/RegistrationContext';
-import Step1_BasicProfile from './pages/registration/steps/Step1_BasicProfile';
-import Step2_PhysicalInfo from './pages/registration/steps/Step2_PhysicalInfo';
-import Step3_SportType from './pages/registration/steps/Step3_SportType';
-import Step4_ExperienceLevel from './pages/registration/steps/Step4_ExperienceLevel';
-import Step5_BranchSelection from './pages/registration/steps/Step5_BranchSelection';
-import Step6_SubscriptionPlan from './pages/registration/steps/Step6_SubscriptionPlan';
-import Step7_CoachSelection from './pages/registration/steps/Step7_CoachSelection';
-import Step8_ReviewPayment from './pages/registration/steps/Step8_ReviewPayment';
-import RegistrationSuccess from './pages/registration/RegistrationSuccess';
+const Step1_BasicProfile = lazy(() => import('./pages/registration/steps/Step1_BasicProfile'));
+const Step2_PhysicalInfo = lazy(() => import('./pages/registration/steps/Step2_PhysicalInfo'));
+const Step3_SportType = lazy(() => import('./pages/registration/steps/Step3_SportType'));
+const Step4_ExperienceLevel = lazy(() => import('./pages/registration/steps/Step4_ExperienceLevel'));
+const Step5_BranchSelection = lazy(() => import('./pages/registration/steps/Step5_BranchSelection'));
+const Step6_SubscriptionPlan = lazy(() => import('./pages/registration/steps/Step6_SubscriptionPlan'));
+const Step7_CoachSelection = lazy(() => import('./pages/registration/steps/Step7_CoachSelection'));
+const Step8_ReviewPayment = lazy(() => import('./pages/registration/steps/Step8_ReviewPayment'));
+const RegistrationSuccess = lazy(() => import('./pages/registration/RegistrationSuccess'));
+
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+    <div>Loading...</div>
+  </div>
+);
 
 function RedirectByRole() {
   const { user, loading } = useAuth();
@@ -80,6 +89,7 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/portal/:slug" element={<ClubLogin />} />
@@ -153,6 +163,7 @@ function App() {
           <Route path="/" element={<RedirectByRole />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </Suspense>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

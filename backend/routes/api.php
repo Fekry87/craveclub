@@ -4,7 +4,13 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CorporateController;
 use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\ClubController;
+use App\Http\Controllers\Api\ClubDashboardController;
 use App\Http\Controllers\Api\CoachApiController;
+use App\Http\Controllers\Api\CoachManagementController;
+use App\Http\Controllers\Api\GroupManagementController;
+use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\SessionManagementController;
+use App\Http\Controllers\Api\SwimmerManagementController;
 use App\Http\Controllers\Api\SwimmerApiController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\BranchController;
@@ -89,35 +95,35 @@ Route::prefix('v1')->group(function () {
         // ── Club Manager ────────────────────────────────────
         Route::middleware(['role:CLUB_MANAGER', 'club.context'])->prefix('club')->group(function () {
             // Always available (core)
-            Route::get('/dashboard', [ClubController::class, 'dashboard']);
-            Route::get('/settings', [ClubController::class, 'settings']);
-            Route::put('/settings', [ClubController::class, 'updateSettings']);
-            Route::get('/features', [ClubController::class, 'features']);
+            Route::get('/dashboard', [ClubDashboardController::class, 'dashboard']);
+            Route::get('/settings', [ClubDashboardController::class, 'settings']);
+            Route::put('/settings', [ClubDashboardController::class, 'updateSettings']);
+            Route::get('/features', [ClubDashboardController::class, 'features']);
 
-            Route::get('/coaches', [ClubController::class, 'coachIndex']);
-            Route::post('/coaches', [ClubController::class, 'coachStore']);
-            Route::get('/coaches/{coach}', [ClubController::class, 'coachShow']);
-            Route::put('/coaches/{coach}', [ClubController::class, 'coachUpdate']);
-            Route::delete('/coaches/{coach}', [ClubController::class, 'coachDestroy']);
+            Route::get('/coaches', [CoachManagementController::class, 'coachIndex']);
+            Route::post('/coaches', [CoachManagementController::class, 'coachStore']);
+            Route::get('/coaches/{coach}', [CoachManagementController::class, 'coachShow']);
+            Route::put('/coaches/{coach}', [CoachManagementController::class, 'coachUpdate']);
+            Route::delete('/coaches/{coach}', [CoachManagementController::class, 'coachDestroy']);
 
-            Route::get('/swimmers', [ClubController::class, 'swimmerIndex']);
-            Route::post('/swimmers', [ClubController::class, 'swimmerStore']);
-            Route::get('/swimmers/{swimmer}', [ClubController::class, 'swimmerShow']);
-            Route::put('/swimmers/{swimmer}', [ClubController::class, 'swimmerUpdate']);
-            Route::delete('/swimmers/{swimmer}', [ClubController::class, 'swimmerDestroy']);
+            Route::get('/swimmers', [SwimmerManagementController::class, 'swimmerIndex']);
+            Route::post('/swimmers', [SwimmerManagementController::class, 'swimmerStore']);
+            Route::get('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerShow']);
+            Route::put('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerUpdate']);
+            Route::delete('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerDestroy']);
 
-            Route::get('/groups', [ClubController::class, 'groupIndex']);
-            Route::post('/groups', [ClubController::class, 'groupStore']);
-            Route::get('/groups/{group}', [ClubController::class, 'groupShow']);
-            Route::put('/groups/{group}', [ClubController::class, 'groupUpdate']);
-            Route::delete('/groups/{group}', [ClubController::class, 'groupDestroy']);
-            Route::post('/groups/{group}/members', [ClubController::class, 'groupMembers']);
+            Route::get('/groups', [GroupManagementController::class, 'groupIndex']);
+            Route::post('/groups', [GroupManagementController::class, 'groupStore']);
+            Route::get('/groups/{group}', [GroupManagementController::class, 'groupShow']);
+            Route::put('/groups/{group}', [GroupManagementController::class, 'groupUpdate']);
+            Route::delete('/groups/{group}', [GroupManagementController::class, 'groupDestroy']);
+            Route::post('/groups/{group}/members', [GroupManagementController::class, 'groupMembers']);
 
-            Route::get('/sessions', [ClubController::class, 'sessionIndex']);
-            Route::post('/sessions', [ClubController::class, 'sessionStore']);
-            Route::get('/sessions/{session}', [ClubController::class, 'sessionShow']);
-            Route::put('/sessions/{session}', [ClubController::class, 'sessionUpdate']);
-            Route::delete('/sessions/{session}', [ClubController::class, 'sessionDestroy']);
+            Route::get('/sessions', [SessionManagementController::class, 'sessionIndex']);
+            Route::post('/sessions', [SessionManagementController::class, 'sessionStore']);
+            Route::get('/sessions/{session}', [SessionManagementController::class, 'sessionShow']);
+            Route::put('/sessions/{session}', [SessionManagementController::class, 'sessionUpdate']);
+            Route::delete('/sessions/{session}', [SessionManagementController::class, 'sessionDestroy']);
 
             // Branches
             Route::apiResource('branches', BranchController::class);
@@ -167,13 +173,13 @@ Route::prefix('v1')->group(function () {
 
             // Feature-gated: Leaderboard management
             Route::middleware(['feature:leaderboard'])->group(function () {
-                Route::get('/leaderboard/settings', [ClubController::class, 'leaderboardSettings']);
-                Route::put('/leaderboard/settings', [ClubController::class, 'leaderboardUpdateSettings']);
-                Route::get('/leaderboard/overview', [ClubController::class, 'leaderboardOverview']);
-                Route::post('/leaderboard/tiers', [ClubController::class, 'leaderboardStoreTier']);
-                Route::put('/leaderboard/tiers/{tier}', [ClubController::class, 'leaderboardUpdateTier']);
-                Route::delete('/leaderboard/tiers/{tier}', [ClubController::class, 'leaderboardDestroyTier']);
-                Route::post('/leaderboard/tiers/reset', [ClubController::class, 'leaderboardResetTiers']);
+                Route::get('/leaderboard/settings', [LeaderboardController::class, 'leaderboardSettings']);
+                Route::put('/leaderboard/settings', [LeaderboardController::class, 'leaderboardUpdateSettings']);
+                Route::get('/leaderboard/overview', [LeaderboardController::class, 'leaderboardOverview']);
+                Route::post('/leaderboard/tiers', [LeaderboardController::class, 'leaderboardStoreTier']);
+                Route::put('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardUpdateTier']);
+                Route::delete('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardDestroyTier']);
+                Route::post('/leaderboard/tiers/reset', [LeaderboardController::class, 'leaderboardResetTiers']);
             });
         });
 

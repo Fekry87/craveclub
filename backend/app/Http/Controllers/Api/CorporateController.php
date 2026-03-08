@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+
 
 class CorporateController extends Controller
 {
@@ -124,7 +124,7 @@ class CorporateController extends Controller
         $manager = User::create([
             'name' => $request->manager_name,
             'email' => $request->manager_email,
-            'password' => Hash::make($request->manager_password),
+            'password' => $request->manager_password,
             'role' => UserRole::CLUB_MANAGER,
             'club_id' => $club->id,
         ]);

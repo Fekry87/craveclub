@@ -9,3 +9,4 @@ backend/database/database.sqlite
 frontend/node_modules/
 frontend/dist/
 node_modules/
+firebase-debug.log
