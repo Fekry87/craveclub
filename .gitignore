@@ -1,0 +1,11 @@
+.DS_Store
+*.swp
+*.swo
+backend/.env
+backend/vendor/
+backend/storage/logs/*
+!backend/storage/logs/.gitkeep
+backend/database/database.sqlite
+frontend/node_modules/
+frontend/dist/
+node_modules/
