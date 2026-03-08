@@ -56,7 +56,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Authenticated routes
-    Route::middleware(['auth:sanctum', 'throttle:200,1', 'request.log'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:by_user', 'request.log'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
 
