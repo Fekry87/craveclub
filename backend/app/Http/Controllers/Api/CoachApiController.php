@@ -70,7 +70,7 @@ class CoachApiController extends Controller
         $groups = Group::where('coach_user_id', $request->user()->id)
             ->with(['swimmers', 'plans'])
             ->withCount('swimmers')
-            ->get();
+            ->paginate(20);
 
         return response()->json($groups);
     }

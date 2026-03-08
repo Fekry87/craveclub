@@ -49,11 +49,16 @@ class SwimmerApiController extends Controller
         $bestRating = DailyEvaluation::where('swimmer_id', $profile->id)->max('rating');
 
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
-            ->selectRaw("strftime('%Y-%m', created_at) as month, AVG(rating) as avg_rating, COUNT(*) as count")
-            ->groupByRaw("strftime('%Y-%m', created_at)")
-            ->orderBy('month', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(fn($eval) => $eval->created_at->format('Y-m'))
             ->take(6)
-            ->get();
+            ->map(fn($group, $month) => [
+                'month' => $month,
+                'avg_rating' => round($group->avg('rating'), 2),
+                'count' => $group->count(),
+            ])
+            ->values();
 
         return response()->json([
             'profile' => $profile,
@@ -281,6 +286,12 @@ class SwimmerApiController extends Controller
         }
         unset($entry);
 
+        // Paginate all_rankings manually
+        $perPage = (int) $request->input('per_page', 20);
+        $page = (int) $request->input('page', 1);
+        $total = count($allRankings);
+        $paginatedRankings = array_slice(array_values($allRankings), ($page - 1) * $perPage, $perPage);
+
         // Current swimmer data
         $myXpData = $this->computeSwimmerXp($profile->id, $clubId, $settings);
         $myLevelInfo = $this->getLevelInfo($myXpData['total_xp'], $levels);
@@ -294,11 +305,14 @@ class SwimmerApiController extends Controller
 
         return response()->json([
             'top5' => $top5,
-            'all_rankings' => array_values($allRankings),
+            'all_rankings' => array_values($paginatedRankings),
             'my_rank' => $myRank,
             'my_xp' => $myXpData,
             'my_level' => $myLevelInfo,
-            'total_swimmers' => count($rankings),
+            'total_swimmers' => $total,
+            'current_page' => $page,
+            'per_page' => $perPage,
+            'last_page' => (int) ceil($total / $perPage),
             'levels' => $levels,
         ]);
     }
@@ -316,11 +330,16 @@ class SwimmerApiController extends Controller
         $bestRating = DailyEvaluation::where('swimmer_id', $profile->id)->max('rating');
 
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
-            ->selectRaw("strftime('%Y-%m', created_at) as month, AVG(rating) as avg_rating, COUNT(*) as count")
-            ->groupByRaw("strftime('%Y-%m', created_at)")
-            ->orderBy('month', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(fn($eval) => $eval->created_at->format('Y-m'))
             ->take(6)
-            ->get();
+            ->map(fn($group, $month) => [
+                'month' => $month,
+                'avg_rating' => round($group->avg('rating'), 2),
+                'count' => $group->count(),
+            ])
+            ->values();
 
         return response()->json([
             'total_sessions' => $totalSessions,

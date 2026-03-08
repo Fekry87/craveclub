@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 
 class CorporateController extends Controller
@@ -238,6 +239,8 @@ class CorporateController extends Controller
             'before' => $before,
             'after' => $features->fresh()->only(ClubFeature::featureKeys()),
         ], $club->id);
+
+        Cache::forget("club_features_{$club->id}");
 
         return response()->json($features->fresh());
     }

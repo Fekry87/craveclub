@@ -13,6 +13,7 @@ class SwimmerProfile extends Model
     protected $fillable = [
         'club_id', 'user_id', 'branch_id', 'first_name', 'last_name', 'level',
         'date_of_birth', 'guardian_name', 'guardian_phone', 'guardian_email', 'medical_notes',
+        'xp_points', 'xp_rank',
     ];
 
     protected function casts(): array
