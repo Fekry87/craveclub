@@ -21,6 +21,7 @@ use App\Models\Skill;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
 use App\Models\ClubFeature;
+use App\Services\AuditService;
 use App\Services\XpCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,18 @@ use Illuminate\Validation\Rule;
 class ClubController extends Controller
 {
     public function __construct(private XpCalculationService $xpService) {}
+
+    /**
+     * Guard: abort 404 if the model doesn't belong to the current club.
+     */
+    private function assertOwnership(mixed $model): void
+    {
+        abort_if(
+            $model->club_id !== app('current_club_id'),
+            404,
+            'Resource not found.'
+        );
+    }
 
     /**
      * Return enabled features for the current club (sidebar rendering).
@@ -139,11 +152,13 @@ class ClubController extends Controller
 
     public function planShow(TrainingPlan $plan): JsonResponse
     {
+        $this->assertOwnership($plan);
         return response()->json($plan->load('items'));
     }
 
     public function planUpdate(Request $request, TrainingPlan $plan): JsonResponse
     {
+        $this->assertOwnership($plan);
         $request->validate([
             'title' => 'sometimes|string|max:255',
             'level' => 'nullable|string|max:100',
@@ -165,6 +180,7 @@ class ClubController extends Controller
 
     public function planDestroy(TrainingPlan $plan): JsonResponse
     {
+        $this->assertOwnership($plan);
         $plan->delete();
         return response()->json(['message' => 'Plan deleted']);
     }
@@ -196,6 +212,7 @@ class ClubController extends Controller
 
     public function skillUpdate(Request $request, Skill $skill): JsonResponse
     {
+        $this->assertOwnership($skill);
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'type' => 'sometimes|in:SKILL,SWIM_TYPE,TECHNIQUE',
@@ -208,6 +225,7 @@ class ClubController extends Controller
 
     public function skillDestroy(Skill $skill): JsonResponse
     {
+        $this->assertOwnership($skill);
         $skill->delete();
         return response()->json(['message' => 'Skill deleted']);
     }
@@ -259,11 +277,13 @@ class ClubController extends Controller
 
     public function coachShow(CoachProfile $coach): JsonResponse
     {
+        $this->assertOwnership($coach);
         return response()->json($coach->load('user'));
     }
 
     public function coachUpdate(Request $request, CoachProfile $coach): JsonResponse
     {
+        $this->assertOwnership($coach);
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'bio' => 'nullable|string',
@@ -281,6 +301,13 @@ class ClubController extends Controller
 
     public function coachDestroy(CoachProfile $coach): JsonResponse
     {
+        $this->assertOwnership($coach);
+
+        AuditService::log('coach.deleted', CoachProfile::class, $coach->id, [
+            'coach_name' => $coach->user?->name,
+            'user_id' => $coach->user_id,
+        ]);
+
         if ($coach->user) {
             $coach->user->delete();
         }
@@ -336,11 +363,13 @@ class ClubController extends Controller
 
     public function swimmerShow(SwimmerProfile $swimmer): JsonResponse
     {
+        $this->assertOwnership($swimmer);
         return response()->json($swimmer->load(['user', 'groups']));
     }
 
     public function swimmerUpdate(Request $request, SwimmerProfile $swimmer): JsonResponse
     {
+        $this->assertOwnership($swimmer);
         $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|string|max:255',
@@ -362,6 +391,13 @@ class ClubController extends Controller
 
     public function swimmerDestroy(SwimmerProfile $swimmer): JsonResponse
     {
+        $this->assertOwnership($swimmer);
+
+        AuditService::log('swimmer.deleted', SwimmerProfile::class, $swimmer->id, [
+            'swimmer_name' => $swimmer->first_name . ' ' . $swimmer->last_name,
+            'user_id' => $swimmer->user_id,
+        ]);
+
         if ($swimmer->user) {
             $swimmer->user->delete();
         }
@@ -396,11 +432,13 @@ class ClubController extends Controller
 
     public function groupShow(Group $group): JsonResponse
     {
+        $this->assertOwnership($group);
         return response()->json($group->load(['coach', 'swimmers', 'plans']));
     }
 
     public function groupUpdate(Request $request, Group $group): JsonResponse
     {
+        $this->assertOwnership($group);
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
@@ -416,12 +454,14 @@ class ClubController extends Controller
 
     public function groupDestroy(Group $group): JsonResponse
     {
+        $this->assertOwnership($group);
         $group->delete();
         return response()->json(['message' => 'Group deleted']);
     }
 
     public function groupMembers(Request $request, Group $group): JsonResponse
     {
+        $this->assertOwnership($group);
         $request->validate([
             'swimmer_ids' => 'required|array',
             'swimmer_ids.*' => [
@@ -469,11 +509,13 @@ class ClubController extends Controller
 
     public function sessionShow(TrainingSession $session): JsonResponse
     {
+        $this->assertOwnership($session);
         return response()->json($session->load(['group.swimmers', 'plan.items', 'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation']));
     }
 
     public function sessionUpdate(Request $request, TrainingSession $session): JsonResponse
     {
+        $this->assertOwnership($session);
         $request->validate([
             'group_id' => [
                 'sometimes',
@@ -496,6 +538,7 @@ class ClubController extends Controller
 
     public function sessionDestroy(TrainingSession $session): JsonResponse
     {
+        $this->assertOwnership($session);
         $session->delete();
         return response()->json(['message' => 'Session deleted']);
     }
@@ -518,10 +561,16 @@ class ClubController extends Controller
     {
         $clubId = $request->user()->club_id;
         $settings = LeaderboardSetting::forClub($clubId);
+        $before = $settings->toArray();
         $settings->update($request->only([
             'rating_xp_1', 'rating_xp_2', 'rating_xp_3', 'rating_xp_4', 'rating_xp_5',
             'attendance_xp', 'streak_bonus_xp', 'streak_threshold',
         ]));
+
+        AuditService::log('leaderboard.settings_changed', LeaderboardSetting::class, $settings->id, [
+            'before' => $before,
+            'after' => $settings->fresh()->toArray(),
+        ]);
 
         return response()->json($settings);
     }
@@ -552,6 +601,7 @@ class ClubController extends Controller
 
     public function leaderboardUpdateTier(StoreTierRequest $request, LevelTier $tier): JsonResponse
     {
+        $this->assertOwnership($tier);
         $clubId = $request->user()->club_id;
 
         $conflict = LevelTier::where('club_id', $clubId)
@@ -571,6 +621,7 @@ class ClubController extends Controller
 
     public function leaderboardDestroyTier(LevelTier $tier): JsonResponse
     {
+        $this->assertOwnership($tier);
         $clubId = $tier->club_id;
         $count = LevelTier::where('club_id', $clubId)->count();
 

@@ -9,6 +9,7 @@ use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CorporateSetting;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -199,7 +200,13 @@ class CorporateController extends Controller
 
     public function clubDestroy(Club $club): JsonResponse
     {
-        $club->delete();
+        AuditService::log('club.deleted', Club::class, $club->id, [
+            'club_name' => $club->name,
+            'club_slug' => $club->slug,
+        ], $club->id);
+
+        $club->delete(); // soft-delete via SoftDeletes trait
+
         return response()->json(['message' => 'Club deleted']);
     }
 
@@ -224,7 +231,13 @@ class CorporateController extends Controller
         ]);
 
         $features = ClubFeature::forClub($club->id);
+        $before = $features->only(ClubFeature::featureKeys());
         $features->update($request->only(ClubFeature::featureKeys()));
+
+        AuditService::log('features.updated', ClubFeature::class, $features->id, [
+            'before' => $before,
+            'after' => $features->fresh()->only(ClubFeature::featureKeys()),
+        ], $club->id);
 
         return response()->json($features->fresh());
     }

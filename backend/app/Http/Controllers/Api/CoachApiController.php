@@ -150,7 +150,8 @@ class CoachApiController extends Controller
 
     public function allSwimmers(Request $request): JsonResponse
     {
-        $swimmers = SwimmerProfile::select('id', 'first_name', 'last_name', 'level')
+        $swimmers = SwimmerProfile::where('club_id', app('current_club_id'))
+            ->select('id', 'first_name', 'last_name', 'level')
             ->orderBy('first_name')
             ->get();
 
@@ -636,6 +637,10 @@ class CoachApiController extends Controller
 
         $session = TrainingSession::findOrFail($request->session_id);
         $clubId = $request->user()->club_id;
+
+        // Verify coach owns this session via their groups
+        $coachGroupIds = $this->coachGroupIds($request);
+        abort_if(!$coachGroupIds->contains($session->group_id), 403, 'You do not own this session.');
 
         foreach ($request->attendance as $att) {
             Attendance::updateOrCreate(

@@ -11,6 +11,7 @@ use App\Models\SwimmerProfile;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\AuditService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -147,6 +148,12 @@ class RegistrationController extends Controller
 
             $result['registration']->load(['branch', 'coach.user', 'plan']);
 
+            AuditService::log('registration.approved', Registration::class, $registration->id, [
+                'swimmer_name' => $registration->full_name,
+                'user_id_created' => $result['swimmer']['user_id'],
+                'profile_id_created' => $result['swimmer']['profile_id'],
+            ]);
+
             return response()->json([
                 'registration' => $result['registration'],
                 'swimmer' => $result['swimmer'],
@@ -166,6 +173,10 @@ class RegistrationController extends Controller
         try {
             $registration->update(['status' => 'cancelled']);
             $registration->load(['branch', 'coach.user', 'plan']);
+
+            AuditService::log('registration.rejected', Registration::class, $registration->id, [
+                'swimmer_name' => $registration->full_name,
+            ]);
 
             return response()->json([
                 'registration' => $registration,

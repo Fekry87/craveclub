@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Registration extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'club_id', 'branch_id', 'coach_id', 'plan_id',
         'full_name', 'phone', 'gender', 'birth_date', 'avatar_url',
