@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\ForceProductionSettings::class);
+        $middleware->append(\App\Http\Middleware\ApiVersionMiddleware::class);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,

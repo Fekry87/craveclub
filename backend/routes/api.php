@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\SessionManagementController;
 use App\Http\Controllers\Api\SwimmerManagementController;
 use App\Http\Controllers\Api\SwimmerApiController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\ApiDocController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SubscriptionPlanController;
@@ -29,6 +30,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::prefix('v1')->group(function () {
+
+    // API Documentation
+    Route::get('/docs', [ApiDocController::class, 'docs']);
 
     // Public
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
