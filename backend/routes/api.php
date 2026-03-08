@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\PublicRegistrationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,6 +31,22 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::prefix('v1')->group(function () {
+
+    // Health Check
+    Route::get('/health', function () {
+        $dbOk = true;
+        try {
+            DB::select('SELECT 1');
+        } catch (\Exception $e) {
+            $dbOk = false;
+        }
+
+        return response()->json([
+            'status' => $dbOk ? 'healthy' : 'degraded',
+            'database' => $dbOk,
+            'timestamp' => now()->toIso8601String(),
+        ], $dbOk ? 200 : 503);
+    });
 
     // API Documentation
     Route::get('/docs', [ApiDocController::class, 'docs']);
