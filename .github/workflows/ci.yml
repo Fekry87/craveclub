@@ -22,7 +22,7 @@ jobs:
         with:
           php-version: '8.2'
           extensions: pdo_sqlite, mbstring, xml
-          coverage: none
+          coverage: xdebug
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -39,14 +39,14 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
 
-      - name: Run PHPUnit tests
-        run: php artisan test
+      - name: Run PHPUnit tests with coverage
+        run: php artisan test --coverage --min=60
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
 
       - name: Run Laravel Pint (lint)
-        run: vendor/bin/pint --test || true
+        run: vendor/bin/pint --test
 
   frontend:
     name: Frontend Build & Tests
@@ -68,8 +68,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Vitest
-        run: npm test
+      - name: Run Vitest with coverage
+        run: npx vitest run --coverage
 
       - name: Build
         run: npm run build
