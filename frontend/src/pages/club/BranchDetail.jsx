@@ -5,7 +5,7 @@ import {
   assignCoaches, unassignCoaches, assignSwimmers, unassignSwimmers,
 } from '../../api/branches';
 import { getAvatarColor } from '../../components/CrudTable';
-import { Modal, ModalActions } from '../../components/ui/Modal';
+import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 import { Button } from '../../components/ui/FormControls';
 
 const KNOWN_FEATURES = [
@@ -102,6 +102,140 @@ export default function BranchDetail() {
       prev.includes(entityId) ? prev.filter(x => x !== entityId) : [...prev, entityId]
     );
   };
+
+  const closeAssignForm = () => { setAssignModal(null); setSelected([]); setSearch(''); setError(''); };
+
+  // ── Assign Form (full-page) ────────────────────────────
+  if (assignModal) {
+    return (
+      <FormPage
+        title={assignModal === 'coaches' ? 'Assign Coaches' : 'Assign Swimmers'}
+        onBack={closeAssignForm}
+        icon={
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
+            <path d="M20 8v6M23 11h-6" />
+          </svg>
+        }
+      >
+        {/* Search */}
+        <div style={{ position: 'relative', marginBottom: 14 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={`Search ${assignModal}...`}
+            style={{
+              width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
+              background: 'rgba(6,13,31,0.5)', border: '1px solid rgba(51,65,85,0.3)',
+              color: '#e2e8f0', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+              outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {/* List */}
+        <div style={{
+          maxHeight: 440, overflowY: 'auto',
+          display: 'flex', flexDirection: 'column', gap: 4,
+        }}>
+          {availableLoading ? (
+            <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>Loading...</div>
+          ) : filteredAvailable(availableList, search, assignModal).length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>
+              {availableList.length === 0 ? `No ${assignModal} available to assign` : 'No matches found'}
+            </div>
+          ) : (
+            filteredAvailable(availableList, search, assignModal).map(item => {
+              const name = assignModal === 'coaches'
+                ? (item.user?.name || 'Unknown')
+                : `${item.first_name} ${item.last_name}`;
+              const sub = assignModal === 'coaches'
+                ? (item.specialization || 'Coach')
+                : (item.level ? item.level.replace('_', ' ') : 'Swimmer');
+              const isSelected = selected.includes(item.id);
+              const itemAc = getAvatarColor(name);
+              const itemInitials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => toggleSelect(item.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 14px', borderRadius: 10,
+                    background: isSelected ? 'rgba(34,211,238,0.08)' : 'transparent',
+                    border: isSelected ? '1px solid rgba(34,211,238,0.2)' : '1px solid rgba(51,65,85,0.15)',
+                    cursor: 'pointer', width: '100%',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {/* Checkbox */}
+                  <div style={{
+                    width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                    background: isSelected ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'rgba(51,65,85,0.3)',
+                    border: isSelected ? '1px solid rgba(34,211,238,0.4)' : '1px solid rgba(51,65,85,0.5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
+                    {isSelected && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    )}
+                  </div>
+                  {/* Avatar */}
+                  <div style={{
+                    width: 34, height: 34, borderRadius: 10, background: itemAc.bg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, color: itemAc.text, flexShrink: 0,
+                    fontFamily: "'Outfit', sans-serif",
+                  }}>
+                    {itemInitials}
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>{name}</div>
+                    <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{sub}</div>
+                  </div>
+                  {item.branch_id && (
+                    <span style={{
+                      padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 500,
+                      background: 'rgba(251,191,36,0.1)', color: '#fbbf24',
+                      border: '1px solid rgba(251,191,36,0.2)',
+                    }}>
+                      Other branch
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {error && (
+          <div style={{
+            background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)',
+            borderRadius: 10, padding: '10px 14px', marginTop: 12,
+            fontSize: 13, color: '#fda4af',
+          }}>
+            {error}
+          </div>
+        )}
+
+        <FormPageActions>
+          <Button type="button" variant="secondary" onClick={closeAssignForm}>Cancel</Button>
+          <Button type="button" disabled={saving || selected.length === 0} onClick={handleAssign}>
+            {saving ? 'Assigning...' : `Assign ${selected.length} Selected`}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   // ── Loading ────────────────────────────────────────────
   if (loading) {
@@ -402,135 +536,6 @@ export default function BranchDetail() {
         )}
       </div>
 
-      {/* ── Assign Modal ────────────────────────────────────── */}
-      {assignModal && (
-        <Modal
-          title={assignModal === 'coaches' ? 'Assign Coaches' : 'Assign Swimmers'}
-          onClose={() => setAssignModal(null)}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
-              <path d="M20 8v6M23 11h-6" />
-            </svg>
-          }
-        >
-          {/* Search */}
-          <div style={{ position: 'relative', marginBottom: 14 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
-              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={`Search ${assignModal}...`}
-              style={{
-                width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
-                background: 'rgba(6,13,31,0.5)', border: '1px solid rgba(51,65,85,0.3)',
-                color: '#e2e8f0', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-                outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {/* List */}
-          <div style={{
-            maxHeight: 340, overflowY: 'auto',
-            display: 'flex', flexDirection: 'column', gap: 4,
-          }}>
-            {availableLoading ? (
-              <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>Loading...</div>
-            ) : filteredAvailable(availableList, search, assignModal).length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>
-                {availableList.length === 0 ? `No ${assignModal} available to assign` : 'No matches found'}
-              </div>
-            ) : (
-              filteredAvailable(availableList, search, assignModal).map(item => {
-                const name = assignModal === 'coaches'
-                  ? (item.user?.name || 'Unknown')
-                  : `${item.first_name} ${item.last_name}`;
-                const sub = assignModal === 'coaches'
-                  ? (item.specialization || 'Coach')
-                  : (item.level ? item.level.replace('_', ' ') : 'Swimmer');
-                const isSelected = selected.includes(item.id);
-                const itemAc = getAvatarColor(name);
-                const itemInitials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleSelect(item.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px 14px', borderRadius: 10,
-                      background: isSelected ? 'rgba(34,211,238,0.08)' : 'transparent',
-                      border: isSelected ? '1px solid rgba(34,211,238,0.2)' : '1px solid rgba(51,65,85,0.15)',
-                      cursor: 'pointer', width: '100%',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {/* Checkbox */}
-                    <div style={{
-                      width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                      background: isSelected ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'rgba(51,65,85,0.3)',
-                      border: isSelected ? '1px solid rgba(34,211,238,0.4)' : '1px solid rgba(51,65,85,0.5)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s',
-                    }}>
-                      {isSelected && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                      )}
-                    </div>
-                    {/* Avatar */}
-                    <div style={{
-                      width: 34, height: 34, borderRadius: 10, background: itemAc.bg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 700, color: itemAc.text, flexShrink: 0,
-                      fontFamily: "'Outfit', sans-serif",
-                    }}>
-                      {itemInitials}
-                    </div>
-                    <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>{name}</div>
-                      <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{sub}</div>
-                    </div>
-                    {item.branch_id && (
-                      <span style={{
-                        padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 500,
-                        background: 'rgba(251,191,36,0.1)', color: '#fbbf24',
-                        border: '1px solid rgba(251,191,36,0.2)',
-                      }}>
-                        Other branch
-                      </span>
-                    )}
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          {error && (
-            <div style={{
-              background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)',
-              borderRadius: 10, padding: '10px 14px', marginTop: 12,
-              fontSize: 13, color: '#fda4af',
-            }}>
-              {error}
-            </div>
-          )}
-
-          <ModalActions>
-            <Button type="button" variant="secondary" onClick={() => setAssignModal(null)}>Cancel</Button>
-            <Button type="button" disabled={saving || selected.length === 0} onClick={handleAssign}>
-              {saving ? 'Assigning...' : `Assign ${selected.length} Selected`}
-            </Button>
-          </ModalActions>
-        </Modal>
-      )}
     </div>
   );
 }

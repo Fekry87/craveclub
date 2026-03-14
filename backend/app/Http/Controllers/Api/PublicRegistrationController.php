@@ -13,6 +13,7 @@ use App\Models\Sport;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class PublicRegistrationController extends Controller
@@ -145,9 +146,9 @@ class PublicRegistrationController extends Controller
             'competed' => 'required|boolean',
             'primary_goal' => 'required|string',
             'weekly_frequency' => 'required|string',
-            'branch_id' => 'required|integer|exists:branches,id',
-            'plan_id' => 'required|integer|exists:subscription_plans,id',
-            'coach_id' => 'required|integer|exists:coach_profiles,id',
+            'branch_id' => ['required', 'integer', Rule::exists('branches', 'id')->where('club_id', app('current_club_id'))],
+            'plan_id' => ['required', 'integer', Rule::exists('subscription_plans', 'id')->where('club_id', app('current_club_id'))],
+            'coach_id' => ['required', 'integer', Rule::exists('coach_profiles', 'id')->where('club_id', app('current_club_id'))],
             'preferred_time' => 'required|string',
             'payment_method' => 'required|in:cash',
             'avatar_url' => 'nullable|string',
@@ -175,10 +176,17 @@ class PublicRegistrationController extends Controller
             abort(422, 'Coach does not belong to this club.');
         }
 
+        // Resolve sport_module_id from club's active sport modules
+        $sportModuleId = DB::table('club_sport_modules')
+            ->where('club_id', $clubId)
+            ->where('is_active', true)
+            ->value('sport_module_id');
+
         try {
-            $registration = DB::transaction(function () use ($validated, $clubId, $plan) {
+            $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId) {
                 return Registration::create(array_merge($validated, [
                     'club_id' => $clubId,
+                    'sport_module_id' => $sportModuleId,
                     'total_amount' => $plan->price,
                     'status' => 'pending',
                 ]));

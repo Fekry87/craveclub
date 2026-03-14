@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { DataTable, Modal, ModalActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
+import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 
 export default function Sessions() {
   const [sessions, setSessions] = useState([]);
@@ -31,6 +31,8 @@ export default function Sessions() {
   };
   const handleDelete = async (s) => { if (confirm('Delete?')) { await api.delete(`/club/sessions/${s.id}`); load(); } };
 
+  const closeForm = () => { setShowModal(false); setEditId(null); };
+
   const columns = [
     { key: 'date', label: 'Date', render: r => r.date?.split('T')[0] },
     { key: 'time', label: 'Time', render: r => (
@@ -42,6 +44,27 @@ export default function Sessions() {
     { key: 'plan', label: 'Plan', render: r => r.plan?.title || <span style={{ color: '#475569' }}>None</span> },
     { key: 'location', label: 'Location' },
   ];
+
+  if (showModal) {
+    return (
+      <FormPage title={editId ? 'Edit Session' : 'New Session'} onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
+        <FormField label="Group"><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={groups.map(g => ({ value: g.id, label: g.name }))} /></FormField>
+        <FormField label="Plan (optional)"><Select value={form.plan_id} onChange={e => setForm({ ...form, plan_id: e.target.value })} options={plans.map(p => ({ value: p.id, label: p.title }))} /></FormField>
+        <FormField label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <FormField label="Start Time"><Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} /></FormField>
+          <FormField label="End Time"><Input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} /></FormField>
+        </div>
+        <FormField label="Location"><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></FormField>
+        <FormField label="Notes"><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   return (
     <div>
@@ -107,24 +130,6 @@ export default function Sessions() {
           );
         }}
       />
-      {showModal && (
-        <Modal title={editId ? 'Edit Session' : 'New Session'} onClose={() => setShowModal(false)}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
-          <FormField label="Group"><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={groups.map(g => ({ value: g.id, label: g.name }))} /></FormField>
-          <FormField label="Plan (optional)"><Select value={form.plan_id} onChange={e => setForm({ ...form, plan_id: e.target.value })} options={plans.map(p => ({ value: p.id, label: p.title }))} /></FormField>
-          <FormField label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></FormField>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <FormField label="Start Time"><Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} /></FormField>
-            <FormField label="End Time"><Input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} /></FormField>
-          </div>
-          <FormField label="Location"><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></FormField>
-          <FormField label="Notes"><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
-          <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
-          </ModalActions>
-        </Modal>
-      )}
     </div>
   );
 }

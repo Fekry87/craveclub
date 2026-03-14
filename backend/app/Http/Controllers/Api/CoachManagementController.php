@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCoachRequest;
 use App\Http\Requests\UpdateCoachRequest;
 use App\Enums\UserRole;
 use App\Models\CoachProfile;
+use App\Models\Group;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
@@ -38,6 +39,23 @@ class CoachManagementController extends Controller
             $query->where('branch_id', $branchId);
         }
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
+    }
+
+    public function sportIndex(Request $request): JsonResponse
+    {
+        $coachUserIds = Group::where('club_id', app('current_club_id'))
+            ->where('sport_module_id', app('current_sport_module_id'))
+            ->whereNotNull('coach_user_id')
+            ->distinct()
+            ->pluck('coach_user_id');
+
+        $coaches = CoachProfile::where('club_id', app('current_club_id'))
+            ->whereIn('user_id', $coachUserIds)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return response()->json(['data' => $coaches]);
     }
 
     public function coachStore(StoreCoachRequest $request): JsonResponse

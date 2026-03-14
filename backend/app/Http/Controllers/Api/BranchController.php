@@ -9,6 +9,7 @@ use App\Models\CoachProfile;
 use App\Models\SwimmerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
@@ -197,7 +198,7 @@ class BranchController extends Controller
 
         $validated = $request->validate([
             'coach_ids' => 'required|array|min:1',
-            'coach_ids.*' => 'integer|exists:coach_profiles,id',
+            'coach_ids.*' => ['integer', Rule::exists('coach_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         CoachProfile::where('club_id', app('current_club_id'))
@@ -240,7 +241,7 @@ class BranchController extends Controller
 
         $validated = $request->validate([
             'swimmer_ids' => 'required|array|min:1',
-            'swimmer_ids.*' => 'integer|exists:swimmer_profiles,id',
+            'swimmer_ids.*' => ['integer', Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         SwimmerProfile::where('club_id', app('current_club_id'))

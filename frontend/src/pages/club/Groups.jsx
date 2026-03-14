@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { DataTable, Modal, ModalActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
+import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
+import { Modal, ModalActions } from '../../components/ui/Modal';
 
 export default function Groups() {
   const [groups, setGroups] = useState([]);
@@ -48,6 +49,8 @@ export default function Groups() {
     setSelectedSwimmers(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const closeForm = () => { setShowModal(false); setEditId(null); };
+
   const columns = [
     { key: 'name', label: 'Name' },
     { key: 'coach', label: 'Coach', render: r => r.coach?.name || <span style={{ color: '#475569' }}>Unassigned</span> },
@@ -57,6 +60,24 @@ export default function Groups() {
       </span>
     ) },
   ];
+
+  if (showModal) {
+    return (
+      <FormPage title={editId ? 'Edit Group' : 'New Group'} onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}>
+        <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
+        <FormField label="Coach">
+          <Select value={form.coach_user_id} onChange={e => setForm({ ...form, coach_user_id: e.target.value })}
+            options={coaches.map(c => ({ value: c.user_id, label: c.user?.name }))} />
+        </FormField>
+        <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   return (
     <div>
@@ -105,21 +126,6 @@ export default function Groups() {
           );
         }}
       />
-      {showModal && (
-        <Modal title={editId ? 'Edit Group' : 'New Group'} onClose={() => setShowModal(false)}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}>
-          <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
-          <FormField label="Coach">
-            <Select value={form.coach_user_id} onChange={e => setForm({ ...form, coach_user_id: e.target.value })}
-              options={coaches.map(c => ({ value: c.user_id, label: c.user?.name }))} />
-          </FormField>
-          <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
-          <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
-          </ModalActions>
-        </Modal>
-      )}
       {showMembers && (
         <Modal title={`Members: ${showMembers.name}`} onClose={() => setShowMembers(null)}
           icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}>

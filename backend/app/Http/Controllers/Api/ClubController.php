@@ -27,7 +27,7 @@ class ClubController extends Controller
     // ── Training Plans ──
     public function planIndex(Request $request): JsonResponse
     {
-        $query = TrainingPlan::with('items');
+        $query = TrainingPlan::with(['items', 'coach'])->withCount('assignments', 'activeAssignments');
         if ($search = $request->input('search')) {
             $query->where('title', 'like', "%{$search}%");
         }
@@ -36,7 +36,11 @@ class ClubController extends Controller
 
     public function planStore(StoreTrainingPlanRequest $request): JsonResponse
     {
-        $plan = TrainingPlan::create($request->only(['title', 'level', 'description']));
+        $plan = TrainingPlan::create($request->only([
+            'title', 'level', 'description',
+            'duration_weeks', 'duration_unit', 'sessions_per_week',
+            'goals', 'difficulty_level', 'is_template', 'phases',
+        ]));
 
         if ($request->has('items')) {
             foreach ($request->items as $item) {
@@ -60,10 +64,21 @@ class ClubController extends Controller
             'title' => 'sometimes|string|max:255',
             'level' => 'nullable|string|max:100',
             'description' => 'nullable|string',
+            'duration_weeks' => 'nullable|integer|min:1|max:52',
+            'duration_unit' => 'nullable|in:weeks,months',
+            'sessions_per_week' => 'nullable|integer|min:1|max:7',
+            'goals' => 'nullable|string',
+            'difficulty_level' => 'nullable|string|in:beginner,intermediate,advanced',
+            'is_template' => 'nullable|boolean',
+            'phases' => 'nullable|array',
             'items' => 'nullable|array',
         ]);
 
-        $plan->update($request->only(['title', 'level', 'description']));
+        $plan->update($request->only([
+            'title', 'level', 'description',
+            'duration_weeks', 'duration_unit', 'sessions_per_week',
+            'goals', 'difficulty_level', 'is_template', 'phases',
+        ]));
 
         if ($request->has('items')) {
             $plan->items()->delete();

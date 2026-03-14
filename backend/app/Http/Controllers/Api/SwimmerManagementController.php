@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSwimmerRequest;
 use App\Http\Requests\UpdateSwimmerRequest;
 use App\Enums\UserRole;
+use App\Models\Group;
 use App\Models\SwimmerProfile;
 use App\Models\User;
 use App\Services\AuditService;
@@ -39,6 +40,23 @@ class SwimmerManagementController extends Controller
             $query->where('branch_id', $branchId);
         }
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
+    }
+
+    public function sportIndex(Request $request): JsonResponse
+    {
+        $groupIds = Group::where('club_id', app('current_club_id'))
+            ->where('sport_module_id', app('current_sport_module_id'))
+            ->pluck('id');
+
+        $swimmers = SwimmerProfile::where('club_id', app('current_club_id'))
+            ->whereHas('groups', function ($q) use ($groupIds) {
+                $q->whereIn('groups.id', $groupIds);
+            })
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return response()->json(['data' => $swimmers]);
     }
 
     public function swimmerStore(StoreSwimmerRequest $request): JsonResponse

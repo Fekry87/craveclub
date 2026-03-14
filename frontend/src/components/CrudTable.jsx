@@ -7,6 +7,8 @@ export {
   useIsMobile,
   Modal,
   ModalActions,
+  FormPage,
+  FormPageActions,
   FormField,
   Input,
   Select,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { PageHeader, Modal, ModalActions, FormField, Input, Select, TextArea, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 
 const STATUS_CONFIG = {
   Scheduled: { bg: 'rgba(56,189,248,0.08)', border: 'rgba(56,189,248,0.15)', color: '#38bdf8', gradient: 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.03) 100%)' },
@@ -93,9 +93,10 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
 }
 
 /* ─── Toolbar ─────────────────────────────────────────── */
-function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, groups, statusCounts, viewMode, setViewMode, isMobile }) {
+function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, groups = [], statusCounts, viewMode, setViewMode, isMobile }) {
   const [expanded, setExpanded] = useState(false);
-  const activeGroupLabel = groupFilter ? (groups.find(g => String(g.id) === String(groupFilter))?.name || 'Group') : 'All Groups';
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  const activeGroupLabel = groupFilter ? (safeGroups.find(g => String(g.id) === String(groupFilter))?.name || 'Group') : 'All Groups';
   const hasActiveFilter = statusFilter || groupFilter;
 
   /* ─── Desktop: always-open inline toolbar ─── */
@@ -125,7 +126,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
               backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
             }}>
             <option value="">All Groups</option>
-            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            {safeGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
 
           {hasActiveFilter && (
@@ -303,7 +304,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
               }}>
               <option value="">All Groups</option>
-              {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {safeGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           {hasActiveFilter && (
@@ -756,13 +757,13 @@ export default function CoachSessions() {
 
   useEffect(() => { load(); }, [statusFilter, groupFilter]);
   useEffect(() => {
-    api.get('/coach/groups').then(r => setGroups(r.data || [])).catch(() => {});
+    api.get('/coach/groups').then(r => setGroups(r.data?.data || r.data || [])).catch(() => {});
     api.get('/coach/swimmers').then(r => setAllSwimmers(r.data || [])).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (form.group_id) {
-      const g = groups.find(g => g.id === Number(form.group_id));
+      const g = (Array.isArray(groups) ? groups : []).find(g => g.id === Number(form.group_id));
       setGroupSwimmers(g?.swimmers || []);
     } else {
       setGroupSwimmers([]);
@@ -771,6 +772,8 @@ export default function CoachSessions() {
 
   const resetForm = () => setForm({ group_id: '', plan_id: '', title: '', type: 'General', date: '', start_time: '', end_time: '', location: '', notes: '', added_swimmer_ids: [], excluded_swimmer_ids: [] });
 
+  const closeForm = () => { setShowModal(false); setEditId(null); resetForm(); setSaveError(''); };
+
   const handleSave = async () => {
     setSaveError('');
     setSaving(true);
@@ -778,7 +781,7 @@ export default function CoachSessions() {
       const payload = { ...form, plan_id: form.plan_id || null };
       if (editId) await api.put(`/coach/sessions/${editId}`, payload);
       else await api.post('/coach/sessions', payload);
-      setShowModal(false); setEditId(null); resetForm(); load();
+      closeForm(); load();
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) {
@@ -811,6 +814,100 @@ export default function CoachSessions() {
 
   const groupSwimmerIds = groupSwimmers.map(s => s.id);
   const availableToAdd = allSwimmers.filter(s => !groupSwimmerIds.includes(s.id) && !form.added_swimmer_ids.includes(s.id) && (addSwimmerSearch === '' || `${s.first_name} ${s.last_name}`.toLowerCase().includes(addSwimmerSearch.toLowerCase())));
+
+  /* ── Full-page form for Create / Edit ── */
+  if (showModal) {
+    return (
+      <FormPage
+        title={editId ? 'Edit Session' : 'New Session'}
+        onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
+          <FormField label="Group"><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={(Array.isArray(groups) ? groups : []).map(g => ({ value: g.id, label: g.name }))} /></FormField>
+          <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={SESSION_TYPES.map(t => ({ value: t, label: t }))} /></FormField>
+        </div>
+        <FormField label="Title (optional)"><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Speed Day, Butterfly Focus" /></FormField>
+        <FormField label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <FormField label="Start Time"><Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} /></FormField>
+          <FormField label="End Time"><Input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} /></FormField>
+        </div>
+        <FormField label="Location"><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="e.g. Main Pool, Lane 3-5" /></FormField>
+        <FormField label="Notes"><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
+
+        {form.group_id && groupSwimmers.length > 0 && (
+          <div style={{ marginTop: 8, padding: '16px 16px 12px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
+            <h4 style={{ color: '#94a3b8', margin: '0 0 12px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              Group Swimmers ({groupSwimmers.length - form.excluded_swimmer_ids.filter(id => groupSwimmerIds.includes(id)).length} active)
+            </h4>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              {groupSwimmers.map(sw => {
+                const excluded = form.excluded_swimmer_ids.includes(sw.id);
+                const ac = getAvatarColor(`${sw.first_name} ${sw.last_name}`);
+                return (
+                  <button key={sw.id} onClick={() => toggleExclusion(sw.id)}
+                    style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: excluded ? 'rgba(239,68,68,0.08)' : ac.bg, border: `1px solid ${excluded ? 'rgba(239,68,68,0.15)' : ac.accent + '30'}`, color: excluded ? '#f87171' : ac.text, cursor: 'pointer', transition: 'all 0.2s ease', textDecoration: excluded ? 'line-through' : 'none', opacity: excluded ? 0.6 : 1 }}
+                  >{sw.first_name} {sw.last_name}</button>
+                );
+              })}
+            </div>
+            {form.added_swimmer_ids.length > 0 && (
+              <>
+                <div style={{ color: '#526280', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '8px 0 6px' }}>Extra Swimmers</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                  {form.added_swimmer_ids.map(id => { const sw = allSwimmers.find(s => s.id === id); if (!sw) return null; return (
+                    <span key={id} style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)', color: '#2dd4bf', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      {sw.first_name} {sw.last_name}
+                      <button onClick={() => removeExtraSwimmer(id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}>&times;</button>
+                    </span>
+                  ); })}
+                </div>
+              </>
+            )}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setShowAddSwimmer(!showAddSwimmer)}
+                style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.2)', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>Add Swimmer
+              </button>
+              {showAddSwimmer && (
+                <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, width: 260, maxHeight: 200, overflowY: 'auto', background: 'rgba(13,25,50,0.98)', border: '1px solid rgba(45,212,191,0.15)', borderRadius: 12, padding: 8, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                  <input type="text" value={addSwimmerSearch} onChange={e => setAddSwimmerSearch(e.target.value)} placeholder="Search swimmers..."
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 8, fontSize: 12, background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.3)', color: '#e2e8f0', outline: 'none', marginBottom: 6, boxSizing: 'border-box' }} />
+                  {availableToAdd.slice(0, 10).map(sw => (
+                    <button key={sw.id} onClick={() => addExtraSwimmer(sw.id)}
+                      style={{ display: 'block', width: '100%', padding: '6px 10px', borderRadius: 6, background: 'transparent', border: 'none', textAlign: 'left', color: '#cbd5e1', fontSize: 12, cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >{sw.first_name} {sw.last_name} <span style={{ color: '#64748b', fontSize: 10 }}>({sw.level})</span></button>
+                  ))}
+                  {availableToAdd.length === 0 && <div style={{ padding: 8, color: '#475569', fontSize: 12, textAlign: 'center' }}>No swimmers available</div>}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {saveError && (
+          <div style={{
+            marginTop: 14, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)',
+            color: '#f87171', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
+            whiteSpace: 'pre-line',
+          }}>
+            {saveError}
+          </div>
+        )}
+
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : editId ? 'Update' : 'Create'}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   return (
     <div>
@@ -855,94 +952,6 @@ export default function CoachSessions() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <Modal title={editId ? 'Edit Session' : 'New Session'} onClose={() => { setShowModal(false); setEditId(null); resetForm(); }}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-            <FormField label="Group"><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={groups.map(g => ({ value: g.id, label: g.name }))} /></FormField>
-            <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={SESSION_TYPES.map(t => ({ value: t, label: t }))} /></FormField>
-          </div>
-          <FormField label="Title (optional)"><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Speed Day, Butterfly Focus" /></FormField>
-          <FormField label="Date"><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></FormField>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <FormField label="Start Time"><Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} /></FormField>
-            <FormField label="End Time"><Input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} /></FormField>
-          </div>
-          <FormField label="Location"><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="e.g. Main Pool, Lane 3-5" /></FormField>
-          <FormField label="Notes"><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
-
-          {form.group_id && groupSwimmers.length > 0 && (
-            <div style={{ marginTop: 8, padding: '16px 16px 12px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
-              <h4 style={{ color: '#94a3b8', margin: '0 0 12px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                Group Swimmers ({groupSwimmers.length - form.excluded_swimmer_ids.filter(id => groupSwimmerIds.includes(id)).length} active)
-              </h4>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {groupSwimmers.map(sw => {
-                  const excluded = form.excluded_swimmer_ids.includes(sw.id);
-                  const ac = getAvatarColor(`${sw.first_name} ${sw.last_name}`);
-                  return (
-                    <button key={sw.id} onClick={() => toggleExclusion(sw.id)}
-                      style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: excluded ? 'rgba(239,68,68,0.08)' : ac.bg, border: `1px solid ${excluded ? 'rgba(239,68,68,0.15)' : ac.accent + '30'}`, color: excluded ? '#f87171' : ac.text, cursor: 'pointer', transition: 'all 0.2s ease', textDecoration: excluded ? 'line-through' : 'none', opacity: excluded ? 0.6 : 1 }}
-                    >{sw.first_name} {sw.last_name}</button>
-                  );
-                })}
-              </div>
-              {form.added_swimmer_ids.length > 0 && (
-                <>
-                  <div style={{ color: '#526280', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '8px 0 6px' }}>Extra Swimmers</div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                    {form.added_swimmer_ids.map(id => { const sw = allSwimmers.find(s => s.id === id); if (!sw) return null; return (
-                      <span key={id} style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)', color: '#2dd4bf', display: 'flex', alignItems: 'center', gap: 5 }}>
-                        {sw.first_name} {sw.last_name}
-                        <button onClick={() => removeExtraSwimmer(id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}>&times;</button>
-                      </span>
-                    ); })}
-                  </div>
-                </>
-              )}
-              <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowAddSwimmer(!showAddSwimmer)}
-                  style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.2)', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>Add Swimmer
-                </button>
-                {showAddSwimmer && (
-                  <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, width: 260, maxHeight: 200, overflowY: 'auto', background: 'rgba(13,25,50,0.98)', border: '1px solid rgba(45,212,191,0.15)', borderRadius: 12, padding: 8, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-                    <input type="text" value={addSwimmerSearch} onChange={e => setAddSwimmerSearch(e.target.value)} placeholder="Search swimmers..."
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: 8, fontSize: 12, background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.3)', color: '#e2e8f0', outline: 'none', marginBottom: 6, boxSizing: 'border-box' }} />
-                    {availableToAdd.slice(0, 10).map(sw => (
-                      <button key={sw.id} onClick={() => addExtraSwimmer(sw.id)}
-                        style={{ display: 'block', width: '100%', padding: '6px 10px', borderRadius: 6, background: 'transparent', border: 'none', textAlign: 'left', color: '#cbd5e1', fontSize: 12, cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >{sw.first_name} {sw.last_name} <span style={{ color: '#64748b', fontSize: 10 }}>({sw.level})</span></button>
-                    ))}
-                    {availableToAdd.length === 0 && <div style={{ padding: 8, color: '#475569', fontSize: 12, textAlign: 'center' }}>No swimmers available</div>}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {saveError && (
-            <div style={{
-              marginTop: 14, padding: '10px 14px', borderRadius: 10,
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)',
-              color: '#f87171', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
-              whiteSpace: 'pre-line',
-            }}>
-              {saveError}
-            </div>
-          )}
-
-          <ModalActions>
-            <Button variant="secondary" onClick={() => { setShowModal(false); setEditId(null); resetForm(); setSaveError(''); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving…' : editId ? 'Update' : 'Create'}
-            </Button>
-          </ModalActions>
-        </Modal>
-      )}
     </div>
   );
 }

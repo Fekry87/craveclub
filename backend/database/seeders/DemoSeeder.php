@@ -11,6 +11,7 @@ use App\Models\SwimmerProfile;
 use App\Models\Group;
 use App\Models\GroupMembership;
 use App\Models\TrainingPlan;
+use App\Models\TrainingPlanAssignment;
 use App\Models\TrainingPlanItem;
 use App\Models\TrainingSession;
 use App\Models\Skill;
@@ -22,6 +23,7 @@ use App\Models\Branch;
 use App\Models\Sport;
 use App\Models\SubscriptionPlan;
 use App\Models\CoachSchedule;
+use App\Models\SportModule;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -31,9 +33,9 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // CHANGE BEFORE RUNNING IN ANY SHARED ENVIRONMENT
-        $seederPassword = 'Cr@ve' . Str::random(8) . rand(10, 99) . '!';
-        Log::info('[DemoSeeder] Generated seed password — check storage/logs/seeder.log');
+        // Demo password — matches the login page hint. CHANGE before deploying to shared/production.
+        $seederPassword = 'Password123!';
+        Log::info('[DemoSeeder] Using demo password: ' . $seederPassword);
         file_put_contents(
             storage_path('logs/seeder.log'),
             '[' . now()->toIso8601String() . '] Seeder password: ' . $seederPassword . PHP_EOL,
@@ -52,15 +54,45 @@ class DemoSeeder extends Seeder
         // Club — Future Academy
         $club = Club::create([
             'name' => 'Future Academy',
+            'display_name' => 'Future Academy Swimming Club',
             'slug' => 'future-academy',
             'logo_url' => null,
             'theme_color' => '#0ea5e9',
             'primary_color' => '#0ea5e9',
             'secondary_color' => '#06b6d4',
+            'app_name' => 'Future Academy',
             'about' => 'Future Academy is a premier swim club dedicated to developing swimmers of all levels. We offer competitive and recreational programs for youth and adults.',
             'contact_email' => 'info@futureacademy.com',
             'contact_phone' => '+1-555-0100',
+            'support_email' => 'support@futureacademy.com',
+            'support_phone' => '+1-555-0101',
+            'social_links' => ['instagram' => '@futureacademy', 'facebook' => 'futureacademy'],
+            'branding_tier' => 'shared',
             'max_branches' => 3,
+        ]);
+
+        // ── Sport Modules (platform-wide) ──
+        $swimmingModule = SportModule::firstOrCreate(['slug' => 'swimming'], [
+            'name' => 'Swimming',
+            'description' => 'Aquatic sports and swimming programs',
+            'icon' => 'drop-fill',
+            'color' => '#2B6CB0',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+        SportModule::firstOrCreate(['slug' => 'football'], [
+            'name' => 'Football', 'icon' => 'football-fill', 'color' => '#276749', 'is_active' => true, 'sort_order' => 2,
+        ]);
+        SportModule::firstOrCreate(['slug' => 'basketball'], [
+            'name' => 'Basketball', 'icon' => 'basketball-fill', 'color' => '#C05621', 'is_active' => true, 'sort_order' => 3,
+        ]);
+        SportModule::firstOrCreate(['slug' => 'tennis'], [
+            'name' => 'Tennis', 'icon' => 'tennis-fill', 'color' => '#553C9A', 'is_active' => true, 'sort_order' => 4,
+        ]);
+
+        // Assign swimming to future-academy
+        $club->sportModules()->syncWithoutDetaching([
+            $swimmingModule->id => ['is_active' => true, 'activated_at' => now()],
         ]);
 
         // Club Manager
@@ -157,6 +189,7 @@ class DemoSeeder extends Seeder
             'name' => 'Academy Elite',
             'description' => 'Advanced competitive swimmers',
             'coach_user_id' => $coachUser1->id,
+            'sport_module_id' => $swimmingModule->id,
         ]);
 
         $group2 = Group::create([
@@ -164,6 +197,7 @@ class DemoSeeder extends Seeder
             'name' => 'Rising Stars',
             'description' => 'Intermediate development swimmers',
             'coach_user_id' => $coachUser2->id,
+            'sport_module_id' => $swimmingModule->id,
         ]);
 
         // Assign swimmers to groups
@@ -185,9 +219,24 @@ class DemoSeeder extends Seeder
         // Training Plans
         $plan1 = TrainingPlan::create([
             'club_id' => $club->id,
+            'coach_user_id' => $coachUser1->id,
+            'sport_module_id' => $swimmingModule->id,
             'title' => 'Sprint Power Session',
             'level' => 'Advanced',
             'description' => 'High intensity sprint training for competitive swimmers.',
+            'duration_weeks' => 4,
+            'sessions_per_week' => 5,
+            'goals' => 'تحسين سرعة السباحة الحرة وتطوير قوة الانطلاق',
+            'difficulty_level' => 'advanced',
+            'is_template' => false,
+            'phases' => [
+                ['week_start' => 1, 'week_end' => 2, 'focus' => 'Base building', 'exercises' => [
+                    ['name' => 'Freestyle sprints', 'sets' => 8, 'reps' => 50, 'notes' => 'Max effort'],
+                ]],
+                ['week_start' => 3, 'week_end' => 4, 'focus' => 'Peak power', 'exercises' => [
+                    ['name' => 'Race pace 100s', 'sets' => 6, 'reps' => 100, 'notes' => 'With dive start'],
+                ]],
+            ],
         ]);
 
         $plan1Items = [
@@ -202,9 +251,24 @@ class DemoSeeder extends Seeder
 
         $plan2 = TrainingPlan::create([
             'club_id' => $club->id,
+            'coach_user_id' => $coachUser2->id,
+            'sport_module_id' => $swimmingModule->id,
             'title' => 'Endurance Builder',
             'level' => 'Intermediate',
             'description' => 'Focus on building aerobic endurance and stroke technique.',
+            'duration_weeks' => 8,
+            'sessions_per_week' => 3,
+            'goals' => 'بناء التحمل وتحسين تقنية الضربات',
+            'difficulty_level' => 'intermediate',
+            'is_template' => false,
+            'phases' => [
+                ['week_start' => 1, 'week_end' => 4, 'focus' => 'Aerobic base', 'exercises' => [
+                    ['name' => 'Long distance freestyle', 'sets' => 4, 'reps' => 200, 'notes' => 'Steady pace'],
+                ]],
+                ['week_start' => 5, 'week_end' => 8, 'focus' => 'Threshold training', 'exercises' => [
+                    ['name' => 'Interval 100s', 'sets' => 8, 'reps' => 100, 'notes' => 'Moderate to fast'],
+                ]],
+            ],
         ]);
 
         $plan2Items = [
@@ -216,6 +280,60 @@ class DemoSeeder extends Seeder
         foreach ($plan2Items as $item) {
             TrainingPlanItem::create(array_merge($item, ['club_id' => $club->id, 'plan_id' => $plan2->id]));
         }
+
+        // Template Training Plan (visible to all coaches)
+        TrainingPlan::create([
+            'club_id' => $club->id,
+            'coach_user_id' => null,
+            'sport_module_id' => $swimmingModule->id,
+            'title' => 'Beginner Basics Program',
+            'level' => 'Beginner',
+            'description' => 'A starter program for new swimmers covering water safety and basic strokes.',
+            'duration_weeks' => 12,
+            'sessions_per_week' => 2,
+            'goals' => 'تعلم أساسيات السباحة والأمان في الماء',
+            'difficulty_level' => 'beginner',
+            'is_template' => true,
+            'phases' => [
+                ['week_start' => 1, 'week_end' => 4, 'focus' => 'Water comfort', 'exercises' => [
+                    ['name' => 'Float and kick', 'sets' => 3, 'reps' => 25, 'notes' => 'With kickboard'],
+                ]],
+                ['week_start' => 5, 'week_end' => 8, 'focus' => 'Basic strokes', 'exercises' => [
+                    ['name' => 'Freestyle introduction', 'sets' => 4, 'reps' => 25, 'notes' => 'Focus on breathing'],
+                ]],
+                ['week_start' => 9, 'week_end' => 12, 'focus' => 'Stroke refinement', 'exercises' => [
+                    ['name' => 'Full lap freestyle', 'sets' => 4, 'reps' => 50, 'notes' => 'Continuous swimming'],
+                ]],
+            ],
+        ]);
+
+        // Training Plan Assignments
+        // Group assignment: plan1 -> group1
+        $assignToday = Carbon::today();
+        TrainingPlanAssignment::create([
+            'training_plan_id' => $plan1->id,
+            'club_id' => $club->id,
+            'assigned_by_coach_id' => $coachUser1->id,
+            'group_id' => $group1->id,
+            'swimmer_profile_id' => null,
+            'start_date' => $assignToday->toDateString(),
+            'end_date' => $assignToday->copy()->addDays($plan1->duration_weeks * 7)->toDateString(),
+            'status' => 'active',
+            'coach_notes' => 'Focus on sprint power for upcoming competition.',
+        ]);
+
+        // Individual assignment: plan2 -> swimmer[5] (first swimmer in group2)
+        TrainingPlanAssignment::create([
+            'training_plan_id' => $plan2->id,
+            'club_id' => $club->id,
+            'assigned_by_coach_id' => $coachUser2->id,
+            'group_id' => null,
+            'swimmer_profile_id' => $swimmers[5]->id,
+            'start_date' => $assignToday->toDateString(),
+            'end_date' => $assignToday->copy()->addDays($plan2->duration_weeks * 7)->toDateString(),
+            'status' => 'active',
+            'coach_notes' => 'Individual endurance program for Mona.',
+        ]);
 
         // Skills
         $skillsData = [
@@ -241,6 +359,7 @@ class DemoSeeder extends Seeder
 
             TrainingSession::create([
                 'club_id' => $club->id,
+                'sport_module_id' => $swimmingModule->id,
                 'group_id' => $group1->id,
                 'plan_id' => $plan1->id,
                 'date' => $date->toDateString(),
@@ -251,6 +370,7 @@ class DemoSeeder extends Seeder
 
             TrainingSession::create([
                 'club_id' => $club->id,
+                'sport_module_id' => $swimmingModule->id,
                 'group_id' => $group2->id,
                 'plan_id' => $plan2->id,
                 'date' => $date->toDateString(),

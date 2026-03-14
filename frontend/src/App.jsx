@@ -12,20 +12,25 @@ import ClubPage from './pages/public/ClubPage';
 
 // Registration context (structural — must stay eager)
 import { RegistrationProvider } from './contexts/RegistrationContext';
+import { SportModuleProvider } from './contexts/SportModuleContext';
 
 // Corporate (Platform Admin)
 const CorporateDashboard = lazy(() => import('./pages/corporate/Dashboard'));
 const CorporateClubs = lazy(() => import('./pages/corporate/Clubs'));
 const CorporateClubDetail = lazy(() => import('./pages/corporate/ClubDetail'));
 const CorporateSettings = lazy(() => import('./pages/corporate/Settings'));
+const ClubBrandingPage = lazy(() => import('./pages/corporate/ClubBrandingPage'));
+const SportModulesPage = lazy(() => import('./pages/corporate/SportModulesPage'));
 
 // Legacy Platform (backward compat)
 const PlatformDashboard = lazy(() => import('./pages/platform/Dashboard'));
 const Clubs = lazy(() => import('./pages/platform/Clubs'));
 
 // Club Manager
+const SportModuleDashboard = lazy(() => import('./pages/club/SportModuleDashboard'));
 const ClubDashboard = lazy(() => import('./pages/club/Dashboard'));
 const Plans = lazy(() => import('./pages/club/Plans'));
+const TrainingPlansPage = lazy(() => import('./pages/club/TrainingPlansPage'));
 const Skills = lazy(() => import('./pages/club/Skills'));
 const Coaches = lazy(() => import('./pages/club/Coaches'));
 const Swimmers = lazy(() => import('./pages/club/Swimmers'));
@@ -37,6 +42,7 @@ const ClubLeaderboard = lazy(() => import('./pages/club/Leaderboard'));
 const BranchesPage = lazy(() => import('./pages/club/BranchesPage'));
 const BranchDetail = lazy(() => import('./pages/club/BranchDetail'));
 const SubscriptionPlansPage = lazy(() => import('./pages/club/SubscriptionPlansPage'));
+const ScheduleBuilderPage = lazy(() => import('./pages/club/ScheduleBuilderPage'));
 
 // Coach
 const CoachDashboard = lazy(() => import('./pages/coach/Dashboard'));
@@ -100,6 +106,8 @@ function App() {
             <Route path="/corporate" element={<CorporateDashboard />} />
             <Route path="/corporate/clubs" element={<CorporateClubs />} />
             <Route path="/corporate/clubs/:id" element={<CorporateClubDetail />} />
+            <Route path="/corporate/clubs/:id/branding" element={<ClubBrandingPage />} />
+            <Route path="/corporate/sport-modules" element={<SportModulesPage />} />
             <Route path="/corporate/settings" element={<CorporateSettings />} />
           </Route>
 
@@ -125,9 +133,11 @@ function App() {
           </Route>
 
           {/* Club Manager — feature-gated routes */}
-          <Route element={<ProtectedRoute roles={['CLUB_MANAGER']}><Layout /></ProtectedRoute>}>
-            <Route path="/club" element={<ClubDashboard />} />
+          <Route element={<ProtectedRoute roles={['CLUB_MANAGER']}><SportModuleProvider><Layout /></SportModuleProvider></ProtectedRoute>}>
+            <Route path="/club" element={<SportModuleDashboard />} />
+            <Route path="/club/dashboard" element={<ClubDashboard />} />
             <Route path="/club/plans" element={<FeatureRoute feature="training_plans"><Plans /></FeatureRoute>} />
+            <Route path="/club/training-plans" element={<FeatureRoute feature="training_plans"><TrainingPlansPage /></FeatureRoute>} />
             <Route path="/club/skills" element={<FeatureRoute feature="skills"><Skills /></FeatureRoute>} />
             <Route path="/club/coaches" element={<Coaches />} />
             <Route path="/club/swimmers" element={<Swimmers />} />
@@ -135,6 +145,7 @@ function App() {
             <Route path="/club/branches" element={<BranchesPage />} />
             <Route path="/club/branches/:id" element={<BranchDetail />} />
             <Route path="/club/sessions" element={<Sessions />} />
+            <Route path="/club/schedules" element={<ScheduleBuilderPage />} />
             <Route path="/club/registrations" element={<Registrations />} />
             <Route path="/club/subscription-plans" element={<FeatureRoute feature="subscription_plans"><SubscriptionPlansPage /></FeatureRoute>} />
             <Route path="/club/leaderboard" element={<FeatureRoute feature="leaderboard"><ClubLeaderboard /></FeatureRoute>} />
@@ -149,6 +160,7 @@ function App() {
             <Route path="/coach/groups" element={<CoachGroups />} />
             <Route path="/coach/swimmers" element={<CoachSwimmers />} />
             <Route path="/coach/swimmers/:id" element={<CoachSwimmerDetail />} />
+            <Route path="/coach/training-plans" element={<TrainingPlansPage />} />
             <Route path="/coach/settings" element={<CoachSettings />} />
           </Route>
 

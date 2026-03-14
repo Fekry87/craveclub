@@ -36,8 +36,43 @@ class GroupManagementController extends Controller
 
     public function groupStore(StoreGroupRequest $request): JsonResponse
     {
-        $group = Group::create($request->only(['name', 'description', 'coach_user_id']));
+        $data = $request->only(['name', 'description', 'coach_user_id']);
+
+        if ($request->filled('sport_module_id')) {
+            $request->validate(['sport_module_id' => 'integer|exists:sport_modules,id']);
+            $assigned = \DB::table('club_sport_modules')
+                ->where('club_id', app('current_club_id'))
+                ->where('sport_module_id', $request->sport_module_id)
+                ->where('is_active', true)
+                ->exists();
+            if (!$assigned) {
+                abort(422, 'Sport module not assigned to this club.');
+            }
+            $data['sport_module_id'] = $request->sport_module_id;
+        }
+
+        $group = Group::create($data);
         return response()->json($group->load(['coach', 'swimmers']), 201);
+    }
+
+    public function sportIndex(Request $request): JsonResponse
+    {
+        $groups = Group::where('club_id', app('current_club_id'))
+            ->where('sport_module_id', app('current_sport_module_id'))
+            ->with(['coach', 'swimmers', 'sportModule'])
+            ->latest()
+            ->get();
+
+        return response()->json(['data' => $groups]);
+    }
+
+    public function sportStore(StoreGroupRequest $request): JsonResponse
+    {
+        $data = $request->only(['name', 'description', 'coach_user_id']);
+        $data['sport_module_id'] = app('current_sport_module_id');
+
+        $group = Group::create($data);
+        return response()->json($group->load(['coach', 'swimmers', 'sportModule']), 201);
     }
 
     public function groupShow(Group $group): JsonResponse

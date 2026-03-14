@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubscriptionPlanController extends Controller
 {
@@ -135,7 +136,7 @@ class SubscriptionPlanController extends Controller
     {
         $request->validate([
             'ordered_ids' => 'required|array|min:1',
-            'ordered_ids.*' => 'integer|exists:subscription_plans,id',
+            'ordered_ids.*' => ['integer', Rule::exists('subscription_plans', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         $clubId = app('current_club_id');

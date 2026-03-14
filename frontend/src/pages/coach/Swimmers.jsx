@@ -214,7 +214,7 @@ export default function CoachSwimmers() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/coach/groups').then(r => setGroups(r.data)).catch(() => {});
+    api.get('/coach/groups').then(r => setGroups(r.data?.data || r.data || [])).catch(() => {});
   }, []);
 
   // Flatten swimmers from groups with group info

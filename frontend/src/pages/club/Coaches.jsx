@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Modal, ModalActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
+import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
 
 const avatarColors = [
   { bg: 'linear-gradient(135deg, #06b6d4, #22d3ee)', text: '#060d1f' },
@@ -232,6 +232,28 @@ export default function Coaches() {
   };
   const handleDelete = async (c) => { if (confirm('Delete?')) { await api.delete(`/club/coaches/${c.id}`); load(); } };
 
+  const closeForm = () => { setShowModal(false); setEditId(null); };
+
+  if (showModal) {
+    return (
+      <FormPage title={editId ? 'Edit Coach' : 'New Coach'} onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
+        <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
+        {!editId && <>
+          <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
+          <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
+        </>}
+        <FormField label="Specialization"><Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} /></FormField>
+        <FormField label="Phone"><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FormField>
+        <FormField label="Bio"><TextArea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></FormField>
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
+
   return (
     <div>
       <PageHeader title="Coaches" search={search} onSearch={setSearch} searchPlaceholder="Search coaches...">
@@ -303,24 +325,6 @@ export default function Coaches() {
           <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No coaches found</div>
           <div style={{ color: '#475569', fontSize: 13 }}>Add your first coach to get started</div>
         </div>
-      )}
-
-      {showModal && (
-        <Modal title={editId ? 'Edit Coach' : 'New Coach'} onClose={() => setShowModal(false)}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
-          <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
-          {!editId && <>
-            <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
-            <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
-          </>}
-          <FormField label="Specialization"><Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} /></FormField>
-          <FormField label="Phone"><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FormField>
-          <FormField label="Bio"><TextArea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></FormField>
-          <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
-          </ModalActions>
-        </Modal>
       )}
     </div>
   );

@@ -17,7 +17,7 @@ export function Input({ ...props }) {
   return <input style={inputStyle} {...inputFocusProps} {...props} />;
 }
 
-export function Select({ options = [], ...props }) {
+export function Select({ options = [], children, ...props }) {
   return (
     <select style={{
       ...inputStyle,
@@ -29,10 +29,14 @@ export function Select({ options = [], ...props }) {
       backgroundPosition: 'right 14px center',
       paddingRight: 36,
     }} {...inputFocusProps} {...props}>
-      <option value="">Select...</option>
-      {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
+      {children || (
+        <>
+          <option value="">Select...</option>
+          {options.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </>
+      )}
     </select>
   );
 }

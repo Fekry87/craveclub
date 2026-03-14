@@ -83,7 +83,7 @@ class CoachApiController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'swimmer_ids' => 'nullable|array',
-            'swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         $group = Group::create([
@@ -115,7 +115,7 @@ class CoachApiController extends Controller
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string|max:1000',
             'swimmer_ids' => 'nullable|array',
-            'swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         $group->update($request->only(['name', 'description']));
@@ -214,8 +214,8 @@ class CoachApiController extends Controller
         $groupIds = $this->coachGroupIds($request);
 
         $request->validate([
-            'group_id' => ['required', 'exists:groups,id', Rule::in($groupIds->toArray())],
-            'plan_id' => 'nullable|exists:training_plans,id',
+            'group_id' => ['required', Rule::exists('groups', 'id')->where('club_id', app('current_club_id')), Rule::in($groupIds->toArray())],
+            'plan_id' => ['nullable', Rule::exists('training_plans', 'id')->where('club_id', app('current_club_id'))],
             'title' => 'nullable|string|max:255',
             'type' => 'nullable|string|in:General,Technique,Endurance,Speed,Test,Recovery,Custom',
             'date' => 'required|date',
@@ -224,9 +224,9 @@ class CoachApiController extends Controller
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'added_swimmer_ids' => 'nullable|array',
-            'added_swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'added_swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'excluded_swimmer_ids' => 'nullable|array',
-            'excluded_swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'excluded_swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         $session = TrainingSession::create([
@@ -292,8 +292,8 @@ class CoachApiController extends Controller
         $session = TrainingSession::whereIn('group_id', $groupIds)->findOrFail($id);
 
         $request->validate([
-            'group_id' => 'sometimes|exists:groups,id',
-            'plan_id' => 'nullable|exists:training_plans,id',
+            'group_id' => ['sometimes', Rule::exists('groups', 'id')->where('club_id', app('current_club_id'))],
+            'plan_id' => ['nullable', Rule::exists('training_plans', 'id')->where('club_id', app('current_club_id'))],
             'title' => 'nullable|string|max:255',
             'type' => 'nullable|string|in:General,Technique,Endurance,Speed,Test,Recovery,Custom',
             'date' => 'sometimes|date',
@@ -302,9 +302,9 @@ class CoachApiController extends Controller
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'added_swimmer_ids' => 'nullable|array',
-            'added_swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'added_swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'excluded_swimmer_ids' => 'nullable|array',
-            'excluded_swimmer_ids.*' => 'exists:swimmer_profiles,id',
+            'excluded_swimmer_ids.*' => [Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
         ]);
 
         $session->update($request->only([
@@ -392,10 +392,10 @@ class CoachApiController extends Controller
         $request->validate([
             'summary_notes' => 'nullable|string',
             'attendance' => 'nullable|array',
-            'attendance.*.swimmer_id' => 'required|exists:swimmer_profiles,id',
+            'attendance.*.swimmer_id' => ['required', Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'attendance.*.present' => 'required|boolean',
             'evaluations' => 'nullable|array',
-            'evaluations.*.swimmer_id' => 'required|exists:swimmer_profiles,id',
+            'evaluations.*.swimmer_id' => ['required', Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'evaluations.*.rating' => 'required|integer|min:1|max:5',
             'evaluations.*.notes' => 'nullable|string',
             'group_evaluation' => 'nullable|array',
@@ -621,16 +621,16 @@ class CoachApiController extends Controller
     public function dailyTraining(Request $request): JsonResponse
     {
         $request->validate([
-            'session_id' => 'required|exists:training_sessions,id',
+            'session_id' => ['required', Rule::exists('training_sessions', 'id')->where('club_id', app('current_club_id'))],
             'attendance' => 'required|array',
-            'attendance.*.swimmer_id' => 'required|exists:swimmer_profiles,id',
+            'attendance.*.swimmer_id' => ['required', Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'attendance.*.present' => 'required|boolean',
             'evaluations' => 'nullable|array',
-            'evaluations.*.swimmer_id' => 'required|exists:swimmer_profiles,id',
+            'evaluations.*.swimmer_id' => ['required', Rule::exists('swimmer_profiles', 'id')->where('club_id', app('current_club_id'))],
             'evaluations.*.rating' => 'required|integer|min:1|max:5',
             'evaluations.*.notes' => 'nullable|string',
             'group_evaluation' => 'nullable|array',
-            'group_evaluation.group_id' => 'required_with:group_evaluation|exists:groups,id',
+            'group_evaluation.group_id' => ['required_with:group_evaluation', Rule::exists('groups', 'id')->where('club_id', app('current_club_id'))],
             'group_evaluation.rating' => 'required_with:group_evaluation|integer|min:1|max:5',
             'group_evaluation.notes' => 'nullable|string',
         ]);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { PageHeader, Button, Modal, ModalActions, FormField, Input, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { PageHeader, Button, FormPage, FormPageActions, FormField, Input, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 
 /* ───── Swimmer Chip (for member display & picker) ───── */
 function SwimmerChip({ swimmer, removable, onRemove, small }) {
@@ -172,27 +172,49 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
   );
 }
 
-/* ───── Group Form Modal ───── */
-function GroupFormModal({ open, onClose, onSaved, editGroup, clubSwimmers }) {
+/* ───── Main Page ───── */
+export default function CoachGroups() {
+  const [groups, setGroups] = useState([]);
+  const [clubSwimmers, setClubSwimmers] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editGroup, setEditGroup] = useState(null);
+  const [toast, setToast] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const [selectedIds, setSelectedIds] = useState([]);
-  const [search, setSearch] = useState('');
+  const [memberSearch, setMemberSearch] = useState('');
   const [saving, setSaving] = useState(false);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const load = () => {
+    api.get('/coach/groups').then(r => setGroups(r.data?.data || r.data || [])).catch(() => {});
+  };
 
   useEffect(() => {
-    if (open) {
-      if (editGroup) {
-        setForm({ name: editGroup.name, description: editGroup.description || '' });
-        setSelectedIds(editGroup.swimmers?.map(s => s.id) || []);
-      } else {
-        setForm({ name: '', description: '' });
-        setSelectedIds([]);
-      }
-      setSearch('');
-    }
-  }, [open, editGroup]);
+    load();
+    // Load all club swimmers for the picker
+    api.get('/coach/swimmers').then(r => setClubSwimmers(r.data)).catch(() => {});
+  }, []);
 
-  const handleSave = async () => {
+  const closeForm = () => { setShowModal(false); setEditGroup(null); setForm({ name: '', description: '' }); setSelectedIds([]); setMemberSearch(''); };
+
+  const handleEdit = (group) => {
+    setEditGroup(group);
+    setForm({ name: group.name, description: group.description || '' });
+    setSelectedIds(group.swimmers?.map(s => s.id) || []);
+    setMemberSearch('');
+    setShowModal(true);
+  };
+
+  const openNewForm = () => {
+    setEditGroup(null);
+    setForm({ name: '', description: '' });
+    setSelectedIds([]);
+    setMemberSearch('');
+    setShowModal(true);
+  };
+
+  const handleSaveGroup = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
@@ -202,8 +224,10 @@ function GroupFormModal({ open, onClose, onSaved, editGroup, clubSwimmers }) {
       } else {
         await api.post('/coach/groups', payload);
       }
-      onSaved();
-      onClose();
+      load();
+      setToast(editGroup ? 'Group updated!' : 'Group created!');
+      setTimeout(() => setToast(null), 3000);
+      closeForm();
     } catch (err) {
       console.error(err);
     } finally {
@@ -215,162 +239,6 @@ function GroupFormModal({ open, onClose, onSaved, editGroup, clubSwimmers }) {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
-  };
-
-  if (!open) return null;
-
-  // Filter available swimmers by search
-  const filteredSwimmers = clubSwimmers.filter(s => {
-    const name = `${s.first_name} ${s.last_name}`.toLowerCase();
-    return name.includes(search.toLowerCase());
-  });
-
-  // Selected swimmers objects
-  const selected = clubSwimmers.filter(s => selectedIds.includes(s.id));
-  const available = filteredSwimmers.filter(s => !selectedIds.includes(s.id));
-
-  return (
-    <Modal
-      title={editGroup ? 'Edit Group' : 'New Group'}
-      onClose={onClose}
-      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-    >
-      <FormField label="Group Name">
-        <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Sharks Elite" />
-      </FormField>
-      <FormField label="Description (optional)">
-        <TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe this group..." rows={2} />
-      </FormField>
-
-      {/* Swimmer picker */}
-      <div style={{ marginTop: 8 }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10,
-        }}>
-          <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Members ({selectedIds.length})
-          </label>
-        </div>
-
-        {/* Selected swimmers */}
-        {selected.length > 0 && (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12,
-            padding: '12px', borderRadius: 12,
-            background: 'rgba(45,212,191,0.04)', border: '1px solid rgba(45,212,191,0.08)',
-          }}>
-            {selected.map(s => (
-              <SwimmerChip key={s.id} swimmer={s} removable small onRemove={() => toggleSwimmer(s.id)} />
-            ))}
-          </div>
-        )}
-
-        {/* Search available swimmers */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 12px', borderRadius: 10,
-          background: 'rgba(6,13,31,0.4)', border: '1px solid rgba(51,65,85,0.3)',
-          marginBottom: 8,
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search swimmers to add..."
-            style={{
-              flex: 1, background: 'none', border: 'none', outline: 'none',
-              color: '#e2e8f0', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-            }}
-          />
-        </div>
-
-        {/* Available swimmers list */}
-        <div style={{
-          maxHeight: 200, overflowY: 'auto', borderRadius: 12,
-          background: 'rgba(6,13,31,0.3)', border: '1px solid rgba(51,65,85,0.15)',
-        }}>
-          {available.length > 0 ? available.map((s, i) => {
-            const ac = getAvatarColor(`${s.first_name} ${s.last_name}`);
-            const initials = `${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase();
-            return (
-              <div key={s.id}
-                onClick={() => toggleSwimmer(s.id)}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', cursor: 'pointer',
-                  borderBottom: i < available.length - 1 ? '1px solid rgba(51,65,85,0.1)' : 'none',
-                  transition: 'background 0.15s',
-                }}
-              >
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: ac.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700, color: ac.text,
-                  fontFamily: "'Outfit', sans-serif",
-                }}>{initials}</div>
-                <span style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 500, flex: 1 }}>{s.first_name} {s.last_name}</span>
-                {s.level && (
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                    background: s.level === 'Advanced' ? 'rgba(45,212,191,0.1)' : s.level === 'Intermediate' ? 'rgba(56,189,248,0.1)' : 'rgba(251,191,36,0.1)',
-                    color: s.level === 'Advanced' ? '#2dd4bf' : s.level === 'Intermediate' ? '#38bdf8' : '#fbbf24',
-                  }}>{s.level}</span>
-                )}
-                <div style={{
-                  width: 24, height: 24, borderRadius: 7,
-                  background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-                </div>
-              </div>
-            );
-          }) : (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#475569', fontSize: 13 }}>
-              {search ? 'No swimmers match search' : 'All swimmers have been added'}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <ModalActions>
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" onClick={handleSave} disabled={!form.name.trim() || saving}>
-          {saving ? 'Saving...' : editGroup ? 'Update Group' : 'Create Group'}
-        </Button>
-      </ModalActions>
-    </Modal>
-  );
-}
-
-/* ───── Main Page ───── */
-export default function CoachGroups() {
-  const [groups, setGroups] = useState([]);
-  const [clubSwimmers, setClubSwimmers] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editGroup, setEditGroup] = useState(null);
-  const [toast, setToast] = useState(null);
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
-
-  const load = () => {
-    api.get('/coach/groups').then(r => setGroups(r.data)).catch(() => {});
-  };
-
-  useEffect(() => {
-    load();
-    // Load all club swimmers for the picker
-    api.get('/coach/swimmers').then(r => setClubSwimmers(r.data)).catch(() => {});
-  }, []);
-
-  const handleEdit = (group) => {
-    setEditGroup(group);
-    setShowModal(true);
   };
 
   const handleDelete = async (group) => {
@@ -385,6 +253,134 @@ export default function CoachGroups() {
       setTimeout(() => setToast(null), 3000);
     }
   };
+
+  /* ── Full-page form for Create / Edit ── */
+  if (showModal) {
+    const filteredSwimmers = clubSwimmers.filter(s => {
+      const name = `${s.first_name} ${s.last_name}`.toLowerCase();
+      return name.includes(memberSearch.toLowerCase());
+    });
+    const selectedSwimmers = clubSwimmers.filter(s => selectedIds.includes(s.id));
+    const availableSwimmers = filteredSwimmers.filter(s => !selectedIds.includes(s.id));
+
+    return (
+      <FormPage
+        title={editGroup ? 'Edit Group' : 'New Group'}
+        onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+      >
+        <FormField label="Group Name">
+          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Sharks Elite" />
+        </FormField>
+        <FormField label="Description (optional)">
+          <TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe this group..." rows={2} />
+        </FormField>
+
+        {/* Swimmer picker */}
+        <div style={{ marginTop: 8 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10,
+          }}>
+            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Members ({selectedIds.length})
+            </label>
+          </div>
+
+          {/* Selected swimmers */}
+          {selectedSwimmers.length > 0 && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12,
+              padding: '12px', borderRadius: 12,
+              background: 'rgba(45,212,191,0.04)', border: '1px solid rgba(45,212,191,0.08)',
+            }}>
+              {selectedSwimmers.map(s => (
+                <SwimmerChip key={s.id} swimmer={s} removable small onRemove={() => toggleSwimmer(s.id)} />
+              ))}
+            </div>
+          )}
+
+          {/* Search available swimmers */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px', borderRadius: 10,
+            background: 'rgba(6,13,31,0.4)', border: '1px solid rgba(51,65,85,0.3)',
+            marginBottom: 8,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              value={memberSearch}
+              onChange={e => setMemberSearch(e.target.value)}
+              placeholder="Search swimmers to add..."
+              style={{
+                flex: 1, background: 'none', border: 'none', outline: 'none',
+                color: '#e2e8f0', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+              }}
+            />
+          </div>
+
+          {/* Available swimmers list */}
+          <div style={{
+            maxHeight: 300, overflowY: 'auto', borderRadius: 12,
+            background: 'rgba(6,13,31,0.3)', border: '1px solid rgba(51,65,85,0.15)',
+          }}>
+            {availableSwimmers.length > 0 ? availableSwimmers.map((s, i) => {
+              const ac = getAvatarColor(`${s.first_name} ${s.last_name}`);
+              const initials = `${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase();
+              return (
+                <div key={s.id}
+                  onClick={() => toggleSwimmer(s.id)}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px', cursor: 'pointer',
+                    borderBottom: i < availableSwimmers.length - 1 ? '1px solid rgba(51,65,85,0.1)' : 'none',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: ac.bg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700, color: ac.text,
+                    fontFamily: "'Outfit', sans-serif",
+                  }}>{initials}</div>
+                  <span style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 500, flex: 1 }}>{s.first_name} {s.last_name}</span>
+                  {s.level && (
+                    <span style={{
+                      padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+                      background: s.level === 'Advanced' ? 'rgba(45,212,191,0.1)' : s.level === 'Intermediate' ? 'rgba(56,189,248,0.1)' : 'rgba(251,191,36,0.1)',
+                      color: s.level === 'Advanced' ? '#2dd4bf' : s.level === 'Intermediate' ? '#38bdf8' : '#fbbf24',
+                    }}>{s.level}</span>
+                  )}
+                  <div style={{
+                    width: 24, height: 24, borderRadius: 7,
+                    background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#475569', fontSize: 13 }}>
+                {memberSearch ? 'No swimmers match search' : 'All swimmers have been added'}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button variant="primary" onClick={handleSaveGroup} disabled={!form.name.trim() || saving}>
+            {saving ? 'Saving...' : editGroup ? 'Update Group' : 'Create Group'}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   return (
     <div>
@@ -402,7 +398,7 @@ export default function CoachGroups() {
       )}
 
       <PageHeader title="My Groups">
-        <Button onClick={() => { setEditGroup(null); setShowModal(true); }}>
+        <Button onClick={openNewForm}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           New Group
         </Button>
@@ -443,7 +439,7 @@ export default function CoachGroups() {
           <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No groups yet</div>
           <div style={{ color: '#475569', fontSize: 13, marginBottom: 20 }}>Create your first training group to organize swimmers</div>
           <button
-            onClick={() => { setEditGroup(null); setShowModal(true); }}
+            onClick={openNewForm}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
             style={{
@@ -462,18 +458,6 @@ export default function CoachGroups() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
-      <GroupFormModal
-        open={showModal}
-        onClose={() => { setShowModal(false); setEditGroup(null); }}
-        onSaved={() => {
-          load();
-          setToast(editGroup ? 'Group updated!' : 'Group created!');
-          setTimeout(() => setToast(null), 3000);
-        }}
-        editGroup={editGroup}
-        clubSwimmers={clubSwimmers}
-      />
     </div>
   );
 }

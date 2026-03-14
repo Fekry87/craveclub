@@ -12,6 +12,7 @@ class TrainingSession extends Model
 
     protected $fillable = [
         'club_id', 'branch_id', 'coach_user_id', 'group_id', 'plan_id',
+        'recurring_schedule_id', 'sport_module_id',
         'title', 'type', 'status',
         'date', 'start_time', 'end_time', 'location', 'notes',
         'started_at', 'completed_at', 'summary_notes',
@@ -30,6 +31,8 @@ class TrainingSession extends Model
     public function branch() { return $this->belongsTo(Branch::class); }
     public function plan() { return $this->belongsTo(TrainingPlan::class, 'plan_id'); }
     public function coach() { return $this->belongsTo(User::class, 'coach_user_id'); }
+    public function recurringSchedule() { return $this->belongsTo(RecurringSchedule::class); }
+    public function sportModule() { return $this->belongsTo(SportModule::class); }
     public function attendances() { return $this->hasMany(Attendance::class, 'session_id'); }
     public function evaluations() { return $this->hasMany(DailyEvaluation::class, 'session_id'); }
     public function groupEvaluation() { return $this->hasOne(GroupEvaluation::class, 'session_id'); }

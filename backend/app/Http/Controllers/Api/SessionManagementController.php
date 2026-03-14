@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSessionRequest;
 use App\Http\Requests\UpdateSessionRequest;
+use App\Models\Group;
 use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,9 +42,43 @@ class SessionManagementController extends Controller
 
     public function sessionStore(StoreSessionRequest $request): JsonResponse
     {
+        $sportModuleId = $request->sport_module_id;
+        if (!$sportModuleId && $request->group_id) {
+            $group = Group::find($request->group_id);
+            $sportModuleId = $group?->sport_module_id;
+        }
+
         $session = TrainingSession::create(array_merge(
             $request->only(['group_id', 'plan_id', 'date', 'start_time', 'end_time', 'location', 'notes']),
-            ['club_id' => $request->user()->club_id]
+            [
+                'club_id' => $request->user()->club_id,
+                'sport_module_id' => $sportModuleId,
+            ]
+        ));
+
+        return response()->json($session->load(['group', 'plan']), 201);
+    }
+
+    public function sportIndex(Request $request): JsonResponse
+    {
+        $sessions = TrainingSession::where('club_id', app('current_club_id'))
+            ->where('sport_module_id', app('current_sport_module_id'))
+            ->with(['group', 'plan'])
+            ->orderBy('date', 'desc')
+            ->orderBy('start_time')
+            ->get();
+
+        return response()->json(['data' => $sessions]);
+    }
+
+    public function sportStore(StoreSessionRequest $request): JsonResponse
+    {
+        $session = TrainingSession::create(array_merge(
+            $request->only(['group_id', 'plan_id', 'date', 'start_time', 'end_time', 'location', 'notes']),
+            [
+                'club_id' => $request->user()->club_id,
+                'sport_module_id' => app('current_sport_module_id'),
+            ]
         ));
 
         return response()->json($session->load(['group', 'plan']), 201);

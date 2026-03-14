@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getPlans, createPlan, updatePlan, deletePlan, togglePlan, reorderPlans } from '../../api/subscriptionPlans';
 import { PageHeader, Button, FormField, Input } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
+import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 
 const emptyForm = {
   name: '',
@@ -159,6 +160,123 @@ export default function SubscriptionPlansPage() {
     ? (Number(form.price) * (1 - Number(form.discount_percent) / 100)).toFixed(2)
     : null;
 
+  // ── Create / Edit Form Page ─────────────────────────
+  if (modal === 'create' || modal === 'edit') {
+    return (
+      <FormPage
+        title={modal === 'create' ? 'New Plan' : `Edit \u2014 ${editPlan?.name}`}
+        onBack={closeModal}
+        icon={
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><path d="M1 10h22" />
+          </svg>
+        }
+      >
+        <FormField label="Plan Name *">
+          <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="e.g. Monthly, Quarterly" />
+        </FormField>
+
+        {/* Duration stepper */}
+        <FormField label="Duration (months) *">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button type="button" onClick={() => updateField('duration_months', Math.max(1, form.duration_months - 1))}
+              style={stepperBtnStyle}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /></svg>
+            </button>
+            <div style={{
+              flex: 1, textAlign: 'center',
+              fontSize: 28, fontWeight: 800, color: '#22d3ee',
+              fontFamily: "'Outfit', sans-serif",
+            }}>
+              {form.duration_months}
+            </div>
+            <button type="button" onClick={() => updateField('duration_months', Math.min(36, form.duration_months + 1))}
+              style={stepperBtnStyle}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            {form.duration_months === 1 ? '1 month' : `${form.duration_months} months`}
+          </div>
+        </FormField>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="Price *">
+            <Input type="number" min="0" step="0.01" value={form.price} onChange={e => updateField('price', e.target.value)} placeholder="0.00" />
+          </FormField>
+          <FormField label="Discount %">
+            <Input type="number" min="0" max="100" value={form.discount_percent} onChange={e => updateField('discount_percent', e.target.value)} placeholder="0" />
+          </FormField>
+        </div>
+
+        {/* Live price preview */}
+        {computedPrice && (
+          <div style={{
+            padding: '12px 14px', borderRadius: 12, marginBottom: 18,
+            background: 'linear-gradient(135deg, rgba(34,211,238,0.06) 0%, rgba(6,182,212,0.03) 100%)',
+            border: '1px solid rgba(34,211,238,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>After discount:</span>
+            <div>
+              <span style={{ fontSize: 13, color: '#64748b', textDecoration: 'line-through', marginRight: 8 }}>
+                {Number(form.price).toLocaleString()}
+              </span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: '#2dd4bf', fontFamily: "'Outfit', sans-serif" }}>
+                {Number(computedPrice).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Most Popular toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 14px', borderRadius: 12,
+          background: form.is_popular ? 'rgba(251,191,36,0.06)' : 'rgba(6,13,31,0.4)',
+          border: form.is_popular ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(51,65,85,0.3)',
+          marginBottom: 12, transition: 'all 0.25s ease',
+        }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 16 }}>&#11088;</span> Most Popular
+            </div>
+            <div style={{ fontSize: 12, color: form.is_popular ? '#fbbf24' : '#64748b', marginTop: 2 }}>
+              {form.is_popular ? 'This plan will be highlighted. Only one plan can be popular.' : 'Highlight this plan for new members.'}
+            </div>
+          </div>
+          <ToggleSwitch checked={form.is_popular} onChange={() => updateField('is_popular', !form.is_popular)} color="#fbbf24" />
+        </div>
+
+        {/* Active toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 14px', borderRadius: 12,
+          background: 'rgba(6,13,31,0.4)',
+          border: '1px solid rgba(51,65,85,0.3)',
+          marginBottom: 4,
+        }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>
+              {form.is_active ? 'Plan is visible to new members' : 'Plan is hidden from registration'}
+            </div>
+          </div>
+          <ToggleSwitch checked={form.is_active} onChange={() => updateField('is_active', !form.is_active)} />
+        </div>
+
+        {error && <ErrorBanner message={error} />}
+
+        <FormPageActions>
+          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" disabled={saving || !form.name || !form.price} onClick={handleSave}>
+            {saving ? 'Saving...' : modal === 'create' ? 'Create Plan' : 'Save Changes'}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
+
   // ── Feature disabled ─────────────────────────────────
   if (loadError === 'feature_disabled') {
     return (
@@ -261,121 +379,6 @@ export default function SubscriptionPlansPage() {
             />
           ))}
         </div>
-      )}
-
-      {/* ── Create / Edit Modal ─────────────────────────── */}
-      {(modal === 'create' || modal === 'edit') && (
-        <Modal
-          title={modal === 'create' ? 'New Plan' : `Edit \u2014 ${editPlan?.name}`}
-          onClose={closeModal}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><path d="M1 10h22" />
-            </svg>
-          }
-        >
-          <FormField label="Plan Name *">
-            <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="e.g. Monthly, Quarterly" />
-          </FormField>
-
-          {/* Duration stepper */}
-          <FormField label="Duration (months) *">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button type="button" onClick={() => updateField('duration_months', Math.max(1, form.duration_months - 1))}
-                style={stepperBtnStyle}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /></svg>
-              </button>
-              <div style={{
-                flex: 1, textAlign: 'center',
-                fontSize: 28, fontWeight: 800, color: '#22d3ee',
-                fontFamily: "'Outfit', sans-serif",
-              }}>
-                {form.duration_months}
-              </div>
-              <button type="button" onClick={() => updateField('duration_months', Math.min(36, form.duration_months + 1))}
-                style={stepperBtnStyle}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-              </button>
-            </div>
-            <div style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 4 }}>
-              {form.duration_months === 1 ? '1 month' : `${form.duration_months} months`}
-            </div>
-          </FormField>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <FormField label="Price *">
-              <Input type="number" min="0" step="0.01" value={form.price} onChange={e => updateField('price', e.target.value)} placeholder="0.00" />
-            </FormField>
-            <FormField label="Discount %">
-              <Input type="number" min="0" max="100" value={form.discount_percent} onChange={e => updateField('discount_percent', e.target.value)} placeholder="0" />
-            </FormField>
-          </div>
-
-          {/* Live price preview */}
-          {computedPrice && (
-            <div style={{
-              padding: '12px 14px', borderRadius: 12, marginBottom: 18,
-              background: 'linear-gradient(135deg, rgba(34,211,238,0.06) 0%, rgba(6,182,212,0.03) 100%)',
-              border: '1px solid rgba(34,211,238,0.12)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-              <span style={{ fontSize: 13, color: '#94a3b8' }}>After discount:</span>
-              <div>
-                <span style={{ fontSize: 13, color: '#64748b', textDecoration: 'line-through', marginRight: 8 }}>
-                  {Number(form.price).toLocaleString()}
-                </span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#2dd4bf', fontFamily: "'Outfit', sans-serif" }}>
-                  {Number(computedPrice).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Most Popular toggle */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 14px', borderRadius: 12,
-            background: form.is_popular ? 'rgba(251,191,36,0.06)' : 'rgba(6,13,31,0.4)',
-            border: form.is_popular ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(51,65,85,0.3)',
-            marginBottom: 12, transition: 'all 0.25s ease',
-          }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 16 }}>&#11088;</span> Most Popular
-              </div>
-              <div style={{ fontSize: 12, color: form.is_popular ? '#fbbf24' : '#64748b', marginTop: 2 }}>
-                {form.is_popular ? 'This plan will be highlighted. Only one plan can be popular.' : 'Highlight this plan for new members.'}
-              </div>
-            </div>
-            <ToggleSwitch checked={form.is_popular} onChange={() => updateField('is_popular', !form.is_popular)} color="#fbbf24" />
-          </div>
-
-          {/* Active toggle */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 14px', borderRadius: 12,
-            background: 'rgba(6,13,31,0.4)',
-            border: '1px solid rgba(51,65,85,0.3)',
-            marginBottom: 4,
-          }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>
-                {form.is_active ? 'Plan is visible to new members' : 'Plan is hidden from registration'}
-              </div>
-            </div>
-            <ToggleSwitch checked={form.is_active} onChange={() => updateField('is_active', !form.is_active)} />
-          </div>
-
-          {error && <ErrorBanner message={error} />}
-
-          <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-            <Button type="button" disabled={saving || !form.name || !form.price} onClick={handleSave}>
-              {saving ? 'Saving...' : modal === 'create' ? 'Create Plan' : 'Save Changes'}
-            </Button>
-          </ModalActions>
-        </Modal>
       )}
 
       {/* ── Delete Confirmation ─────────────────────────── */}

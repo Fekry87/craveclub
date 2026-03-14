@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getBranches, createBranch, updateBranch, deleteBranch, updateBranchFeatures } from '../../api/branches';
 import { PageHeader, Button, FormField, Input, TextArea } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
+import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 
 const KNOWN_FEATURES = [
   { key: 'training_plans', label: 'Training Plans', icon: '\u{1F4CB}' },
@@ -164,6 +165,148 @@ export default function BranchesPage() {
 
   const updateField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
+  // ── Create / Edit Form Page ────────────────────────────
+  if (modal === 'create' || modal === 'edit') {
+    return (
+      <FormPage
+        title={modal === 'create' ? 'New Branch' : `Edit \u2014 ${editBranch?.name}`}
+        onBack={closeModal}
+        icon={
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        }
+      >
+        <FormField label="Branch Name *">
+          <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="Main Branch" />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="City *">
+            <Input value={form.city} onChange={e => updateField('city', e.target.value)} placeholder="Cairo" />
+          </FormField>
+          <FormField label="Phone">
+            <Input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+20-100-1234567" />
+          </FormField>
+        </div>
+        <FormField label="Address *">
+          <Input value={form.address} onChange={e => updateField('address', e.target.value)} placeholder="123 Olympic Avenue" />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="Working Hours">
+            <Input value={form.working_hours} onChange={e => updateField('working_hours', e.target.value)} placeholder="7am \u2013 10pm" />
+          </FormField>
+          <FormField label="Capacity">
+            <Input type="number" min="1" value={form.capacity} onChange={e => updateField('capacity', e.target.value)} placeholder="100" />
+          </FormField>
+        </div>
+        <FormField label="Description">
+          <TextArea value={form.description} onChange={e => updateField('description', e.target.value)} placeholder="Describe this branch..." rows={3} />
+        </FormField>
+
+        {/* Active toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 14px', borderRadius: 12,
+          background: 'rgba(6,13,31,0.4)',
+          border: '1px solid rgba(51,65,85,0.3)',
+          marginBottom: 4,
+        }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
+            <div style={{ fontSize: 12, color: '#64748b' }}>
+              {form.is_active ? 'Branch is operational' : 'Branch is inactive'}
+            </div>
+          </div>
+          <ToggleSwitch checked={form.is_active} onChange={() => updateField('is_active', !form.is_active)} />
+        </div>
+
+        {error && <ErrorBanner message={error} />}
+
+        <FormPageActions>
+          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" disabled={saving || !form.name || !form.city || !form.address} onClick={handleSave}>
+            {saving ? 'Saving...' : modal === 'create' ? 'Create Branch' : 'Save Changes'}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
+
+  // ── Manage Features Form Page ──────────────────────────
+  if (modal === 'features' && editBranch) {
+    return (
+      <FormPage
+        title={`Branch Features \u2014 ${editBranch.name}`}
+        onBack={closeModal}
+        icon={
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        }
+      >
+        <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 18px', lineHeight: 1.5 }}>
+          Override which features are available at this branch.
+          Features disabled at club level cannot be enabled here.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {KNOWN_FEATURES.map(f => {
+            const clubEnabled = clubFeatureKeys.includes(f.key);
+            const branchValue = localFeatures[f.key];
+            const effective = branchValue !== undefined ? branchValue : clubEnabled;
+
+            return (
+              <div key={f.key} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px 0',
+                borderBottom: '1px solid rgba(51,65,85,0.2)',
+                opacity: !clubEnabled ? 0.4 : 1,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 22, lineHeight: 1 }}>{f.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>
+                      {f.label}
+                    </div>
+                    {!clubEnabled && (
+                      <div style={{ fontSize: 12, color: '#fda4af' }}>Disabled at club level</div>
+                    )}
+                    {clubEnabled && branchValue !== undefined && (
+                      <div style={{ fontSize: 12, color: '#64748b' }}>
+                        {branchValue ? 'Enabled for this branch' : 'Disabled for this branch'}
+                      </div>
+                    )}
+                    {clubEnabled && branchValue === undefined && (
+                      <div style={{ fontSize: 12, color: '#64748b' }}>Inherited from club</div>
+                    )}
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={effective}
+                  disabled={!clubEnabled}
+                  onChange={() => {
+                    if (!clubEnabled) return;
+                    setLocalFeatures(prev => ({ ...prev, [f.key]: !effective }));
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {error && <ErrorBanner message={error} />}
+
+        <FormPageActions>
+          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" disabled={saving} onClick={handleSaveFeatures}>
+            {saving ? 'Saving...' : 'Save Features'}
+          </Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
+
   // ── Loading ────────────────────────────────────────────
   if (branches === null && !loadError) {
     return (
@@ -261,144 +404,6 @@ export default function BranchesPage() {
             />
           ))}
         </div>
-      )}
-
-      {/* ── Create / Edit Modal ─────────────────────────── */}
-      {(modal === 'create' || modal === 'edit') && (
-        <Modal
-          title={modal === 'create' ? 'New Branch' : `Edit \u2014 ${editBranch?.name}`}
-          onClose={closeModal}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          }
-        >
-          <FormField label="Branch Name *">
-            <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="Main Branch" />
-          </FormField>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <FormField label="City *">
-              <Input value={form.city} onChange={e => updateField('city', e.target.value)} placeholder="Cairo" />
-            </FormField>
-            <FormField label="Phone">
-              <Input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+20-100-1234567" />
-            </FormField>
-          </div>
-          <FormField label="Address *">
-            <Input value={form.address} onChange={e => updateField('address', e.target.value)} placeholder="123 Olympic Avenue" />
-          </FormField>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <FormField label="Working Hours">
-              <Input value={form.working_hours} onChange={e => updateField('working_hours', e.target.value)} placeholder="7am \u2013 10pm" />
-            </FormField>
-            <FormField label="Capacity">
-              <Input type="number" min="1" value={form.capacity} onChange={e => updateField('capacity', e.target.value)} placeholder="100" />
-            </FormField>
-          </div>
-          <FormField label="Description">
-            <TextArea value={form.description} onChange={e => updateField('description', e.target.value)} placeholder="Describe this branch..." rows={3} />
-          </FormField>
-
-          {/* Active toggle */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 14px', borderRadius: 12,
-            background: 'rgba(6,13,31,0.4)',
-            border: '1px solid rgba(51,65,85,0.3)',
-            marginBottom: 4,
-          }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>
-                {form.is_active ? 'Branch is operational' : 'Branch is inactive'}
-              </div>
-            </div>
-            <ToggleSwitch checked={form.is_active} onChange={() => updateField('is_active', !form.is_active)} />
-          </div>
-
-          {error && <ErrorBanner message={error} />}
-
-          <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-            <Button type="button" disabled={saving || !form.name || !form.city || !form.address} onClick={handleSave}>
-              {saving ? 'Saving...' : modal === 'create' ? 'Create Branch' : 'Save Changes'}
-            </Button>
-          </ModalActions>
-        </Modal>
-      )}
-
-      {/* ── Manage Features Modal ───────────────────────── */}
-      {modal === 'features' && editBranch && (
-        <Modal
-          title={`Branch Features \u2014 ${editBranch.name}`}
-          onClose={closeModal}
-          icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          }
-        >
-          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 18px', lineHeight: 1.5 }}>
-            Override which features are available at this branch.
-            Features disabled at club level cannot be enabled here.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {KNOWN_FEATURES.map(f => {
-              const clubEnabled = clubFeatureKeys.includes(f.key);
-              const branchValue = localFeatures[f.key];
-              const effective = branchValue !== undefined ? branchValue : clubEnabled;
-
-              return (
-                <div key={f.key} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '14px 0',
-                  borderBottom: '1px solid rgba(51,65,85,0.2)',
-                  opacity: !clubEnabled ? 0.4 : 1,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 22, lineHeight: 1 }}>{f.icon}</span>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>
-                        {f.label}
-                      </div>
-                      {!clubEnabled && (
-                        <div style={{ fontSize: 12, color: '#fda4af' }}>Disabled at club level</div>
-                      )}
-                      {clubEnabled && branchValue !== undefined && (
-                        <div style={{ fontSize: 12, color: '#64748b' }}>
-                          {branchValue ? 'Enabled for this branch' : 'Disabled for this branch'}
-                        </div>
-                      )}
-                      {clubEnabled && branchValue === undefined && (
-                        <div style={{ fontSize: 12, color: '#64748b' }}>Inherited from club</div>
-                      )}
-                    </div>
-                  </div>
-                  <ToggleSwitch
-                    checked={effective}
-                    disabled={!clubEnabled}
-                    onChange={() => {
-                      if (!clubEnabled) return;
-                      setLocalFeatures(prev => ({ ...prev, [f.key]: !effective }));
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {error && <ErrorBanner message={error} />}
-
-          <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-            <Button type="button" disabled={saving} onClick={handleSaveFeatures}>
-              {saving ? 'Saving...' : 'Save Features'}
-            </Button>
-          </ModalActions>
-        </Modal>
       )}
 
       {/* ── Delete Confirmation ─────────────────────────── */}

@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'club.header' => \App\Http\Middleware\ResolveClubFromHeader::class,
             'request.log' => \App\Http\Middleware\RequestLogger::class,
             'feature' => \App\Http\Middleware\FeatureGuard::class,
+            'sport.context' => \App\Http\Middleware\SportContext::class,
         ]);
 
         // Token-based auth only — no session/CSRF needed for API routes

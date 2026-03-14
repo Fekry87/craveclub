@@ -20,6 +20,11 @@ use App\Http\Controllers\Api\SubscriptionPlanController;
 use App\Http\Controllers\Api\CoachScheduleController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\PublicRegistrationController;
+use App\Http\Controllers\Api\TrainingPlanController;
+use App\Http\Controllers\Api\RecurringScheduleController;
+use App\Http\Controllers\Api\ClubBrandingController;
+use App\Http\Controllers\Api\SportModuleController;
+use App\Http\Controllers\Api\SwimmerReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +59,7 @@ Route::prefix('v1')->group(function () {
     // Public
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
+    Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
 
     // ── Public Registration API (club resolved via X-Club-Slug header) ──
     Route::middleware(['club.header', 'throttle:60,1'])->group(function () {
@@ -65,6 +71,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/coaches/{coach}/schedule', [PublicRegistrationController::class, 'coachSchedule']);
         Route::post('/registrations', [PublicRegistrationController::class, 'store']);
         Route::get('/registrations/{id}', [PublicRegistrationController::class, 'status']);
+
+        // Public namespace aliases (for mobile registration wizard)
+        Route::get('/public/sports', [PublicRegistrationController::class, 'sports']);
     });
 
     // Auth — rate limit (10 per minute)
@@ -101,6 +110,18 @@ Route::prefix('v1')->group(function () {
             // Club feature management
             Route::get('/clubs/{club}/features', [CorporateController::class, 'clubFeatures']);
             Route::put('/clubs/{club}/features', [CorporateController::class, 'updateClubFeatures']);
+
+            // Club branding management
+            Route::put('/clubs/{club}/branding', [ClubBrandingController::class, 'update']);
+            Route::post('/clubs/{club}/branding/upload', [ClubBrandingController::class, 'upload']);
+
+            // Sport Modules (platform-wide catalog)
+            Route::apiResource('sport-modules', SportModuleController::class);
+
+            // Club sport module assignment
+            Route::get('/clubs/{club}/sport-modules', [SportModuleController::class, 'getClubSportModules']);
+            Route::post('/clubs/{club}/sport-modules', [SportModuleController::class, 'assignSportModule']);
+            Route::delete('/clubs/{club}/sport-modules/{module}', [SportModuleController::class, 'removeSportModule']);
         });
 
         // ── Platform Admin (backward compat — same as old routes) ──
@@ -120,6 +141,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/settings', [ClubDashboardController::class, 'settings']);
             Route::put('/settings', [ClubDashboardController::class, 'updateSettings']);
             Route::get('/features', [ClubDashboardController::class, 'features']);
+            Route::get('/branding', [ClubBrandingController::class, 'own']);
+
+            // Sport Modules (manager dashboard)
+            Route::get('/sport-modules', [ClubDashboardController::class, 'sportModules']);
+            Route::get('/sport-modules/{module}', [ClubDashboardController::class, 'sportModuleShow']);
 
             Route::get('/coaches', [CoachManagementController::class, 'coachIndex']);
             Route::post('/coaches', [CoachManagementController::class, 'coachStore']);
@@ -132,6 +158,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerShow']);
             Route::put('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerUpdate']);
             Route::delete('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerDestroy']);
+            Route::get('/swimmers/{swimmer}/weekly-report', [SwimmerReportController::class, 'managerSwimmer']);
 
             Route::get('/groups', [GroupManagementController::class, 'groupIndex']);
             Route::post('/groups', [GroupManagementController::class, 'groupStore']);
@@ -182,7 +209,21 @@ Route::prefix('v1')->group(function () {
                 Route::get('/plans/{plan}', [ClubController::class, 'planShow']);
                 Route::put('/plans/{plan}', [ClubController::class, 'planUpdate']);
                 Route::delete('/plans/{plan}', [ClubController::class, 'planDestroy']);
+
+                // Training Plan Assignment (Manager)
+                Route::post('/training-plans/{plan}/assign-to-coach', [TrainingPlanController::class, 'assignToCoach']);
             });
+
+            // Recurring Schedules
+            Route::get('/recurring-schedules', [RecurringScheduleController::class, 'index']);
+            Route::post('/recurring-schedules', [RecurringScheduleController::class, 'store']);
+            Route::get('/recurring-schedules/{recurringSchedule}', [RecurringScheduleController::class, 'show']);
+            Route::put('/recurring-schedules/{recurringSchedule}', [RecurringScheduleController::class, 'update']);
+            Route::get('/recurring-schedules/{recurringSchedule}/preview', [RecurringScheduleController::class, 'preview']);
+            Route::post('/recurring-schedules/{recurringSchedule}/generate', [RecurringScheduleController::class, 'generate']);
+            Route::post('/recurring-schedules/{recurringSchedule}/holidays', [RecurringScheduleController::class, 'addHolidays']);
+            Route::delete('/recurring-schedules/{recurringSchedule}/holidays/{date}', [RecurringScheduleController::class, 'removeHoliday']);
+            Route::delete('/recurring-schedules/{recurringSchedule}', [RecurringScheduleController::class, 'destroy']);
 
             // Feature-gated: Skills
             Route::middleware('feature:skills')->group(function () {
@@ -202,6 +243,24 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardDestroyTier']);
                 Route::post('/leaderboard/tiers/reset', [LeaderboardController::class, 'leaderboardResetTiers']);
             });
+
+            // ── Sport-scoped management (optional sport context layer) ──
+            Route::prefix('{sportSlug}')
+                ->middleware(['sport.context'])
+                ->group(function () {
+                    Route::get('/groups', [GroupManagementController::class, 'sportIndex']);
+                    Route::post('/groups', [GroupManagementController::class, 'sportStore']);
+
+                    Route::get('/sessions', [SessionManagementController::class, 'sportIndex']);
+                    Route::post('/sessions', [SessionManagementController::class, 'sportStore']);
+
+                    Route::middleware('feature:training_plans')->group(function () {
+                        Route::get('/training-plans', [TrainingPlanController::class, 'sportIndex']);
+                    });
+
+                    Route::get('/swimmers', [SwimmerManagementController::class, 'sportIndex']);
+                    Route::get('/coaches', [CoachManagementController::class, 'sportIndex']);
+                });
         });
 
         // ── Coach ───────────────────────────────────────────
@@ -237,6 +296,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/swimmers/{swimmer}/evaluate', [CoachApiController::class, 'evaluateSwimmer']);
             });
 
+            // Weekly Report (Coach view)
+            Route::get('/swimmers/{swimmer}/weekly-report', [SwimmerReportController::class, 'coachSwimmer']);
+
+            // Training Plans (Coach)
+            Route::get('/training-plans', [TrainingPlanController::class, 'coachPlans']);
+            Route::post('/training-plans/{plan}/assign', [TrainingPlanController::class, 'assign']);
+            Route::get('/training-plans/assignments', [TrainingPlanController::class, 'coachAssignments']);
+            Route::patch('/training-plans/assignments/{assignment}', [TrainingPlanController::class, 'updateAssignment']);
+
             // Legacy
             Route::post('/daily-training', [CoachApiController::class, 'dailyTraining']);
         });
@@ -247,6 +315,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/dashboard', [SwimmerApiController::class, 'dashboard']);
             Route::get('/sessions', [SwimmerApiController::class, 'sessions']);
             Route::get('/stats', [SwimmerApiController::class, 'stats']);
+
+            // Training Plan
+            Route::get('/training-plan', [TrainingPlanController::class, 'swimmerPlan']);
+
+            // Weekly Report
+            Route::get('/weekly-report', [SwimmerReportController::class, 'swimmerSelf']);
 
             // Feature-gated: Evaluations
             Route::middleware('feature:evaluations')->group(function () {

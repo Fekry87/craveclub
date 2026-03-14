@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import api from '../../api/axios';
-import { DataTable, Modal, ModalActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
+import { getSkills, createSkill, updateSkill, deleteSkill } from '../../api/skills';
+import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 
 export default function Skills() {
   const [skills, setSkills] = useState([]);
@@ -9,19 +9,19 @@ export default function Skills() {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', type: 'SKILL', description: '' });
 
-  const load = () => api.get('/club/skills', { params: { search } })
+  const load = () => getSkills({ search })
     .then(r => setSkills(r.data.data || []))
     .catch(() => {});
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    if (editId) await api.put(`/club/skills/${editId}`, form);
-    else await api.post('/club/skills', form);
+    if (editId) await updateSkill(editId, form);
+    else await createSkill(form);
     setShowModal(false); setEditId(null); load();
   };
 
   const handleEdit = (s) => { setEditId(s.id); setForm({ name: s.name, type: s.type, description: s.description || '' }); setShowModal(true); };
-  const handleDelete = async (s) => { if (confirm('Delete?')) { await api.delete(`/club/skills/${s.id}`); load(); } };
+  const handleDelete = async (s) => { if (confirm('Delete?')) { await deleteSkill(s.id); load(); } };
 
   const typeColors = {
     SKILL: { bg: 'rgba(34,211,238,0.08)', border: 'rgba(34,211,238,0.15)', color: '#22d3ee' },
@@ -37,6 +37,23 @@ export default function Skills() {
     }},
     { key: 'description', label: 'Description' },
   ];
+
+  const closeForm = () => { setShowModal(false); setEditId(null); };
+
+  if (showModal) {
+    return (
+      <FormPage title={editId ? 'Edit Skill' : 'New Skill'} onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}>
+        <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
+        <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }]} /></FormField>
+        <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
 
   return (
     <div>
@@ -78,18 +95,6 @@ export default function Skills() {
           );
         }}
       />
-      {showModal && (
-        <Modal title={editId ? 'Edit Skill' : 'New Skill'} onClose={() => setShowModal(false)}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}>
-          <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
-          <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }]} /></FormField>
-          <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
-          <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
-          </ModalActions>
-        </Modal>
-      )}
     </div>
   );
 }

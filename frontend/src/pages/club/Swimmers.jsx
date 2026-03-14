@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Modal, ModalActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
+import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
 
 const levelConfig = {
   'Beginner':     { color: '#22d3ee', bg: 'rgba(34,211,238,0.10)', border: 'rgba(34,211,238,0.20)', headerGrad: 'rgba(34,211,238,0.08)' },
@@ -331,6 +331,49 @@ export default function Swimmers() {
 
   const hasActiveFilters = levelFilter !== 'All' || loginFilter !== 'All';
 
+  const closeForm = () => { setShowModal(false); setEditId(null); };
+
+  if (showModal) {
+    return (
+      <FormPage title={editId ? 'Edit Swimmer' : 'New Swimmer'} onBack={closeForm}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <FormField label="First Name"><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></FormField>
+          <FormField label="Last Name"><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></FormField>
+        </div>
+        <FormField label="Level"><Input value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} placeholder="Beginner, Intermediate, Advanced" /></FormField>
+        <FormField label="Date of Birth"><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></FormField>
+        <FormField label="Guardian Name"><Input value={form.guardian_name} onChange={e => setForm({ ...form, guardian_name: e.target.value })} /></FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <FormField label="Guardian Phone"><Input value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })} /></FormField>
+          <FormField label="Guardian Email"><Input type="email" value={form.guardian_email} onChange={e => setForm({ ...form, guardian_email: e.target.value })} /></FormField>
+        </div>
+        <FormField label="Medical Notes"><TextArea value={form.medical_notes} onChange={e => setForm({ ...form, medical_notes: e.target.value })} /></FormField>
+        {!editId && (
+          <div style={{
+            marginTop: 8, padding: '14px 16px', borderRadius: 12,
+            background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.08)',
+          }}>
+            <label style={{ color: '#94a3b8', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.create_login} onChange={e => setForm({ ...form, create_login: e.target.checked })} />
+              Create login account for swimmer
+            </label>
+            {form.create_login && (
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
+                <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
+              </div>
+            )}
+          </div>
+        )}
+        <FormPageActions>
+          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+        </FormPageActions>
+      </FormPage>
+    );
+  }
+
   return (
     <div>
       <PageHeader title="Swimmers" search={search} onSearch={setSearch} searchPlaceholder="Search swimmers...">
@@ -526,44 +569,6 @@ export default function Swimmers() {
         </div>
       )}
 
-      {showModal && (
-        <Modal title={editId ? 'Edit Swimmer' : 'New Swimmer'} onClose={() => setShowModal(false)}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <FormField label="First Name"><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></FormField>
-            <FormField label="Last Name"><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></FormField>
-          </div>
-          <FormField label="Level"><Input value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} placeholder="Beginner, Intermediate, Advanced" /></FormField>
-          <FormField label="Date of Birth"><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></FormField>
-          <FormField label="Guardian Name"><Input value={form.guardian_name} onChange={e => setForm({ ...form, guardian_name: e.target.value })} /></FormField>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <FormField label="Guardian Phone"><Input value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })} /></FormField>
-            <FormField label="Guardian Email"><Input type="email" value={form.guardian_email} onChange={e => setForm({ ...form, guardian_email: e.target.value })} /></FormField>
-          </div>
-          <FormField label="Medical Notes"><TextArea value={form.medical_notes} onChange={e => setForm({ ...form, medical_notes: e.target.value })} /></FormField>
-          {!editId && (
-            <div style={{
-              marginTop: 8, padding: '14px 16px', borderRadius: 12,
-              background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.08)',
-            }}>
-              <label style={{ color: '#94a3b8', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input type="checkbox" checked={form.create_login} onChange={e => setForm({ ...form, create_login: e.target.checked })} />
-                Create login account for swimmer
-              </label>
-              {form.create_login && (
-                <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
-                  <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
-                </div>
-              )}
-            </div>
-          )}
-          <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
-          </ModalActions>
-        </Modal>
-      )}
     </div>
   );
 }

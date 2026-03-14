@@ -7,6 +7,8 @@ use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\Group;
+use App\Models\Registration;
+use App\Models\SportModule;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Services\XpCalculationService;
@@ -74,6 +76,134 @@ class ClubDashboardController extends Controller
     public function settings(Request $request): JsonResponse
     {
         return response()->json($request->user()->club);
+    }
+
+    /**
+     * List active sport modules for the current club with computed stats.
+     */
+    public function sportModules(Request $request): JsonResponse
+    {
+        $clubId = $request->user()->club_id;
+
+        $club = Club::findOrFail($clubId);
+        $modules = $club->activeSportModules()->orderBy('sort_order')->get();
+
+        $weekStart = now()->startOfWeek()->toDateString();
+        $weekEnd = now()->endOfWeek()->toDateString();
+
+        $result = $modules->map(function ($module) use ($clubId, $weekStart, $weekEnd) {
+            $moduleId = $module->id;
+
+            $groupIds = Group::where('club_id', $clubId)
+                ->where('sport_module_id', $moduleId)
+                ->pluck('id');
+
+            $membersCount = $groupIds->isNotEmpty()
+                ? \DB::table('group_memberships')->whereIn('group_id', $groupIds)->distinct('swimmer_id')->count('swimmer_id')
+                : 0;
+
+            $coachesCount = Group::where('club_id', $clubId)
+                ->where('sport_module_id', $moduleId)
+                ->whereNotNull('coach_user_id')
+                ->distinct('coach_user_id')
+                ->count('coach_user_id');
+
+            $groupsCount = $groupIds->count();
+
+            $sessionsThisWeek = TrainingSession::where('club_id', $clubId)
+                ->where('sport_module_id', $moduleId)
+                ->whereBetween('date', [$weekStart, $weekEnd])
+                ->count();
+
+            return [
+                'id' => $module->id,
+                'name' => $module->name,
+                'slug' => $module->slug,
+                'icon' => $module->icon,
+                'color' => $module->color,
+                'description' => $module->description,
+                'stats' => [
+                    'members_count' => $membersCount,
+                    'coaches_count' => $coachesCount,
+                    'groups_count' => $groupsCount,
+                    'sessions_this_week' => $sessionsThisWeek,
+                ],
+            ];
+        });
+
+        return response()->json($result);
+    }
+
+    /**
+     * Show a single sport module with detail stats for the current club.
+     */
+    public function sportModuleShow(Request $request, SportModule $module): JsonResponse
+    {
+        $clubId = $request->user()->club_id;
+
+        // Verify the module is assigned to this club
+        $isAssigned = $module->clubs()
+            ->where('club_id', $clubId)
+            ->wherePivot('is_active', true)
+            ->exists();
+
+        abort_if(!$isAssigned, 404);
+
+        $moduleId = $module->id;
+        $weekStart = now()->startOfWeek()->toDateString();
+        $weekEnd = now()->endOfWeek()->toDateString();
+
+        $groupIds = Group::where('club_id', $clubId)
+            ->where('sport_module_id', $moduleId)
+            ->pluck('id');
+
+        $membersCount = $groupIds->isNotEmpty()
+            ? \DB::table('group_memberships')->whereIn('group_id', $groupIds)->distinct('swimmer_id')->count('swimmer_id')
+            : 0;
+
+        $coachesCount = Group::where('club_id', $clubId)
+            ->where('sport_module_id', $moduleId)
+            ->whereNotNull('coach_user_id')
+            ->distinct('coach_user_id')
+            ->count('coach_user_id');
+
+        $groupsCount = $groupIds->count();
+
+        $sessionsThisWeek = TrainingSession::where('club_id', $clubId)
+            ->where('sport_module_id', $moduleId)
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->count();
+
+        $recentSessions = TrainingSession::where('club_id', $clubId)
+            ->where('sport_module_id', $moduleId)
+            ->orderByDesc('date')
+            ->orderByDesc('start_time')
+            ->take(10)
+            ->with('group:id,name')
+            ->get();
+
+        // Registration sport_ids stores sport slugs/names — match by module slug
+        $pendingRegistrations = Registration::where('club_id', $clubId)
+            ->where('status', 'pending')
+            ->whereJsonContains('sport_ids', $module->slug)
+            ->count();
+
+        return response()->json([
+            'id' => $module->id,
+            'name' => $module->name,
+            'slug' => $module->slug,
+            'icon' => $module->icon,
+            'color' => $module->color,
+            'description' => $module->description,
+            'stats' => [
+                'members_count' => $membersCount,
+                'coaches_count' => $coachesCount,
+                'groups_count' => $groupsCount,
+                'sessions_this_week' => $sessionsThisWeek,
+            ],
+            'recent_sessions' => $recentSessions,
+            'pending_registrations' => $pendingRegistrations,
+        ]);
     }
 
     public function updateSettings(Request $request): JsonResponse

@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\Club;
 use App\Models\User;
 use App\Models\AuditLog;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -108,7 +109,15 @@ class PlatformController extends Controller
 
     public function clubDestroy(Club $club): JsonResponse
     {
+        AuditService::log('club.deleted', Club::class, $club->id, [
+            'club_name' => $club->name,
+            'club_slug' => $club->slug,
+        ], $club->id);
+
+        // Soft-delete all club users first, then the club itself
+        $club->users()->each(fn ($u) => $u->delete());
         $club->delete();
+
         return response()->json(['message' => 'Club deleted']);
     }
 }

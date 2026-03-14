@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { getAvatarColor } from '../../components/CrudTable';
+import ClubSportModulesPanel from './ClubSportModulesPanel';
 
 const featureLabels = {
   leaderboard_enabled: { label: 'Leaderboard', desc: 'Gamified XP ranking system for swimmers', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
@@ -99,6 +100,15 @@ export default function CorporateClubDetail() {
               <div key={i} style={{ width: 28, height: 28, borderRadius: 8, background: color, border: '2px solid rgba(255,255,255,0.1)', boxShadow: `0 0 10px ${color}40` }} />
             ))}
           </div>
+          <button
+            onClick={() => navigate(`/corporate/clubs/${id}/branding`)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.1)'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>
+            Configure Branding
+          </button>
         </div>
       </div>
 
@@ -126,6 +136,9 @@ export default function CorporateClubDetail() {
           ))}
         </div>
       </div>
+
+      {/* Sport Modules */}
+      <ClubSportModulesPanel clubId={club.id} />
     </div>
   );
 }

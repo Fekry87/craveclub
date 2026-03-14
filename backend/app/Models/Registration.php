@@ -10,7 +10,7 @@ class Registration extends Model
 {
     use SoftDeletes;
     protected $fillable = [
-        'club_id', 'branch_id', 'coach_id', 'plan_id',
+        'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'plan_id',
         'full_name', 'phone', 'gender', 'birth_date', 'avatar_url',
         'height_cm', 'weight_kg', 'fitness_level', 'prior_experience',
         'medical_notes', 'sport_ids', 'experience_level', 'years_experience',
@@ -49,5 +49,10 @@ class Registration extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'plan_id');
+    }
+
+    public function sportModule(): BelongsTo
+    {
+        return $this->belongsTo(SportModule::class);
     }
 }

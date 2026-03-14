@@ -79,7 +79,9 @@ class CorporateController extends Controller
 
     public function clubIndex(Request $request): JsonResponse
     {
-        $query = Club::with('features')->withCount(['users', 'branches']);
+        $query = Club::with(['features', 'activeSportModules' => function ($q) {
+            $q->select('sport_modules.id', 'name', 'slug', 'icon', 'color');
+        }])->withCount(['users', 'branches']);
 
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");
