@@ -1,9 +1,161 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSportModule } from '../contexts/SportModuleContext';
 import { getStoredClubSlug } from '../api/axios';
 import { RouteErrorBoundary } from './ErrorBoundary';
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api/notifications';
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'الآن';
+  if (mins < 60) return `${mins}د`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}س`;
+  const days = Math.floor(hrs / 24);
+  return `${days}ي`;
+}
+
+function NotificationBell({ navigate }) {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const dropdownRef = useRef(null);
+
+  const fetchNotifications = useCallback(() => {
+    getNotifications()
+      .then(data => {
+        setNotifications(data.notifications?.data?.slice(0, 5) || []);
+        setUnreadCount(data.unread_count || 0);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch {}
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() })));
+      setUnreadCount(0);
+    } catch {}
+  };
+
+  const handleNotificationClick = (notif) => {
+    if (!notif.read_at) handleMarkRead(notif.id);
+    setOpen(false);
+    const d = notif.data;
+    if (d?.swimmer_id) navigate(`/club/swimmers`);
+    else if (d?.session_id) navigate(`/club/sessions`);
+    else if (d?.registration_id) navigate(`/club/registrations`);
+  };
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          background: open ? 'rgba(34,211,238,0.12)' : 'rgba(34,211,238,0.06)',
+          border: `1px solid ${open ? 'rgba(34,211,238,0.2)' : 'rgba(34,211,238,0.1)'}`,
+          borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'pointer', position: 'relative', transition: 'all 0.2s',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+        </svg>
+        {unreadCount > 0 && (
+          <div style={{
+            position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16,
+            borderRadius: 8, background: '#ef4444', border: '2px solid #0a1628',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, fontWeight: 700, color: '#fff', padding: '0 3px',
+          }}>{unreadCount > 9 ? '9+' : unreadCount}</div>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 44, right: 0, width: 320, maxHeight: 400,
+          background: 'linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%)',
+          border: '1px solid rgba(34,211,238,0.12)', borderRadius: 14,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden',
+          animation: 'fadeInUp 0.2s ease-out',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', borderBottom: '1px solid rgba(51,65,85,0.2)',
+          }}>
+            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>الإشعارات</span>
+            {unreadCount > 0 && (
+              <button type="button" onClick={handleMarkAllRead} style={{
+                background: 'none', border: 'none', color: '#22d3ee', fontSize: 11,
+                fontWeight: 600, cursor: 'pointer', padding: '2px 6px',
+              }}>قراءة الكل</button>
+            )}
+          </div>
+
+          <div style={{ overflowY: 'auto', maxHeight: 320 }}>
+            {notifications.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#475569', fontSize: 13 }}>
+                لا توجد إشعارات
+              </div>
+            ) : notifications.map(notif => (
+              <div
+                key={notif.id}
+                onClick={() => handleNotificationClick(notif)}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.04)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                style={{
+                  padding: '10px 16px', cursor: 'pointer', transition: 'background 0.15s',
+                  borderBottom: '1px solid rgba(51,65,85,0.1)',
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                }}
+              >
+                <div style={{
+                  width: 8, height: 8, borderRadius: 4, flexShrink: 0, marginTop: 5,
+                  background: notif.read_at ? 'transparent' : '#22d3ee',
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{notif.title}</div>
+                  <div style={{
+                    color: '#94a3b8', fontSize: 11, lineHeight: 1.4,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>{notif.body}</div>
+                  <div style={{ color: '#475569', fontSize: 10, marginTop: 3 }}>{timeAgo(notif.created_at)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const allNavItems = {
   PLATFORM_ADMIN: [
@@ -24,6 +176,7 @@ const allNavItems = {
     { to: '/club/schedules', label: 'Schedules', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
     { to: '/club/registrations', label: 'Registrations', icon: 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 3a4 4 0 100 8 4 4 0 000-8zM20 8v6M23 11h-6' },
     { to: '/club/subscription-plans', label: 'Subscriptions', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', feature: 'subscription_plans' },
+    { to: '/club/analytics', label: 'Analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
     { to: '/club/leaderboard', label: 'Leaderboard', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', feature: 'leaderboard' },
     { to: '/club/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
   ],
@@ -154,10 +307,11 @@ export default function Layout() {
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--theme-primary, #22d3ee)', flexShrink: 0 }}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>{user?.name}</div>
               <div style={{ color: '#475569', fontSize: 9, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{roleLabels[user?.role] || user?.role}</div>
             </div>
+            <NotificationBell navigate={navigate} />
           </div>
         </div>
 

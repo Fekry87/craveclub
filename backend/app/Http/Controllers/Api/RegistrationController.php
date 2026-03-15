@@ -11,7 +11,9 @@ use App\Models\SwimmerProfile;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\Club;
 use App\Services\AuditService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -154,6 +156,17 @@ class RegistrationController extends Controller
                 'profile_id_created' => $result['swimmer']['profile_id'],
             ]);
 
+            // Notify the newly created swimmer user
+            $club = Club::find($clubId);
+            app(NotificationService::class)->notify(
+                userId: $result['swimmer']['user_id'],
+                type: 'registration_approved',
+                title: 'تم قبول طلبك',
+                body: "مرحباً {$registration->full_name}! تم قبول طلب تسجيلك في {$club->name}.",
+                data: ['registration_id' => $registration->id],
+                clubId: $clubId,
+            );
+
             return response()->json([
                 'registration' => $result['registration'],
                 'swimmer' => $result['swimmer'],
@@ -177,6 +190,23 @@ class RegistrationController extends Controller
             AuditService::log('registration.rejected', Registration::class, $registration->id, [
                 'swimmer_name' => $registration->full_name,
             ]);
+
+            // Notify swimmer user if they have an existing account (from a prior registration)
+            $clubId = app('current_club_id');
+            $swimmerUser = User::where('club_id', $clubId)
+                ->where('name', $registration->full_name)
+                ->first();
+
+            if ($swimmerUser) {
+                app(NotificationService::class)->notify(
+                    userId: $swimmerUser->id,
+                    type: 'registration_rejected',
+                    title: 'تعذّر قبول الطلب',
+                    body: 'نأسف، لم يتم قبول طلب تسجيلك. للمزيد تواصل مع النادي.',
+                    data: ['registration_id' => $registration->id],
+                    clubId: $clubId,
+                );
+            }
 
             return response()->json([
                 'registration' => $registration,

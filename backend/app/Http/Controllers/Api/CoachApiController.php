@@ -12,6 +12,8 @@ use App\Models\SessionSwimmer;
 use App\Models\SessionExclusion;
 use App\Models\SwimmerProfile;
 use App\Models\GroupMembership;
+use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -369,7 +371,7 @@ class CoachApiController extends Controller
         foreach ($effectiveSwimmers as $swimmer) {
             Attendance::firstOrCreate(
                 ['session_id' => $session->id, 'swimmer_id' => $swimmer->id],
-                ['club_id' => $user->club_id, 'present' => true]
+                ['club_id' => $user->club_id, 'present' => false]
             );
         }
 
@@ -438,6 +440,53 @@ class CoachApiController extends Controller
             'summary_notes' => $request->summary_notes,
         ]);
 
+        // ── Absence Alert Notifications ──
+        if ($request->has('attendance')) {
+            $clubId = app('current_club_id');
+            $notificationService = app(NotificationService::class);
+            $coachUserId = $session->coach_user_id;
+
+            foreach ($request->attendance as $att) {
+                if (!$att['present']) {
+                    $swimmer = SwimmerProfile::find($att['swimmer_id']);
+                    if (!$swimmer) continue;
+
+                    // Notify coach: single absence
+                    $notificationService->notify(
+                        userId: $coachUserId,
+                        type: 'absence_alert',
+                        title: 'غياب سباح',
+                        body: "{$swimmer->full_name} لم يحضر جلسة {$session->title} بتاريخ {$session->date}",
+                        data: ['swimmer_id' => $swimmer->id, 'session_id' => $session->id],
+                        clubId: $clubId,
+                    );
+
+                    // Check for 3 consecutive absences → notify manager
+                    $recentAbsences = Attendance::where('swimmer_id', $swimmer->id)
+                        ->where('present', false)
+                        ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('status', 'Completed'))
+                        ->join('training_sessions', 'attendances.session_id', '=', 'training_sessions.id')
+                        ->orderByDesc('training_sessions.date')
+                        ->take(3)
+                        ->pluck('attendances.present');
+
+                    if ($recentAbsences->count() >= 3 && $recentAbsences->every(fn ($v) => !$v)) {
+                        $manager = User::where('club_id', $clubId)->where('role', 'CLUB_MANAGER')->first();
+                        if ($manager) {
+                            $notificationService->notify(
+                                userId: $manager->id,
+                                type: 'repeated_absence',
+                                title: 'غياب متكرر',
+                                body: "{$swimmer->full_name} غاب 3 جلسات متتالية — يحتاج متابعة",
+                                data: ['swimmer_id' => $swimmer->id, 'session_id' => $session->id],
+                                clubId: $clubId,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
         return response()->json([
             'message' => 'Session completed',
             'session' => $session->load([
@@ -460,6 +509,124 @@ class CoachApiController extends Controller
             'excluded_swimmers' => $session->sessionExclusions,
             'effective_roster' => $session->effective_swimmers,
         ]);
+    }
+
+    // ─── SESSION ATTENDANCE ──────────────────────────────────────────
+
+    public function sessionAttendance(Request $request, int $id): JsonResponse
+    {
+        $groupIds = $this->coachGroupIds($request);
+
+        $session = TrainingSession::whereIn('group_id', $groupIds)
+            ->with(['group.swimmers', 'sessionSwimmers', 'sessionExclusions'])
+            ->findOrFail($id);
+
+        $effectiveSwimmers = $session->effective_swimmers;
+        $attendances = Attendance::where('session_id', $session->id)->get()->keyBy('swimmer_id');
+        $evaluations = DailyEvaluation::where('session_id', $session->id)->get()->keyBy('swimmer_id');
+
+        $roster = $effectiveSwimmers->map(function ($swimmer) use ($attendances, $evaluations) {
+            $att = $attendances->get($swimmer->id);
+            $eval = $evaluations->get($swimmer->id);
+
+            return [
+                'swimmer_id' => $swimmer->id,
+                'first_name' => $swimmer->first_name,
+                'last_name' => $swimmer->last_name,
+                'avatar_url' => $swimmer->avatar_url ?? null,
+                'present' => $att ? (bool) $att->present : false,
+                'evaluated' => $eval !== null,
+                'rating' => $eval?->rating,
+                'notes' => $eval?->notes,
+            ];
+        })->values();
+
+        $presentCount = $roster->where('present', true)->count();
+
+        return response()->json([
+            'session' => [
+                'id' => $session->id,
+                'title' => $session->title,
+                'date' => $session->date?->toDateString(),
+                'start_time' => $session->start_time,
+                'status' => $session->status,
+                'group_id' => $session->group_id,
+            ],
+            'roster' => $roster,
+            'summary' => [
+                'total' => $roster->count(),
+                'present' => $presentCount,
+                'absent' => $roster->count() - $presentCount,
+                'evaluated' => $roster->where('evaluated', true)->count(),
+            ],
+        ]);
+    }
+
+    public function toggleAttendance(Request $request, int $sessionId, int $swimmerId): JsonResponse
+    {
+        $groupIds = $this->coachGroupIds($request);
+        $clubId = app('current_club_id');
+
+        $session = TrainingSession::whereIn('group_id', $groupIds)
+            ->with(['group.swimmers', 'sessionSwimmers', 'sessionExclusions'])
+            ->findOrFail($sessionId);
+
+        if (!in_array($session->status, ['Live', 'Completed'])) {
+            return response()->json(['message' => 'Cannot update attendance for a session that is not Live or Completed.'], 422);
+        }
+
+        $effectiveIds = $session->effective_swimmers->pluck('id');
+        if (!$effectiveIds->contains($swimmerId)) {
+            return response()->json(['message' => 'Swimmer is not in this session roster.'], 422);
+        }
+
+        $request->validate([
+            'present' => 'required|boolean',
+            'rating' => 'nullable|integer|min:1|max:5',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        Attendance::updateOrCreate(
+            ['session_id' => $sessionId, 'swimmer_id' => $swimmerId],
+            ['club_id' => $clubId, 'present' => $request->present]
+        );
+
+        if ($request->has('rating') && $request->rating !== null) {
+            DailyEvaluation::updateOrCreate(
+                ['session_id' => $sessionId, 'swimmer_id' => $swimmerId],
+                ['club_id' => $clubId, 'rating' => $request->rating, 'notes' => $request->notes]
+            );
+        }
+
+        $swimmer = SwimmerProfile::find($swimmerId);
+        $att = Attendance::where('session_id', $sessionId)->where('swimmer_id', $swimmerId)->first();
+        $eval = DailyEvaluation::where('session_id', $sessionId)->where('swimmer_id', $swimmerId)->first();
+
+        return response()->json([
+            'swimmer_id' => $swimmer->id,
+            'first_name' => $swimmer->first_name,
+            'last_name' => $swimmer->last_name,
+            'avatar_url' => $swimmer->avatar_url ?? null,
+            'present' => (bool) $att->present,
+            'evaluated' => $eval !== null,
+            'rating' => $eval?->rating,
+            'notes' => $eval?->notes,
+        ]);
+    }
+
+    public function sessionCancel(Request $request, int $id): JsonResponse
+    {
+        $groupIds = $this->coachGroupIds($request);
+
+        $session = TrainingSession::whereIn('group_id', $groupIds)->findOrFail($id);
+
+        if ($session->status !== 'Scheduled') {
+            return response()->json(['message' => 'Only scheduled sessions can be cancelled.'], 422);
+        }
+
+        $session->update(['status' => 'Cancelled']);
+
+        return response()->json($session);
     }
 
     // ─── COACH PROFILE / SETTINGS ──────────────────────────────────

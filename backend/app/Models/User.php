@@ -45,6 +45,16 @@ class User extends Authenticatable
         return $this->hasOne(SwimmerProfile::class);
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function pushTokens()
+    {
+        return $this->hasMany(PushToken::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::PLATFORM_ADMIN;

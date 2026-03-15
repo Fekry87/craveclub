@@ -36,6 +36,7 @@ const Coaches = lazy(() => import('./pages/club/Coaches'));
 const Swimmers = lazy(() => import('./pages/club/Swimmers'));
 const Groups = lazy(() => import('./pages/club/Groups'));
 const Sessions = lazy(() => import('./pages/club/Sessions'));
+const SessionDetailPage = lazy(() => import('./pages/club/SessionDetailPage'));
 const Registrations = lazy(() => import('./pages/club/Registrations'));
 const Settings = lazy(() => import('./pages/club/Settings'));
 const ClubLeaderboard = lazy(() => import('./pages/club/Leaderboard'));
@@ -43,6 +44,9 @@ const BranchesPage = lazy(() => import('./pages/club/BranchesPage'));
 const BranchDetail = lazy(() => import('./pages/club/BranchDetail'));
 const SubscriptionPlansPage = lazy(() => import('./pages/club/SubscriptionPlansPage'));
 const ScheduleBuilderPage = lazy(() => import('./pages/club/ScheduleBuilderPage'));
+const AnalyticsDashboard = lazy(() => import('./pages/club/AnalyticsDashboard'));
+const CoachPerformancePage = lazy(() => import('./pages/club/CoachPerformancePage'));
+const CoachDetailPage = lazy(() => import('./pages/club/CoachDetailPage'));
 
 // Coach
 const CoachDashboard = lazy(() => import('./pages/coach/Dashboard'));
@@ -140,15 +144,19 @@ function App() {
             <Route path="/club/training-plans" element={<FeatureRoute feature="training_plans"><TrainingPlansPage /></FeatureRoute>} />
             <Route path="/club/skills" element={<FeatureRoute feature="skills"><Skills /></FeatureRoute>} />
             <Route path="/club/coaches" element={<Coaches />} />
+            <Route path="/club/coaches/performance" element={<CoachPerformancePage />} />
+            <Route path="/club/coaches/:coachId/performance" element={<CoachDetailPage />} />
             <Route path="/club/swimmers" element={<Swimmers />} />
             <Route path="/club/groups" element={<Groups />} />
             <Route path="/club/branches" element={<BranchesPage />} />
             <Route path="/club/branches/:id" element={<BranchDetail />} />
             <Route path="/club/sessions" element={<Sessions />} />
+            <Route path="/club/sessions/:id" element={<SessionDetailPage />} />
             <Route path="/club/schedules" element={<ScheduleBuilderPage />} />
             <Route path="/club/registrations" element={<Registrations />} />
             <Route path="/club/subscription-plans" element={<FeatureRoute feature="subscription_plans"><SubscriptionPlansPage /></FeatureRoute>} />
             <Route path="/club/leaderboard" element={<FeatureRoute feature="leaderboard"><ClubLeaderboard /></FeatureRoute>} />
+            <Route path="/club/analytics" element={<AnalyticsDashboard />} />
             <Route path="/club/settings" element={<Settings />} />
           </Route>
 

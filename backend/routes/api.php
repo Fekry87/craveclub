@@ -24,7 +24,9 @@ use App\Http\Controllers\Api\TrainingPlanController;
 use App\Http\Controllers\Api\RecurringScheduleController;
 use App\Http\Controllers\Api\ClubBrandingController;
 use App\Http\Controllers\Api\SportModuleController;
+use App\Http\Controllers\Api\CoachPerformanceController;
 use App\Http\Controllers\Api\SwimmerReportController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -91,6 +93,12 @@ Route::prefix('v1')->group(function () {
             return Broadcast::auth($request);
         });
 
+        // ── Notifications (all authenticated users) ──────────
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::put('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::put('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+        Route::post('/notifications/push-token', [NotificationController::class, 'registerToken']);
+
         // ── Corporate (CraveClubs) ──────────────────────────
         Route::middleware('role:PLATFORM_ADMIN')->prefix('corporate')->group(function () {
             // Corporate settings
@@ -138,6 +146,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware(['role:CLUB_MANAGER', 'club.context'])->prefix('club')->group(function () {
             // Always available (core)
             Route::get('/dashboard', [ClubDashboardController::class, 'dashboard']);
+            Route::get('/analytics', [ClubDashboardController::class, 'analytics']);
             Route::get('/settings', [ClubDashboardController::class, 'settings']);
             Route::put('/settings', [ClubDashboardController::class, 'updateSettings']);
             Route::get('/features', [ClubDashboardController::class, 'features']);
@@ -147,9 +156,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/sport-modules', [ClubDashboardController::class, 'sportModules']);
             Route::get('/sport-modules/{module}', [ClubDashboardController::class, 'sportModuleShow']);
 
+            Route::get('/coaches/performance', [CoachPerformanceController::class, 'index']);
+            Route::get('/coaches/performance/compare', [CoachPerformanceController::class, 'comparison']);
+
             Route::get('/coaches', [CoachManagementController::class, 'coachIndex']);
             Route::post('/coaches', [CoachManagementController::class, 'coachStore']);
             Route::get('/coaches/{coach}', [CoachManagementController::class, 'coachShow']);
+            Route::get('/coaches/{coach}/performance', [CoachPerformanceController::class, 'show']);
             Route::put('/coaches/{coach}', [CoachManagementController::class, 'coachUpdate']);
             Route::delete('/coaches/{coach}', [CoachManagementController::class, 'coachDestroy']);
 
@@ -170,6 +183,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/sessions', [SessionManagementController::class, 'sessionIndex']);
             Route::post('/sessions', [SessionManagementController::class, 'sessionStore']);
             Route::get('/sessions/{session}', [SessionManagementController::class, 'sessionShow']);
+            Route::get('/sessions/{session}/attendance', [SessionManagementController::class, 'sessionAttendance']);
             Route::put('/sessions/{session}', [SessionManagementController::class, 'sessionUpdate']);
             Route::delete('/sessions/{session}', [SessionManagementController::class, 'sessionDestroy']);
 
@@ -283,6 +297,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/sessions/{session}/start', [CoachApiController::class, 'sessionStart']);
             Route::post('/sessions/{session}/complete', [CoachApiController::class, 'sessionComplete']);
             Route::get('/sessions/{session}/roster', [CoachApiController::class, 'sessionRoster']);
+            Route::get('/sessions/{session}/attendance', [CoachApiController::class, 'sessionAttendance']);
+            Route::patch('/sessions/{session}/attendance/{swimmer}', [CoachApiController::class, 'toggleAttendance']);
+            Route::post('/sessions/{session}/cancel', [CoachApiController::class, 'sessionCancel']);
 
             // Coach profile/settings
             Route::get('/profile', [CoachApiController::class, 'profile']);
