@@ -39,4 +39,16 @@ class HealthCheckTest extends TestCase
 
         $response->assertHeader('X-Request-ID');
     }
+
+    public function test_health_includes_replica_section(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'checks' => [
+                    'replica' => ['status', 'lag_seconds'],
+                ],
+            ]);
+    }
 }

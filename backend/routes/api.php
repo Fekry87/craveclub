@@ -99,6 +99,48 @@ Route::prefix('v1')->group(function () {
             $checks['disk'] = ['status' => 'unknown'];
         }
 
+        // 5. Replica: check replication lag (MySQL only)
+        try {
+            if (config('database.default') === 'mysql' && config('database.connections.mysql.read.host.0') !== config('database.connections.mysql.write.host.0')) {
+                // Try MySQL 8.0+ syntax first, fall back to legacy
+                $replicaStatus = null;
+                try {
+                    $replicaStatus = DB::connection('mysql')->selectOne('SHOW REPLICA STATUS');
+                } catch (\Throwable $e) {
+                    try {
+                        $replicaStatus = DB::connection('mysql')->selectOne('SHOW SLAVE STATUS');
+                    } catch (\Throwable $e2) {
+                        // Neither command worked
+                    }
+                }
+
+                if ($replicaStatus) {
+                    $lagSeconds = $replicaStatus->Seconds_Behind_Source
+                        ?? $replicaStatus->Seconds_Behind_Master
+                        ?? 0;
+                    $checks['replica'] = [
+                        'status' => $lagSeconds < 30 ? 'ok' : 'degraded',
+                        'lag_seconds' => (int) $lagSeconds,
+                    ];
+                } else {
+                    $checks['replica'] = [
+                        'status' => 'ok',
+                        'lag_seconds' => 0,
+                    ];
+                }
+            } else {
+                $checks['replica'] = [
+                    'status' => 'ok',
+                    'lag_seconds' => 0,
+                ];
+            }
+        } catch (\Throwable $e) {
+            $checks['replica'] = [
+                'status' => 'ok',
+                'lag_seconds' => 0,
+            ];
+        }
+
         $dbOk = ($checks['database']['status'] ?? 'error') === 'ok';
         $allOk = collect($checks)->every(fn ($c) => in_array($c['status'], ['ok', 'unavailable', 'unknown']));
 

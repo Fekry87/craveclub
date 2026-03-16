@@ -13,7 +13,8 @@
 - CORS `supports_credentials` must stay `false` (no cookies); `allowed_origins` includes both `localhost` and `127.0.0.1`; methods/headers are explicit whitelists (not wildcards)
 - Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP — added by `SecurityHeaders` middleware
 - Structured exception handler in `bootstrap/app.php`: ValidationException→422, AuthenticationException→401, NotFoundHttpException→404, AccessDeniedHttpException→403, MethodNotAllowedHttpException→405, Throwable→500
-- Health check: `GET /api/v1/health` — returns `{status, checks: {database, redis, queue, disk}, timestamp}` with graceful degradation (200 if DB ok, 503 only if DB down)
+- Health check: `GET /api/v1/health` — returns `{status, checks: {database, redis, queue, disk, replica}, timestamp}` with graceful degradation (200 if DB ok, 503 only if DB down)
+- MySQL read/write split: `config/database.php` has `read`/`write` hosts with `sticky: true`; set `DB_READ_HOST` for replica, empty = use primary for both (zero code changes)
 - Global RequestId middleware: generates UUID per request, stores in `app('request_id')`, adds `X-Request-ID` response header on ALL routes
 - Sentry error tracking: captures unhandled exceptions in Throwable handler, sets user context (id, email, club_id) in ClubContext middleware
 - Structured JSON logging: `json` channel uses Monolog RotatingFileHandler + AddRequestContext tap (request_id, club_id, environment); production default `LOG_CHANNEL=json`
@@ -218,6 +219,7 @@
 - `backend/app/Http/Controllers/Api/MetricsController.php` — system metrics endpoint (protected by X-Metrics-Key header)
 - `backend/app/Console/Commands/GenerateBusinessReport.php` — weekly business metrics report (registrations, attendance, sessions)
 - `backend/docs/MONITORING_SETUP.md` — UptimeRobot setup, SLA targets, incident response, alerting channels
+- `backend/docs/SCALING_GUIDE.md` — read replicas, connection pool sizing, horizontal scaling phases, caching strategy
 
 ## Registration Wizard Routes
 ```
