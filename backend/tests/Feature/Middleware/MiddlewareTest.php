@@ -163,6 +163,13 @@ class MiddlewareTest extends TestCase
         $response->assertHeader('X-Response-Time');
     }
 
+    public function test_response_time_header_on_public_endpoint(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertHeader('X-Response-Time');
+    }
+
     // ── ForceProductionSettings ──────────────────────────
 
     public function test_testing_env_passes_through(): void
@@ -170,5 +177,49 @@ class MiddlewareTest extends TestCase
         $response = $this->getJson('/api/v1/docs');
 
         $response->assertOk();
+    }
+
+    // ── Metrics Endpoint ────────────────────────────────
+
+    public function test_metrics_returns_403_without_key(): void
+    {
+        $response = $this->getJson('/api/v1/metrics');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_metrics_returns_403_with_wrong_key(): void
+    {
+        config(['app.metrics_secret_key' => 'correct-key']);
+
+        $response = $this->getJson('/api/v1/metrics', [
+            'X-Metrics-Key' => 'wrong-key',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_metrics_returns_200_with_correct_key(): void
+    {
+        config(['app.metrics_secret_key' => 'test-secret-key']);
+
+        $response = $this->getJson('/api/v1/metrics', [
+            'X-Metrics-Key' => 'test-secret-key',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'timestamp',
+                'app' => ['version', 'environment'],
+                'database' => [
+                    'total_clubs',
+                    'total_users',
+                    'total_sessions',
+                    'total_notifications',
+                    'pending_jobs',
+                    'failed_jobs_24h',
+                ],
+                'queues' => ['pending', 'failed_24h'],
+            ]);
     }
 }

@@ -5,6 +5,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -16,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(\App\Http\Middleware\RequestId::class);
+        $middleware->append(\App\Http\Middleware\TrackResponseTime::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\ForceProductionSettings::class);
         $middleware->append(\App\Http\Middleware\ApiVersionMiddleware::class);
@@ -52,7 +56,26 @@ return Application::configure(basePath: dirname(__DIR__))
             ], 404);
         });
 
+        // FIX: Explicit 403 handler — prevents falling through to generic 500
+        $exceptions->renderable(function (AccessDeniedHttpException $e) {
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Forbidden.',
+            ], 403);
+        });
+
+        // FIX: Explicit 405 handler — prevents falling through to generic 500
+        $exceptions->renderable(function (MethodNotAllowedHttpException $e) {
+            return response()->json([
+                'message' => 'Method not allowed.',
+            ], 405);
+        });
+
         $exceptions->renderable(function (\Throwable $e) {
+            // Capture unhandled exceptions in Sentry
+            if (app()->bound('sentry')) {
+                app('sentry')->captureException($e);
+            }
+
             if (app()->hasDebugModeEnabled()) {
                 return null; // Let Laravel handle in debug mode
             }

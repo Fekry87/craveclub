@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\CoachPerformanceController;
 use App\Http\Controllers\Api\SwimmerReportController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AppVersionController;
+use App\Http\Controllers\Api\MetricsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,9 @@ Route::prefix('v1')->group(function () {
 
     // App Version Check (public, no auth — used by mobile for force-update)
     Route::get('/app/version-check', [AppVersionController::class, 'check']);
+
+    // Metrics (protected by X-Metrics-Key header)
+    Route::get('/metrics', [MetricsController::class, 'index']);
 
     // API Documentation
     Route::get('/docs', [ApiDocController::class, 'docs']);

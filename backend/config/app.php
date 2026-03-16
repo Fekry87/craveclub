@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Metrics Secret Key
+    |--------------------------------------------------------------------------
+    |
+    | Secret key for the /api/v1/metrics endpoint. Requests must include
+    | this value in the X-Metrics-Key header to access system metrics.
+    |
+    */
+
+    'metrics_secret_key' => env('METRICS_SECRET_KEY'),
+
 ];

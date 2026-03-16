@@ -29,6 +29,9 @@
 - CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)
 - CI env: `backend/.env.ci` — MySQL 8.0 + Redis 7, `QUEUE_CONNECTION=sync`, safe to commit (no secrets)
 - Safe migration: `php artisan migrate:safe` — checks pending, runs migrate --force, rebuilds config/route/view cache, logs to daily channel
+- Response time tracking: `TrackResponseTime` global middleware adds `X-Response-Time` header on ALL responses, logs SLOW_REQUEST (>500ms) to daily channel
+- Metrics endpoint: `GET /api/v1/metrics` protected by `X-Metrics-Key` header matching `METRICS_SECRET_KEY` env var — returns system/business metrics
+- Business reports: `php artisan report:business` — weekly registrations, attendance, sessions, notifications; logged to `storage/logs/business_report.log`; scheduled Monday 08:00
 - Docker: PHP 8.2 FPM Alpine backend + MySQL 8.0 + Redis 7 Alpine (see `docker-compose.yml`)
 - API base URL is dynamic: `http://${window.location.hostname}:8000/api/v1` — works on both `localhost` and `127.0.0.1`; override with `VITE_API_URL` env var
 - Real-time: Laravel Reverb WebSockets — `broadcast()->toOthers()` OUTSIDE DB transactions
@@ -211,6 +214,10 @@
 - `.github/workflows/deploy.yml` — deploy pipeline (tests → Railway deploy → migrate:safe → health check)
 - `backend/.env.ci` — CI environment config (MySQL + Redis, sync queue, no secrets)
 - `backend/app/Console/Commands/SafeMigrate.php` — safe migration command (checks pending, migrates, rebuilds caches)
+- `backend/app/Http/Middleware/TrackResponseTime.php` — global middleware: X-Response-Time header + SLOW_REQUEST logging (>500ms)
+- `backend/app/Http/Controllers/Api/MetricsController.php` — system metrics endpoint (protected by X-Metrics-Key header)
+- `backend/app/Console/Commands/GenerateBusinessReport.php` — weekly business metrics report (registrations, attendance, sessions)
+- `backend/docs/MONITORING_SETUP.md` — UptimeRobot setup, SLA targets, incident response, alerting channels
 
 ## Registration Wizard Routes
 ```
