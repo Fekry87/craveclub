@@ -44,6 +44,8 @@
 - White-label branding: Club model has display_name, cover_url, favicon_url, app_name, support_email, support_phone, social_links (JSON), custom_domain, is_domain_active, branding_tier (shared|branded)
 - Public branding API: `GET /api/v1/branding/{slug}` — cached 1hr, busted on update; returns club branding + feature flags
 - Club Manager branding: `GET /api/v1/club/branding` (read), `PUT /api/v1/club/branding` (update), `POST /api/v1/club/branding/upload` (upload assets) — full branding config available to CLUB_MANAGER, not just corporate
+- CDN for assets: `CDN_URL` env var in `config/filesystems.php` s3 disk — when set, `Storage::disk('s3')->url()` returns CDN URL; branding uploads use content-hash filenames with `Cache-Control: immutable`
+- Frontend bundle split: Vite `manualChunks` — `vendor` (react/react-dom/react-router-dom) and `axios` are separate chunks
 - Training Engine: TrainingPlan → TrainingPlanAssignment → RecurringSchedule → SessionGeneratorService pipeline
 - TrainingPlan extended fields: duration_weeks, sessions_per_week, goals, difficulty_level (beginner|intermediate|advanced), is_template, coach_user_id, phases (JSON)
 - TrainingPlanAssignment: links plan to group or individual swimmer with start/end dates, status (active|paused|completed|cancelled), coach_notes
@@ -307,3 +309,5 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
 - Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
 - `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false
+- Branding upload uses content-hash filenames (`logo-a1b2c3d4.png`) — new file = new hash = CDN serves fresh without purge; `CacheControl: public, max-age=31536000, immutable`
+- `CDN_URL` env var: when set, `Storage::disk('s3')->url()` returns CDN URL; when empty, falls back to direct `AWS_URL` — no code changes needed in controllers

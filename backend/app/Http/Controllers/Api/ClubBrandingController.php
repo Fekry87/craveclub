@@ -87,6 +87,8 @@ class ClubBrandingController extends Controller
             'support_email' => $club->support_email ?? $club->contact_email,
             'support_phone' => $club->support_phone ?? $club->contact_phone,
             'social_links' => $club->social_links,
+            'custom_domain' => $club->custom_domain,
+            'is_domain_active' => $club->is_domain_active,
             'branding_tier' => $club->branding_tier,
             'features' => [
                 'leaderboard' => $features->leaderboard_enabled,
@@ -107,7 +109,57 @@ class ClubBrandingController extends Controller
      */
     public function update(Request $request, Club $club): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate($this->brandingRules($club->id));
+
+        $club->update($validated);
+
+        Cache::forget("branding_{$club->slug}");
+
+        return response()->json($club->fresh());
+    }
+
+    /**
+     * Club Manager: PUT /api/v1/club/branding
+     * Update branding for the authenticated club.
+     */
+    public function updateOwn(Request $request): JsonResponse
+    {
+        $club = Club::findOrFail(app('current_club_id'));
+
+        $validated = $request->validate($this->brandingRules($club->id));
+
+        $club->update($validated);
+
+        Cache::forget("branding_{$club->slug}");
+
+        return response()->json($club->fresh());
+    }
+
+    /**
+     * Club Manager: POST /api/v1/club/branding/upload
+     * Upload logo, cover, or favicon for the authenticated club.
+     */
+    public function uploadOwn(Request $request): JsonResponse
+    {
+        $club = Club::findOrFail(app('current_club_id'));
+        return $this->handleUpload($request, $club);
+    }
+
+    /**
+     * Corporate: POST /api/v1/corporate/clubs/{club}/branding/upload
+     * Upload logo, cover, or favicon image.
+     */
+    public function upload(Request $request, Club $club): JsonResponse
+    {
+        return $this->handleUpload($request, $club);
+    }
+
+    /**
+     * Shared validation rules for branding updates.
+     */
+    private function brandingRules(int $clubId): array
+    {
+        return [
             'display_name' => 'nullable|string|max:255',
             'app_name' => 'nullable|string|max:255',
             'primary_color' => ['nullable', 'string', 'regex:/^[0-9A-Fa-f]{6}$/'],
@@ -123,23 +175,17 @@ class ClubBrandingController extends Controller
             'social_links.instagram' => 'nullable|string|max:255',
             'social_links.twitter' => 'nullable|string|max:255',
             'social_links.facebook' => 'nullable|string|max:255',
-            'custom_domain' => 'nullable|string|max:255|unique:clubs,custom_domain,' . $club->id,
+            'custom_domain' => 'nullable|string|max:255|unique:clubs,custom_domain,' . $clubId,
             'is_domain_active' => 'nullable|boolean',
             'branding_tier' => 'nullable|string|in:shared,branded',
-        ]);
-
-        $club->update($validated);
-
-        Cache::forget("branding_{$club->slug}");
-
-        return response()->json($club->fresh());
+        ];
     }
 
     /**
-     * Corporate: POST /api/v1/corporate/clubs/{club}/branding/upload
-     * Upload logo, cover, or favicon image.
+     * Shared file upload handler.
+     * Uses content-hash filenames for CDN cache-busting without purge.
      */
-    public function upload(Request $request, Club $club): JsonResponse
+    private function handleUpload(Request $request, Club $club): JsonResponse
     {
         $request->validate([
             'file' => 'required|file|mimes:png,jpg,jpeg,svg|max:2048',
@@ -150,13 +196,18 @@ class ClubBrandingController extends Controller
         $type = $request->input('type');
         $ext = $file->getClientOriginalExtension();
 
-        $path = $file->storeAs(
-            "clubs/{$club->slug}",
-            "{$type}.{$ext}",
-            'public'
-        );
+        // Content hash for CDN cache-busting: new file = new filename = fresh CDN response
+        $hash = substr(md5_file($file->getRealPath()), 0, 8);
+        $filename = "{$type}-{$hash}.{$ext}";
+        $storagePath = "clubs/{$club->slug}/{$filename}";
 
-        $url = Storage::disk('public')->url($path);
+        Storage::disk('s3')->put($storagePath, file_get_contents($file->getRealPath()), [
+            'visibility' => 'public',
+            'ContentType' => $file->getMimeType(),
+            'CacheControl' => 'public, max-age=31536000, immutable',
+        ]);
+
+        $url = Storage::disk('s3')->url($storagePath);
 
         $columnMap = [
             'logo' => 'logo_url',

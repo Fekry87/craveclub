@@ -158,11 +158,34 @@ In production with `LOG_CHANNEL=json`, structured JSON logs are written with req
 | **Sentry** | Application errors, queue failures | `SENTRY_LARAVEL_DSN` env var |
 | **Logs** | Slow queries, slow requests, audit trail | Built-in, no setup needed |
 
+## CDN Monitoring
+
+### Health Check
+
+Monitor any static branding asset or a known test file on the CDN:
+
+| Setting | Value |
+|---------|-------|
+| URL | `GET https://cdn.craveclubs.com/file/BUCKET/healthz.txt` |
+| Check interval | 15 minutes |
+| Alert when | Status != 200 for 2 consecutive checks |
+
+### Fallback
+
+If `CDN_URL` is not set, `Storage::disk('s3')->url()` returns the direct Backblaze B2 URL. Assets will still load, just without Cloudflare edge caching.
+
+### Cache Strategy
+
+- **Branding assets** use content-hash filenames (`logo-a1b2c3d4.png`) with `Cache-Control: public, max-age=31536000, immutable`
+- When a club updates their logo, the new file gets a different hash → CDN serves it fresh immediately
+- No manual cache purge needed
+
 ## Environment Variables for Monitoring
 
 | Variable | Description |
 |----------|-------------|
 | `METRICS_SECRET_KEY` | Secret key for `/api/v1/metrics` endpoint |
+| `CDN_URL` | CDN base URL for branding assets (e.g., `https://cdn.craveclubs.com/file/bucket`) |
 | `SENTRY_LARAVEL_DSN` | Sentry error tracking DSN |
 | `SENTRY_TRACES_SAMPLE_RATE` | Performance tracing sample rate (0.0 - 1.0) |
 | `LOG_CHANNEL` | `json` for production, `stack` for development |
