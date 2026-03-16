@@ -47,14 +47,25 @@ Railway uses a `Procfile` at the project root to define processes. The file is a
 
 ### Post-Deployment Commands
 
-Run these after every deployment to optimize performance:
+The `migrate:safe` command handles migrations + cache rebuilding automatically:
+
+```bash
+php artisan migrate:safe
+```
+
+This command:
+1. Checks for pending migrations
+2. Runs `migrate --force` if any exist
+3. Rebuilds `config:cache`, `route:cache`, `view:cache`
+4. Logs completion to the daily log channel
+
+For manual cache management:
 
 ```bash
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
-php artisan migrate --force
 ```
 
 To clear caches during troubleshooting:
@@ -132,6 +143,49 @@ The `/api/v1/health` endpoint performs 4 checks:
 Response codes:
 - `200` — healthy or degraded (DB is ok)
 - `503` — unhealthy (DB is down)
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflows
+
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| **CI** (`.github/workflows/ci.yml`) | PR to `main`, push to `main`/`develop` | Backend tests (MySQL + Redis) + Frontend tests |
+| **Deploy** (`.github/workflows/deploy.yml`) | Push to `main` only | Backend tests → Frontend tests → Railway deploy → Health check |
+
+### Required GitHub Secrets
+
+| Secret | Where to Get | Description |
+|--------|-------------|-------------|
+| `RAILWAY_TOKEN` | Railway dashboard → Account Settings → Tokens | API token for Railway CLI deployment |
+| `PRODUCTION_URL` | e.g. `https://your-app.railway.app` | Base URL for post-deploy health check verification |
+
+### Deploy Checklist
+
+Before merging to `main`:
+
+- [ ] All tests pass locally (`php artisan test` + `npx vitest run`)
+- [ ] No `[BREAKING MIGRATION]` in this deploy (or schedule maintenance window)
+- [ ] `API_CHANGELOG.md` updated if API endpoints changed
+- [ ] Environment variables added to Railway if new ones are needed
+
+### Breaking Migrations
+
+For migrations that require downtime (column renames, type changes, dropped tables):
+
+1. Tag commit message with `[BREAKING MIGRATION]`
+2. Schedule a maintenance window
+3. Manually run `php artisan down` on Railway before deploy
+4. Deploy and run `php artisan migrate:safe`
+5. Run `php artisan up` to restore service
+
+### CI Environment
+
+The CI pipeline uses `backend/.env.ci` with:
+- MySQL 8.0 service container (matches production)
+- Redis 7 service container (matches production)
+- `QUEUE_CONNECTION=sync` (no async processing in tests)
+- DemoSeeder for realistic test data
 
 ## Docker Deployment (Alternative)
 

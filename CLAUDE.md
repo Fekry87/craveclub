@@ -26,6 +26,9 @@
 - Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
 - Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
 - Deployment: Procfile with 3 processes (web, worker, scheduler) for Railway.app; see `backend/docs/DEPLOYMENT.md`
+- CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)
+- CI env: `backend/.env.ci` — MySQL 8.0 + Redis 7, `QUEUE_CONNECTION=sync`, safe to commit (no secrets)
+- Safe migration: `php artisan migrate:safe` — checks pending, runs migrate --force, rebuilds config/route/view cache, logs to daily channel
 - Docker: PHP 8.2 FPM Alpine backend + MySQL 8.0 + Redis 7 Alpine (see `docker-compose.yml`)
 - API base URL is dynamic: `http://${window.location.hostname}:8000/api/v1` — works on both `localhost` and `127.0.0.1`; override with `VITE_API_URL` env var
 - Real-time: Laravel Reverb WebSockets — `broadcast()->toOthers()` OUTSIDE DB transactions
@@ -204,6 +207,10 @@
 - `backend/app/Http/Middleware/ApiVersionMiddleware.php` — reads X-App-Version/X-Platform from client + adds X-API-Version to response
 - `backend/docs/API_CHANGELOG.md` — API endpoint change history
 - `backend/docs/API_VERSIONING_STRATEGY.md` — versioning scheme, force-update mechanism, backward compat rules
+- `.github/workflows/ci.yml` — CI pipeline (MySQL + Redis services, backend + frontend tests, Pint lint)
+- `.github/workflows/deploy.yml` — deploy pipeline (tests → Railway deploy → migrate:safe → health check)
+- `backend/.env.ci` — CI environment config (MySQL + Redis, sync queue, no secrets)
+- `backend/app/Console/Commands/SafeMigrate.php` — safe migration command (checks pending, migrates, rebuilds caches)
 
 ## Registration Wizard Routes
 ```
