@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -18,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Health check stays accessible during maintenance mode
+        $middleware->preventRequestsDuringMaintenance(except: [
+            'api/v1/health',
+        ]);
+
         $middleware->append(\App\Http\Middleware\RequestId::class);
         $middleware->append(\App\Http\Middleware\TrackResponseTime::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
@@ -68,6 +74,18 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'message' => 'Method not allowed.',
             ], 405);
+        });
+
+        // Maintenance mode: return JSON 503 instead of HTML (for API/mobile clients)
+        $exceptions->renderable(function (HttpException $e) {
+            if ($e->getStatusCode() === 503) {
+                return response()->json([
+                    'message' => 'System is under maintenance. Please try again in a few minutes.',
+                    'retry_after' => 300,
+                ], 503);
+            }
+
+            return null; // Let other HttpExceptions fall through
         });
 
         $exceptions->renderable(function (\Throwable $e) {

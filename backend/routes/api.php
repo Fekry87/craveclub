@@ -42,7 +42,16 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // Health Check — 4 checks: database, redis, queue, disk
+    // Exempt from maintenance mode (see bootstrap/app.php)
     Route::get('/health', function () {
+        // Return 200 during maintenance so load balancer keeps the instance
+        if (app()->isDownForMaintenance()) {
+            return response()->json([
+                'status' => 'maintenance',
+                'timestamp' => now()->toIso8601String(),
+            ], 200);
+        }
+
         $checks = [];
 
         // 1. Database: SELECT 1, measure latency
@@ -147,6 +156,12 @@ Route::prefix('v1')->group(function () {
         return response()->json([
             'status' => $dbOk ? ($allOk ? 'healthy' : 'degraded') : 'unhealthy',
             'checks' => $checks,
+            'config' => [
+                'cache_driver' => config('cache.default'),
+                'queue_driver' => config('queue.default'),
+                'session_driver' => config('session.driver'),
+                'broadcast_driver' => config('broadcasting.default'),
+            ],
             'timestamp' => now()->toIso8601String(),
         ], $dbOk ? 200 : 503);
     });

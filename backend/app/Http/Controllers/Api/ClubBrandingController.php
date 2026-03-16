@@ -8,6 +8,7 @@ use App\Models\ClubFeature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ClubBrandingController extends Controller
@@ -18,51 +19,62 @@ class ClubBrandingController extends Controller
      */
     public function show(string $slug): JsonResponse
     {
-        $data = Cache::remember("branding_{$slug}", 3600, function () use ($slug) {
-            $club = Club::where('slug', $slug)
-                ->where('is_active', true)
-                ->first();
-
-            if (!$club) {
-                return null;
-            }
-
-            $features = ClubFeature::forClub($club->id);
-
-            return [
-                'club_name' => $club->name,
-                'display_name' => $club->display_name,
-                'app_name' => $club->app_name,
-                'primary_color' => $club->primary_color,
-                'secondary_color' => $club->secondary_color,
-                'accent_color' => $club->accent_color,
-                'logo_url' => $club->logo_url,
-                'cover_url' => $club->cover_url,
-                'favicon_url' => $club->favicon_url,
-                'support_email' => $club->support_email ?? $club->contact_email,
-                'support_phone' => $club->support_phone ?? $club->contact_phone,
-                'social_links' => $club->social_links,
-                'branding_tier' => $club->branding_tier,
-                'features' => [
-                    'leaderboard' => $features->leaderboard_enabled,
-                    'evaluations' => $features->evaluations_enabled,
-                    'skills' => $features->skills_enabled,
-                    'training_plans' => $features->training_plans_enabled,
-                    'attendance_tracking' => $features->attendance_tracking_enabled,
-                    'swimmer_accounts' => $features->swimmer_accounts_enabled,
-                    'coach_portal' => $features->coach_portal_enabled,
-                    'subscription_plans' => $features->subscription_plans_enabled,
-                ],
-            ];
-        });
+        try {
+            $data = Cache::remember("branding_{$slug}", 3600, fn() => $this->computeBranding($slug));
+        } catch (\Exception $e) {
+            Log::warning('Cache unavailable, using direct query', ['slug' => $slug, 'method' => 'branding.show']);
+            $data = $this->computeBranding($slug);
+        }
 
         if ($data === null) {
-            // Clear the null cache entry so next request retries
-            Cache::forget("branding_{$slug}");
+            try {
+                Cache::forget("branding_{$slug}");
+            } catch (\Exception $e) {
+                // Cache unavailable — no entry to clear
+            }
             abort(404, 'Club not found.');
         }
 
         return response()->json($data);
+    }
+
+    private function computeBranding(string $slug): ?array
+    {
+        $club = Club::where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$club) {
+            return null;
+        }
+
+        $features = ClubFeature::forClub($club->id);
+
+        return [
+            'club_name' => $club->name,
+            'display_name' => $club->display_name,
+            'app_name' => $club->app_name,
+            'primary_color' => $club->primary_color,
+            'secondary_color' => $club->secondary_color,
+            'accent_color' => $club->accent_color,
+            'logo_url' => $club->logo_url,
+            'cover_url' => $club->cover_url,
+            'favicon_url' => $club->favicon_url,
+            'support_email' => $club->support_email ?? $club->contact_email,
+            'support_phone' => $club->support_phone ?? $club->contact_phone,
+            'social_links' => $club->social_links,
+            'branding_tier' => $club->branding_tier,
+            'features' => [
+                'leaderboard' => $features->leaderboard_enabled,
+                'evaluations' => $features->evaluations_enabled,
+                'skills' => $features->skills_enabled,
+                'training_plans' => $features->training_plans_enabled,
+                'attendance_tracking' => $features->attendance_tracking_enabled,
+                'swimmer_accounts' => $features->swimmer_accounts_enabled,
+                'coach_portal' => $features->coach_portal_enabled,
+                'subscription_plans' => $features->subscription_plans_enabled,
+            ],
+        ];
     }
 
     /**

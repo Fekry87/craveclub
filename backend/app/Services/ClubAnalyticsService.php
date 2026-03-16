@@ -11,12 +11,27 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClubAnalyticsService
 {
+    /**
+     * Cache with graceful fallback — if Redis/cache is unavailable,
+     * execute the callback directly instead of crashing.
+     */
+    private function cacheWithFallback(string $key, int $ttl, int $clubId, string $method, \Closure $callback): mixed
+    {
+        try {
+            return Cache::remember($key, $ttl, $callback);
+        } catch (\Exception $e) {
+            Log::warning('Cache unavailable, using direct query', ['club_id' => $clubId, 'method' => $method]);
+            return $callback();
+        }
+    }
+
     public function getMembershipGrowth(int $clubId): array
     {
-        return Cache::remember("analytics_growth_{$clubId}", 3600, function () use ($clubId) {
+        return $this->cacheWithFallback("analytics_growth_{$clubId}", 3600, $clubId, 'getMembershipGrowth', function () use ($clubId) {
             $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
 
             $monthlyCounts = SwimmerProfile::where('club_id', $clubId)
@@ -50,7 +65,7 @@ class ClubAnalyticsService
 
     public function getRetentionMetrics(int $clubId): array
     {
-        return Cache::remember("analytics_retention_{$clubId}", 3600, function () use ($clubId) {
+        return $this->cacheWithFallback("analytics_retention_{$clubId}", 3600, $clubId, 'getRetentionMetrics', function () use ($clubId) {
             $totalSwimmers = SwimmerProfile::where('club_id', $clubId)->count();
 
             if ($totalSwimmers === 0) {
@@ -120,7 +135,7 @@ class ClubAnalyticsService
 
     public function getAttendanceTrend(int $clubId): array
     {
-        return Cache::remember("analytics_attendance_trend_{$clubId}", 3600, function () use ($clubId) {
+        return $this->cacheWithFallback("analytics_attendance_trend_{$clubId}", 3600, $clubId, 'getAttendanceTrend', function () use ($clubId) {
             $eightWeeksAgo = now()->subWeeks(7)->startOfWeek()->toDateString();
             $thisWeekEnd = now()->endOfWeek()->toDateString();
 
@@ -180,7 +195,7 @@ class ClubAnalyticsService
 
     public function getRegistrationFunnel(int $clubId): array
     {
-        return Cache::remember("analytics_funnel_{$clubId}", 3600, function () use ($clubId) {
+        return $this->cacheWithFallback("analytics_funnel_{$clubId}", 3600, $clubId, 'getRegistrationFunnel', function () use ($clubId) {
             $thirtyDaysAgo = now()->subDays(30);
 
             $submitted = Registration::where('club_id', $clubId)
@@ -215,7 +230,7 @@ class ClubAnalyticsService
 
     public function getCoachPerformanceSummary(int $clubId): array
     {
-        return Cache::remember("analytics_coaches_{$clubId}", 3600, function () use ($clubId) {
+        return $this->cacheWithFallback("analytics_coaches_{$clubId}", 3600, $clubId, 'getCoachPerformanceSummary', function () use ($clubId) {
             $coaches = CoachProfile::where('club_id', $clubId)
                 ->where('is_active', true)
                 ->with('user:id,name')

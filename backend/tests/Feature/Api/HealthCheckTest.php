@@ -51,4 +51,19 @@ class HealthCheckTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_health_includes_config_section(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'config' => [
+                    'cache_driver',
+                    'queue_driver',
+                    'session_driver',
+                    'broadcast_driver',
+                ],
+            ]);
+    }
 }

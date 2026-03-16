@@ -12,8 +12,10 @@
 - `statefulApi()` is commented out in `backend/bootstrap/app.php` — do NOT re-enable
 - CORS `supports_credentials` must stay `false` (no cookies); `allowed_origins` includes both `localhost` and `127.0.0.1`; methods/headers are explicit whitelists (not wildcards)
 - Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP — added by `SecurityHeaders` middleware
-- Structured exception handler in `bootstrap/app.php`: ValidationException→422, AuthenticationException→401, NotFoundHttpException→404, AccessDeniedHttpException→403, MethodNotAllowedHttpException→405, Throwable→500
-- Health check: `GET /api/v1/health` — returns `{status, checks: {database, redis, queue, disk, replica}, timestamp}` with graceful degradation (200 if DB ok, 503 only if DB down)
+- Structured exception handler in `bootstrap/app.php`: ValidationException→422, AuthenticationException→401, NotFoundHttpException→404, AccessDeniedHttpException→403, MethodNotAllowedHttpException→405, HttpException(503)→JSON maintenance, Throwable→500
+- Health check: `GET /api/v1/health` — returns `{status, checks: {database, redis, queue, disk, replica}, config: {cache_driver, queue_driver, session_driver, broadcast_driver}, timestamp}` with graceful degradation (200 if DB ok, 503 only if DB down); exempt from maintenance mode (returns `status: maintenance` with 200)
+- Maintenance mode: `php artisan down` returns JSON 503 on all endpoints except health; `php artisan up` resumes normal operation
+- Graceful degradation: all cache calls wrapped in try/catch — app works without Redis (slower, no crash); logs warning "Cache unavailable, using direct query"
 - MySQL read/write split: `config/database.php` has `read`/`write` hosts with `sticky: true`; set `DB_READ_HOST` for replica, empty = use primary for both (zero code changes)
 - Global RequestId middleware: generates UUID per request, stores in `app('request_id')`, adds `X-Request-ID` response header on ALL routes
 - Sentry error tracking: captures unhandled exceptions in Throwable handler, sets user context (id, email, club_id) in ClubContext middleware
@@ -26,7 +28,8 @@
 - API versioning: URL-prefix (`/api/v1`) + client headers (`X-App-Version`, `X-Platform`) read by `ApiVersionMiddleware`, stored in container as `client_app_version`/`client_platform`
 - Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
 - Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
-- Deployment: Procfile with 3 processes (web, worker, scheduler) for Railway.app; see `backend/docs/DEPLOYMENT.md`
+- Deployment: Procfile with 4 processes (web, worker, scheduler, reverb) for Railway.app; see `backend/docs/DEPLOYMENT.md`
+- Stateless architecture: no user data on local disk; S3 for uploads, Redis for cache/queue, Sanctum tokens for auth — ready for horizontal scaling with zero code changes
 - CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)
 - CI env: `backend/.env.ci` — MySQL 8.0 + Redis 7, `QUEUE_CONNECTION=sync`, safe to commit (no secrets)
 - Safe migration: `php artisan migrate:safe` — checks pending, runs migrate --force, rebuilds config/route/view cache, logs to daily channel
@@ -35,7 +38,7 @@
 - Business reports: `php artisan report:business` — weekly registrations, attendance, sessions, notifications; logged to `storage/logs/business_report.log`; scheduled Monday 08:00
 - Docker: PHP 8.2 FPM Alpine backend + MySQL 8.0 + Redis 7 Alpine (see `docker-compose.yml`)
 - API base URL is dynamic: `http://${window.location.hostname}:8000/api/v1` — works on both `localhost` and `127.0.0.1`; override with `VITE_API_URL` env var
-- Real-time: Laravel Reverb WebSockets — `broadcast()->toOthers()` OUTSIDE DB transactions
+- Real-time: Laravel Reverb WebSockets — `broadcast()->toOthers()` OUTSIDE DB transactions; Reverb runs as dedicated 4th Procfile process, single instance only (cannot horizontally scale without Redis pub/sub adapter)
 - Private channels scoped by club: `private-club.{club_id}` (CLUB_MANAGER only), `private-club.{club_id}.coach` (COACH + CLUB_MANAGER)
 - Broadcasting auth: `POST /api/v1/broadcasting/auth` under `auth:sanctum` middleware
 - SoftDeletes on 8 critical models: Club, User, CoachProfile, SwimmerProfile, Group, TrainingSession, Registration, SubscriptionPlan — `deleted_at` column added via migration 000054
@@ -221,7 +224,9 @@
 - `backend/app/Http/Controllers/Api/MetricsController.php` — system metrics endpoint (protected by X-Metrics-Key header)
 - `backend/app/Console/Commands/GenerateBusinessReport.php` — weekly business metrics report (registrations, attendance, sessions)
 - `backend/docs/MONITORING_SETUP.md` — UptimeRobot setup, SLA targets, incident response, alerting channels
-- `backend/docs/SCALING_GUIDE.md` — read replicas, connection pool sizing, horizontal scaling phases, caching strategy
+- `backend/docs/SCALING_GUIDE.md` — read replicas, connection pool sizing, horizontal scaling phases, caching strategy, stateless audit, WebSocket architecture
+- `backend/docs/FAILOVER_RUNBOOK.md` — incident response: DB failover, Redis outage, queue worker down, maintenance mode procedures
+- `backend/docs/PRODUCTION_ARCHITECTURE.md` — full production architecture: Railway services, external services, data flows, SLA targets, environment variables
 
 ## Registration Wizard Routes
 ```
