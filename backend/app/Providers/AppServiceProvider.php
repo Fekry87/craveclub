@@ -26,10 +26,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // Per-user rate limiting: authenticated users get 60 req/min keyed by user ID,
         // unauthenticated guests get 20 req/min keyed by IP.
-        RateLimiter::for('by_user', function (Request $request) {
+        // Load testing: use env var to override rate limits (default: 60 auth, 20 guest)
+        $authLimit = (int) env('RATE_LIMIT_AUTH', 60);
+        $guestLimit = (int) env('RATE_LIMIT_GUEST', 20);
+        RateLimiter::for('by_user', function (Request $request) use ($authLimit, $guestLimit) {
             return $request->user()
-                ? Limit::perMinute(60)->by($request->user()->id)
-                : Limit::perMinute(20)->by($request->ip());
+                ? Limit::perMinute($authLimit)->by($request->user()->id)
+                : Limit::perMinute($guestLimit)->by($request->ip());
         });
 
         // Slow query logger — catches queries over 100ms for production monitoring
