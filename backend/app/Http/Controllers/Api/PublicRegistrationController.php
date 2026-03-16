@@ -9,12 +9,14 @@ use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\CoachSchedule;
 use App\Models\Registration;
+use App\Models\Club;
 use App\Models\Sport;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PublicRegistrationController extends Controller
 {
@@ -31,15 +33,22 @@ class PublicRegistrationController extends Controller
     }
 
     /**
-     * Active sports offered by the club.
+     * Active sport modules assigned to the club.
      */
     public function sports(): JsonResponse
     {
-        $sports = Sport::where('club_id', app('current_club_id'))
-            ->where('is_active', true)
-            ->get(['id', 'name', 'slug', 'description', 'icon']);
+        $club = Club::find(app('current_club_id'));
 
-        return response()->json($sports);
+        if (!$club) {
+            return response()->json([]);
+        }
+
+        $modules = $club->activeSportModules()
+            ->where('sport_modules.is_active', true)
+            ->orderBy('sort_order')
+            ->get(['sport_modules.id', 'sport_modules.name', 'sport_modules.slug', 'sport_modules.description', 'sport_modules.icon', 'sport_modules.color']);
+
+        return response()->json($modules);
     }
 
     /**
@@ -68,7 +77,7 @@ class PublicRegistrationController extends Controller
     {
         $query = CoachProfile::where('club_id', app('current_club_id'))
             ->where('is_active', true)
-            ->with('user:id,name,avatar');
+            ->with('user:id,name,email,avatar');
 
         if ($request->sport_id) {
             $query->whereJsonContains('sport_ids', $request->sport_id);
@@ -78,6 +87,10 @@ class PublicRegistrationController extends Controller
             'id' => $coach->id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
+            'avatar_url' => $coach->user->avatar ?? null,
+            'email' => $coach->user->email ?? null,
+            'phone' => $coach->phone,
+            'specialization' => $coach->specialization,
             'bio' => $coach->bio,
             'experience_years' => $coach->experience_years,
             'certifications' => $coach->certifications,
@@ -97,12 +110,16 @@ class PublicRegistrationController extends Controller
             abort(404);
         }
 
-        $coach->load('user:id,name,avatar');
+        $coach->load('user:id,name,email,avatar');
 
         return response()->json([
             'id' => $coach->id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
+            'avatar_url' => $coach->user->avatar ?? null,
+            'email' => $coach->user->email ?? null,
+            'phone' => $coach->phone,
+            'specialization' => $coach->specialization,
             'bio' => $coach->bio,
             'experience_years' => $coach->experience_years,
             'certifications' => $coach->certifications,
@@ -122,7 +139,29 @@ class PublicRegistrationController extends Controller
 
         $schedules = CoachSchedule::where('coach_id', $coach->id)->get();
 
-        return response()->json($schedules);
+        $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Transform to mobile-expected shape: { coach_id, slots: [{ day, start_time, end_time }] }
+        $slots = [];
+        foreach ($schedules as $schedule) {
+            $dayName = $dayNames[$schedule->day_of_week] ?? $schedule->day_of_week;
+            if (is_array($schedule->slots)) {
+                foreach ($schedule->slots as $slot) {
+                    if (!empty($slot['is_available'])) {
+                        $slots[] = [
+                            'day' => $dayName,
+                            'start_time' => $slot['time'] ?? $slot['start_time'] ?? null,
+                            'end_time' => $slot['end_time'] ?? null,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'coach_id' => $coach->id,
+            'slots' => $slots,
+        ]);
     }
 
     /**
@@ -133,6 +172,9 @@ class PublicRegistrationController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|min:2',
             'phone' => 'required|string|min:10',
+            'guardian_name' => 'nullable|string|max:100',
+            'guardian_phone' => 'nullable|string|max:20',
+            'guardian_email' => 'nullable|email|max:100',
             'gender' => 'required|in:male,female',
             'birth_date' => 'required|date|before:today',
             'height_cm' => 'nullable|integer|min:50|max:250',
@@ -191,23 +233,30 @@ class PublicRegistrationController extends Controller
                     'status' => 'pending',
                 ]));
             });
-
-            // Load relations for broadcast payload
-            $registration->load(['branch', 'coach.user', 'plan']);
-
-            // Fire broadcast event OUTSIDE transaction
-            broadcast(new NewRegistrationSubmitted($registration))->toOthers();
-
-            return response()->json([
-                'message' => 'Registration submitted successfully.',
-                'registration_id' => $registration->id,
-                'status' => 'pending',
-            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Something went wrong. Please try again.',
             ], 500);
         }
+
+        // Load relations for broadcast payload
+        $registration->load(['branch', 'coach.user', 'plan']);
+
+        // Fire broadcast event OUTSIDE transaction — graceful if Reverb unavailable
+        try {
+            broadcast(new NewRegistrationSubmitted($registration))->toOthers();
+        } catch (\Exception $e) {
+            Log::warning('Broadcast failed for registration', [
+                'registration_id' => $registration->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Registration submitted successfully.',
+            'registration_id' => $registration->id,
+            'status' => 'pending',
+        ], 201);
     }
 
     /**

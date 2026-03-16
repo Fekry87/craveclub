@@ -57,7 +57,26 @@ export default function Step7_CoachSelection() {
     setScheduleLoading(true);
     try {
       const data = await getCoachSchedule(id);
-      const scheduleData = Array.isArray(data) ? data : [];
+      // API returns { coach_id, slots: [{ day, start_time, end_time }] }
+      // Transform to [{ day_of_week, slots: [{ time, is_available }] }] for display
+      let scheduleData = [];
+      if (data?.slots && Array.isArray(data.slots)) {
+        const grouped = {};
+        data.slots.forEach(slot => {
+          const dayName = slot.day;
+          if (!grouped[dayName]) grouped[dayName] = [];
+          grouped[dayName].push({
+            time: slot.start_time,
+            is_available: true,
+          });
+        });
+        scheduleData = Object.entries(grouped).map(([dayName, slots]) => ({
+          day_of_week: dayName,
+          slots,
+        }));
+      } else if (Array.isArray(data)) {
+        scheduleData = data;
+      }
       setSchedule(scheduleData);
       const firstAvail = scheduleData.find(d =>
         d.slots?.some(s => s.is_available)
