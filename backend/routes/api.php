@@ -39,18 +39,70 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('v1')->group(function () {
 
-    // Health Check
+    // Health Check — 4 checks: database, redis, queue, disk
     Route::get('/health', function () {
-        $dbOk = true;
+        $checks = [];
+
+        // 1. Database: SELECT 1, measure latency
+        $dbStart = microtime(true);
         try {
             DB::select('SELECT 1');
-        } catch (\Exception $e) {
-            $dbOk = false;
+            $checks['database'] = [
+                'status' => 'ok',
+                'latency_ms' => round((microtime(true) - $dbStart) * 1000, 1),
+            ];
+        } catch (\Throwable $e) {
+            $checks['database'] = ['status' => 'error', 'error' => $e->getMessage()];
         }
 
+        // 2. Redis: set and get a test key
+        $redisStart = microtime(true);
+        try {
+            $redis = app('redis');
+            $redis->set('health_check', 'ok');
+            $redis->get('health_check');
+            $redis->del('health_check');
+            $checks['redis'] = [
+                'status' => 'ok',
+                'latency_ms' => round((microtime(true) - $redisStart) * 1000, 1),
+            ];
+        } catch (\Throwable $e) {
+            $checks['redis'] = ['status' => 'unavailable', 'error' => 'Redis not configured'];
+        }
+
+        // 3. Queue: count pending + recently failed jobs
+        try {
+            $pendingJobs = DB::table('jobs')->count();
+            $failedLastHour = DB::table('failed_jobs')
+                ->where('failed_at', '>=', now()->subHour())
+                ->count();
+            $checks['queue'] = [
+                'status' => $pendingJobs > 100 ? 'degraded' : 'ok',
+                'pending_jobs' => $pendingJobs,
+                'failed_last_hour' => $failedLastHour,
+            ];
+        } catch (\Throwable $e) {
+            $checks['queue'] = ['status' => 'ok', 'pending_jobs' => 0, 'failed_last_hour' => 0];
+        }
+
+        // 4. Disk: check free space > 500MB
+        try {
+            $freeBytes = disk_free_space('/');
+            $freeGb = round($freeBytes / (1024 * 1024 * 1024), 1);
+            $checks['disk'] = [
+                'status' => $freeGb > 0.5 ? 'ok' : 'warning',
+                'free_gb' => $freeGb,
+            ];
+        } catch (\Throwable $e) {
+            $checks['disk'] = ['status' => 'unknown'];
+        }
+
+        $dbOk = ($checks['database']['status'] ?? 'error') === 'ok';
+        $allOk = collect($checks)->every(fn ($c) => in_array($c['status'], ['ok', 'unavailable', 'unknown']));
+
         return response()->json([
-            'status' => $dbOk ? 'healthy' : 'degraded',
-            'database' => $dbOk,
+            'status' => $dbOk ? ($allOk ? 'healthy' : 'degraded') : 'unhealthy',
+            'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
         ], $dbOk ? 200 : 503);
     });
@@ -95,8 +147,9 @@ Route::prefix('v1')->group(function () {
 
         // ── Notifications (all authenticated users) ──────────
         Route::get('/notifications', [NotificationController::class, 'index']);
-        Route::put('/notifications/read-all', [NotificationController::class, 'markAllRead']);
-        Route::put('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+        Route::match(['put', 'post'], '/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::match(['put', 'post'], '/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+        Route::match(['put', 'post'], '/notifications/{id}/read', [NotificationController::class, 'markRead']);
         Route::post('/notifications/push-token', [NotificationController::class, 'registerToken']);
 
         // ── Corporate (CraveClubs) ──────────────────────────
@@ -151,6 +204,8 @@ Route::prefix('v1')->group(function () {
             Route::put('/settings', [ClubDashboardController::class, 'updateSettings']);
             Route::get('/features', [ClubDashboardController::class, 'features']);
             Route::get('/branding', [ClubBrandingController::class, 'own']);
+            Route::put('/branding', [ClubBrandingController::class, 'updateOwn']);
+            Route::post('/branding/upload', [ClubBrandingController::class, 'uploadOwn']);
 
             // Sport Modules (manager dashboard)
             Route::get('/sport-modules', [ClubDashboardController::class, 'sportModules']);

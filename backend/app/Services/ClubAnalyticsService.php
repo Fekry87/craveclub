@@ -62,46 +62,52 @@ class ClubAnalyticsService
                 ];
             }
 
-            $thirtyDaysAgo = now()->subDays(30)->toDateString();
-            $twentyOneDaysAgo = now()->subDays(21)->toDateString();
             $sixtyDaysAgo = now()->subDays(60)->toDateString();
 
-            // Swimmers who attended at least 1 session in last 30 days
-            $activeSwimmerIds = Attendance::where('present', true)
-                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('date', '>=', $thirtyDaysAgo))
-                ->distinct()
-                ->pluck('swimmer_id');
-
-            $retentionRate = round(($activeSwimmerIds->count() / $totalSwimmers) * 100, 1);
-
-            // Swimmers with any attendance record in club
             $allClubSwimmerIds = SwimmerProfile::where('club_id', $clubId)->pluck('id');
 
-            // At-risk: 0 sessions in last 21 days
-            $recentAttenders21 = Attendance::where('present', true)
-                ->whereIn('swimmer_id', $allClubSwimmerIds)
-                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('date', '>=', $twentyOneDaysAgo))
-                ->distinct()
-                ->pluck('swimmer_id');
+            // Single query: all club sessions in last 60 days (covers 30d, 21d, and 60d windows)
+            $sessions60d = TrainingSession::where('club_id', $clubId)
+                ->where('date', '>=', $sixtyDaysAgo)
+                ->select('id', 'date')
+                ->get();
 
-            $atRiskCount = $allClubSwimmerIds->diff($recentAttenders21)->count();
+            $sessionIds60d = $sessions60d->pluck('id');
 
-            // Churned: 0 sessions in last 60 days
-            $recentAttenders60 = Attendance::where('present', true)
-                ->whereIn('swimmer_id', $allClubSwimmerIds)
-                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('date', '>=', $sixtyDaysAgo))
-                ->distinct()
-                ->pluck('swimmer_id');
+            // Single query: all attendance with present=true for those sessions
+            $presentAttendance = $sessionIds60d->isNotEmpty()
+                ? DB::table('attendance')
+                    ->whereIn('session_id', $sessionIds60d)
+                    ->where('present', true)
+                    ->join('training_sessions', 'attendance.session_id', '=', 'training_sessions.id')
+                    ->select('attendance.swimmer_id', 'training_sessions.date')
+                    ->get()
+                : collect();
 
-            $churnedCount = $allClubSwimmerIds->diff($recentAttenders60)->count();
+            // Derive all three time windows from the same dataset
+            $thirtyDaysAgo = now()->subDays(30)->toDateString();
+            $twentyOneDaysAgo = now()->subDays(21)->toDateString();
 
-            // Average attendance rate last 30 days
-            $totalMarks = Attendance::whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('date', '>=', $thirtyDaysAgo))->count();
-            $presentMarks = Attendance::where('present', true)
-                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('date', '>=', $thirtyDaysAgo))
-                ->count();
+            $activeIn30d = $presentAttendance->where('date', '>=', $thirtyDaysAgo)->pluck('swimmer_id')->unique();
+            $activeIn21d = $presentAttendance->where('date', '>=', $twentyOneDaysAgo)->pluck('swimmer_id')->unique();
+            $activeIn60d = $presentAttendance->pluck('swimmer_id')->unique();
 
-            $avgAttendanceRate = $totalMarks > 0 ? round(($presentMarks / $totalMarks) * 100, 1) : 0;
+            $retentionRate = round(($activeIn30d->count() / $totalSwimmers) * 100, 1);
+            $atRiskCount = $allClubSwimmerIds->diff($activeIn21d)->count();
+            $churnedCount = $allClubSwimmerIds->diff($activeIn60d)->count();
+
+            // Average attendance rate last 30 days — single aggregation
+            $sessionIds30d = $sessions60d->where('date', '>=', $thirtyDaysAgo)->pluck('id');
+            $attStats30d = $sessionIds30d->isNotEmpty()
+                ? DB::table('attendance')
+                    ->whereIn('session_id', $sessionIds30d)
+                    ->selectRaw('COUNT(*) as total, SUM(CASE WHEN present = 1 THEN 1 ELSE 0 END) as present')
+                    ->first()
+                : (object) ['total' => 0, 'present' => 0];
+
+            $avgAttendanceRate = $attStats30d->total > 0
+                ? round(($attStats30d->present / $attStats30d->total) * 100, 1)
+                : 0;
 
             return [
                 'retention_rate_30d' => $retentionRate,
@@ -115,32 +121,50 @@ class ClubAnalyticsService
     public function getAttendanceTrend(int $clubId): array
     {
         return Cache::remember("analytics_attendance_trend_{$clubId}", 3600, function () use ($clubId) {
-            $result = [];
+            $eightWeeksAgo = now()->subWeeks(7)->startOfWeek()->toDateString();
+            $thisWeekEnd = now()->endOfWeek()->toDateString();
 
+            // Single query: all completed sessions in the 8-week window
+            $sessions = TrainingSession::where('club_id', $clubId)
+                ->whereBetween('date', [$eightWeeksAgo, $thisWeekEnd])
+                ->where('status', 'Completed')
+                ->select('id', 'date')
+                ->get();
+
+            $allSessionIds = $sessions->pluck('id');
+
+            // Single query: attendance stats grouped by session_id
+            $attendanceBySession = $allSessionIds->isNotEmpty()
+                ? DB::table('attendance')
+                    ->whereIn('session_id', $allSessionIds)
+                    ->selectRaw('session_id, COUNT(*) as total, SUM(CASE WHEN present = 1 THEN 1 ELSE 0 END) as present')
+                    ->groupBy('session_id')
+                    ->get()
+                    ->keyBy('session_id')
+                : collect();
+
+            // Build weekly buckets from pre-loaded data (zero additional queries)
+            $result = [];
             for ($i = 7; $i >= 0; $i--) {
-                $weekStart = now()->subWeeks($i)->startOfWeek()->toDateString();
-                $weekEnd = now()->subWeeks($i)->endOfWeek()->toDateString();
+                $weekStart = now()->subWeeks($i)->startOfWeek();
+                $weekEnd = now()->subWeeks($i)->endOfWeek();
                 $weekLabel = now()->subWeeks($i)->format('Y-\\WW');
 
-                $sessions = TrainingSession::where('club_id', $clubId)
-                    ->whereBetween('date', [$weekStart, $weekEnd])
-                    ->where('status', 'Completed')
-                    ->pluck('id');
+                $weekSessions = $sessions->filter(fn ($s) =>
+                    $s->date->between($weekStart, $weekEnd)
+                );
 
-                $sessionsCount = $sessions->count();
+                $sessionsCount = $weekSessions->count();
+                $totalMarks = 0;
+                $presentMarks = 0;
 
-                if ($sessionsCount === 0) {
-                    $result[] = [
-                        'week' => $weekLabel,
-                        'rate' => 0,
-                        'sessions' => 0,
-                        'total_marks' => 0,
-                    ];
-                    continue;
+                foreach ($weekSessions as $s) {
+                    $att = $attendanceBySession->get($s->id);
+                    if ($att) {
+                        $totalMarks += $att->total;
+                        $presentMarks += $att->present;
+                    }
                 }
-
-                $totalMarks = Attendance::whereIn('session_id', $sessions)->count();
-                $presentMarks = Attendance::whereIn('session_id', $sessions)->where('present', true)->count();
 
                 $result[] = [
                     'week' => $weekLabel,
@@ -197,43 +221,111 @@ class ClubAnalyticsService
                 ->with('user:id,name')
                 ->get();
 
+            if ($coaches->isEmpty()) {
+                return [];
+            }
+
             $thirtyDaysAgo = now()->subDays(30)->toDateString();
+            $coachUserIds = $coaches->pluck('user_id');
 
-            return $coaches->map(function ($coach) use ($clubId, $thirtyDaysAgo): array {
-                $groups = Group::where('club_id', $clubId)
-                    ->where('coach_user_id', $coach->user_id)
-                    ->get();
+            // Pre-load all groups for all coaches in one query
+            $allGroups = Group::where('club_id', $clubId)
+                ->whereIn('coach_user_id', $coachUserIds)
+                ->select('id', 'coach_user_id')
+                ->get()
+                ->groupBy('coach_user_id');
 
-                $groupIds = $groups->pluck('id');
-                $swimmersCount = $groupIds->isNotEmpty()
-                    ? DB::table('group_memberships')->whereIn('group_id', $groupIds)->distinct('swimmer_id')->count('swimmer_id')
-                    : 0;
+            $allGroupIds = $allGroups->flatten()->pluck('id');
 
-                $sessions30d = TrainingSession::whereIn('group_id', $groupIds)
+            // Pre-load all memberships in one query
+            $allMemberships = $allGroupIds->isNotEmpty()
+                ? DB::table('group_memberships')
+                    ->whereIn('group_id', $allGroupIds)
+                    ->select('group_id', 'swimmer_id')
+                    ->get()
+                    ->groupBy('group_id')
+                : collect();
+
+            // Pre-load all completed sessions in last 30d grouped by coach
+            $allSessions30d = $allGroupIds->isNotEmpty()
+                ? TrainingSession::whereIn('group_id', $allGroupIds)
                     ->where('date', '>=', $thirtyDaysAgo)
                     ->where('status', 'Completed')
-                    ->pluck('id');
+                    ->select('id', 'group_id')
+                    ->get()
+                : collect();
 
-                $totalMarks = Attendance::whereIn('session_id', $sessions30d)->count();
-                $presentMarks = Attendance::whereIn('session_id', $sessions30d)->where('present', true)->count();
+            // Map sessions to coach_user_id
+            $groupToCoach = $allGroups->flatMap(fn ($groups, $coachId) =>
+                $groups->mapWithKeys(fn ($g) => [$g->id => $coachId])
+            );
+
+            $sessionsByCoach = $allSessions30d->groupBy(fn ($s) => $groupToCoach->get($s->group_id));
+            $allSessionIds = $allSessions30d->pluck('id');
+
+            // Single aggregation query for attendance stats by session
+            $attendanceStats = $allSessionIds->isNotEmpty()
+                ? DB::table('attendance')
+                    ->whereIn('session_id', $allSessionIds)
+                    ->selectRaw('session_id, swimmer_id, present')
+                    ->get()
+                : collect();
+
+            $attendanceBySession = $attendanceStats->groupBy('session_id');
+
+            // Single aggregation for avg rating by session
+            $ratingsBySession = $allSessionIds->isNotEmpty()
+                ? DB::table('daily_evaluations')
+                    ->whereIn('session_id', $allSessionIds)
+                    ->selectRaw('session_id, rating')
+                    ->get()
+                    ->groupBy('session_id')
+                : collect();
+
+            return $coaches->map(function ($coach) use ($allGroups, $allMemberships, $sessionsByCoach, $attendanceBySession, $ratingsBySession) {
+                $coachGroups = $allGroups->get($coach->user_id, collect());
+                $coachGroupIds = $coachGroups->pluck('id');
+
+                // Swimmers count from pre-loaded memberships
+                $swimmersCount = $coachGroupIds
+                    ->flatMap(fn ($gid) => $allMemberships->get($gid, collect()))
+                    ->pluck('swimmer_id')
+                    ->unique()
+                    ->count();
+
+                $coachSessions = $sessionsByCoach->get($coach->user_id, collect());
+                $coachSessionIds = $coachSessions->pluck('id');
+
+                // Compute attendance from pre-loaded data
+                $totalMarks = 0;
+                $presentMarks = 0;
+                $swimmerAttendance = []; // swimmer_id => [total, present]
+
+                foreach ($coachSessionIds as $sid) {
+                    $sessionAtt = $attendanceBySession->get($sid, collect());
+                    foreach ($sessionAtt as $att) {
+                        $totalMarks++;
+                        if ($att->present) $presentMarks++;
+
+                        if (!isset($swimmerAttendance[$att->swimmer_id])) {
+                            $swimmerAttendance[$att->swimmer_id] = ['total' => 0, 'present' => 0];
+                        }
+                        $swimmerAttendance[$att->swimmer_id]['total']++;
+                        if ($att->present) $swimmerAttendance[$att->swimmer_id]['present']++;
+                    }
+                }
+
                 $avgAttendance = $totalMarks > 0 ? round(($presentMarks / $totalMarks) * 100, 1) : 0;
 
-                $avgRating = DailyEvaluation::whereIn('session_id', $sessions30d)->avg('rating');
+                // Avg rating from pre-loaded data
+                $allRatings = $coachSessionIds->flatMap(fn ($sid) => $ratingsBySession->get($sid, collect()));
+                $avgRating = $allRatings->isNotEmpty() ? round($allRatings->avg('rating'), 1) : null;
 
-                // At-risk: swimmers in coach's groups with < 60% attendance in last 30d
+                // At-risk count from pre-loaded attendance
                 $atRiskCount = 0;
-                if ($sessions30d->isNotEmpty()) {
-                    $swimmerIds = DB::table('group_memberships')
-                        ->whereIn('group_id', $groupIds)
-                        ->distinct()
-                        ->pluck('swimmer_id');
-
-                    foreach ($swimmerIds as $swimmerId) {
-                        $total = Attendance::whereIn('session_id', $sessions30d)->where('swimmer_id', $swimmerId)->count();
-                        $present = Attendance::whereIn('session_id', $sessions30d)->where('swimmer_id', $swimmerId)->where('present', true)->count();
-                        if ($total > 0 && ($present / $total) < 0.6) {
-                            $atRiskCount++;
-                        }
+                foreach ($swimmerAttendance as $stats) {
+                    if ($stats['total'] > 0 && ($stats['present'] / $stats['total']) < 0.6) {
+                        $atRiskCount++;
                     }
                 }
 
@@ -241,11 +333,11 @@ class ClubAnalyticsService
                     'coach_id' => $coach->id,
                     'user_id' => $coach->user_id,
                     'coach_name' => $coach->user?->name ?? 'Unknown',
-                    'groups_count' => $groups->count(),
+                    'groups_count' => $coachGroups->count(),
                     'swimmers_count' => $swimmersCount,
-                    'sessions_30d' => $sessions30d->count(),
+                    'sessions_30d' => $coachSessions->count(),
                     'avg_attendance' => $avgAttendance,
-                    'avg_rating' => $avgRating ? round($avgRating, 1) : null,
+                    'avg_rating' => $avgRating,
                     'at_risk_count' => $atRiskCount,
                 ];
             })->values()->toArray();
@@ -281,26 +373,50 @@ class ClubAnalyticsService
             ->where('status', 'Completed')
             ->count();
 
-        // Attendance by week (last 8 weeks)
+        // Attendance by week (last 8 weeks) — batch: 2 queries total instead of 24
+        $eightWeeksAgo = now()->subWeeks(7)->startOfWeek()->toDateString();
+        $thisWeekEnd = now()->endOfWeek()->toDateString();
+
+        $coachSessions8w = $groupIds->isNotEmpty()
+            ? TrainingSession::whereIn('group_id', $groupIds)
+                ->whereBetween('date', [$eightWeeksAgo, $thisWeekEnd])
+                ->where('status', 'Completed')
+                ->select('id', 'date')
+                ->get()
+            : collect();
+
+        $coachSessionIds8w = $coachSessions8w->pluck('id');
+        $attBySession8w = $coachSessionIds8w->isNotEmpty()
+            ? DB::table('attendance')
+                ->whereIn('session_id', $coachSessionIds8w)
+                ->selectRaw('session_id, COUNT(*) as total, SUM(CASE WHEN present = 1 THEN 1 ELSE 0 END) as present')
+                ->groupBy('session_id')
+                ->get()
+                ->keyBy('session_id')
+            : collect();
+
         $attendanceByWeek = [];
         for ($i = 7; $i >= 0; $i--) {
-            $weekStart = now()->subWeeks($i)->startOfWeek()->toDateString();
-            $weekEnd = now()->subWeeks($i)->endOfWeek()->toDateString();
+            $weekStart = now()->subWeeks($i)->startOfWeek();
+            $weekEnd = now()->subWeeks($i)->endOfWeek();
             $weekLabel = now()->subWeeks($i)->format('Y-\\WW');
 
-            $sessionIds = TrainingSession::whereIn('group_id', $groupIds)
-                ->whereBetween('date', [$weekStart, $weekEnd])
-                ->where('status', 'Completed')
-                ->pluck('id');
+            $weekSessions = $coachSessions8w->filter(fn ($s) => $s->date->between($weekStart, $weekEnd));
+            $totalMarks = 0;
+            $presentMarks = 0;
 
-            $sessionsCount = $sessionIds->count();
-            $totalMarks = $sessionIds->isNotEmpty() ? Attendance::whereIn('session_id', $sessionIds)->count() : 0;
-            $presentMarks = $sessionIds->isNotEmpty() ? Attendance::whereIn('session_id', $sessionIds)->where('present', true)->count() : 0;
+            foreach ($weekSessions as $s) {
+                $att = $attBySession8w->get($s->id);
+                if ($att) {
+                    $totalMarks += $att->total;
+                    $presentMarks += $att->present;
+                }
+            }
 
             $attendanceByWeek[] = [
                 'week' => $weekLabel,
                 'rate' => $totalMarks > 0 ? round(($presentMarks / $totalMarks) * 100, 1) : 0,
-                'sessions_count' => $sessionsCount,
+                'sessions_count' => $weekSessions->count(),
             ];
         }
 
@@ -323,9 +439,23 @@ class ClubAnalyticsService
             }
         }
 
+        // Pre-load all swimmer profiles in one batch query (used by top + at-risk)
+        $swimmerProfiles = $swimmerIds->isNotEmpty()
+            ? SwimmerProfile::whereIn('id', $swimmerIds)->get()->keyBy('id')
+            : collect();
+
         // Top 5 swimmers by avg rating
         $topSwimmers = [];
         if ($allSessionIds->isNotEmpty() && $swimmerIds->isNotEmpty()) {
+            // Single aggregation: attendance stats per swimmer across all sessions
+            $attendanceBySwimmer = DB::table('attendance')
+                ->whereIn('session_id', $allSessionIds)
+                ->whereIn('swimmer_id', $swimmerIds)
+                ->selectRaw('swimmer_id, COUNT(*) as total, SUM(CASE WHEN present = 1 THEN 1 ELSE 0 END) as present')
+                ->groupBy('swimmer_id')
+                ->get()
+                ->keyBy('swimmer_id');
+
             $topSwimmers = DailyEvaluation::whereIn('session_id', $allSessionIds)
                 ->whereIn('swimmer_id', $swimmerIds)
                 ->selectRaw('swimmer_id, AVG(rating) as avg_rating')
@@ -333,10 +463,11 @@ class ClubAnalyticsService
                 ->orderByDesc('avg_rating')
                 ->take(5)
                 ->get()
-                ->map(function ($row) use ($allSessionIds) {
-                    $swimmer = SwimmerProfile::find($row->swimmer_id);
-                    $total = Attendance::whereIn('session_id', $allSessionIds)->where('swimmer_id', $row->swimmer_id)->count();
-                    $present = Attendance::whereIn('session_id', $allSessionIds)->where('swimmer_id', $row->swimmer_id)->where('present', true)->count();
+                ->map(function ($row) use ($swimmerProfiles, $attendanceBySwimmer) {
+                    $swimmer = $swimmerProfiles->get($row->swimmer_id);
+                    $att = $attendanceBySwimmer->get($row->swimmer_id);
+                    $total = $att?->total ?? 0;
+                    $present = $att?->present ?? 0;
 
                     return [
                         'swimmer_id' => $row->swimmer_id,
@@ -355,24 +486,29 @@ class ClubAnalyticsService
 
         $atRiskSwimmers = [];
         if ($sessions30d->isNotEmpty() && $swimmerIds->isNotEmpty()) {
+            // Single aggregation: attendance stats per swimmer for 30d sessions
+            $att30dBySwimmer = DB::table('attendance')
+                ->whereIn('session_id', $sessions30d)
+                ->whereIn('swimmer_id', $swimmerIds)
+                ->selectRaw('swimmer_id, COUNT(*) as total, SUM(CASE WHEN present = 1 THEN 1 ELSE 0 END) as present, MAX(CASE WHEN present = 1 THEN created_at ELSE NULL END) as last_present_at')
+                ->groupBy('swimmer_id')
+                ->get()
+                ->keyBy('swimmer_id');
+
             foreach ($swimmerIds as $swimmerId) {
-                $total = Attendance::whereIn('session_id', $sessions30d)->where('swimmer_id', $swimmerId)->count();
-                $present = Attendance::whereIn('session_id', $sessions30d)->where('swimmer_id', $swimmerId)->where('present', true)->count();
+                $att = $att30dBySwimmer->get($swimmerId);
+                $total = $att?->total ?? 0;
+                $present = $att?->present ?? 0;
                 $rate = $total > 0 ? round(($present / $total) * 100, 1) : 0;
 
                 if ($rate < 60) {
-                    $swimmer = SwimmerProfile::find($swimmerId);
-                    $lastAttendance = Attendance::where('swimmer_id', $swimmerId)
-                        ->where('present', true)
-                        ->whereHas('session', fn ($q) => $q->whereIn('id', $sessions30d))
-                        ->latest('created_at')
-                        ->first();
+                    $swimmer = $swimmerProfiles->get($swimmerId);
 
                     $atRiskSwimmers[] = [
                         'swimmer_id' => $swimmerId,
                         'name' => $swimmer ? ($swimmer->first_name . ' ' . $swimmer->last_name) : 'Unknown',
                         'attendance_rate' => $rate,
-                        'last_seen' => $lastAttendance?->created_at?->toDateString(),
+                        'last_seen' => $att?->last_present_at ? \Carbon\Carbon::parse($att->last_present_at)->toDateString() : null,
                     ];
                 }
             }

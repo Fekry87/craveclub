@@ -14,7 +14,7 @@ class HealthCheckTest extends TestCase
         $response = $this->getJson('/api/v1/health');
 
         $response->assertOk()
-            ->assertJsonFragment(['status' => 'healthy', 'database' => true]);
+            ->assertJsonFragment(['status' => 'healthy']);
     }
 
     public function test_health_includes_required_fields(): void
@@ -22,6 +22,21 @@ class HealthCheckTest extends TestCase
         $response = $this->getJson('/api/v1/health');
 
         $response->assertOk()
-            ->assertJsonStructure(['status', 'database', 'timestamp']);
+            ->assertJsonStructure([
+                'status',
+                'checks' => [
+                    'database' => ['status', 'latency_ms'],
+                    'queue' => ['status', 'pending_jobs', 'failed_last_hour'],
+                    'disk' => ['status', 'free_gb'],
+                ],
+                'timestamp',
+            ]);
+    }
+
+    public function test_health_has_request_id_header(): void
+    {
+        $response = $this->getJson('/api/v1/health');
+
+        $response->assertHeader('X-Request-ID');
     }
 }

@@ -115,8 +115,16 @@ class SwimmerWeeklyReportService
             ->with(['group.swimmers', 'sessionSwimmers', 'sessionExclusions'])
             ->get();
 
+        // Filter using IDs only — avoids the effectiveSwimmers attribute
+        // which fires a SwimmerProfile::whereIn() query per session (N+1)
         return $sessions->filter(function ($session) use ($swimmerId) {
-            return $session->effectiveSwimmers->contains('id', $swimmerId);
+            $groupSwimmerIds = $session->group ? $session->group->swimmers->pluck('id') : collect();
+            $addedSwimmerIds = $session->sessionSwimmers->pluck('id');
+            $excludedSwimmerIds = $session->sessionExclusions->pluck('id');
+
+            $effectiveIds = $groupSwimmerIds->merge($addedSwimmerIds)->unique()->diff($excludedSwimmerIds);
+
+            return $effectiveIds->contains($swimmerId);
         })->values();
     }
 
@@ -137,8 +145,9 @@ class SwimmerWeeklyReportService
 
         // If no direct assignment, check group assignments
         if (!$assignment) {
+            // FIX: group_memberships column is 'swimmer_id', not 'swimmer_profile_id'
             $groupIds = \DB::table('group_memberships')
-                ->where('swimmer_profile_id', $swimmerId)
+                ->where('swimmer_id', $swimmerId)
                 ->pluck('group_id');
 
             if ($groupIds->isNotEmpty()) {
@@ -190,15 +199,15 @@ class SwimmerWeeklyReportService
     private function computeRisk(int $scheduled, int $attended, float $attendanceRate, ?float $avgRating): array
     {
         if ($scheduled >= 2 && $attended === 0) {
-            return ['red', 'غاب عن جميع جلسات الأسبوع'];
+            return ['red', 'Missed all sessions this week'];
         }
 
         if ($scheduled > 0 && $attendanceRate < 60.0) {
-            return ['yellow', 'حضور أقل من 60% هذا الأسبوع'];
+            return ['yellow', 'Attendance below 60% this week'];
         }
 
         if ($avgRating !== null && $avgRating < 2.5) {
-            return ['yellow', 'متوسط التقييم منخفض هذا الأسبوع'];
+            return ['yellow', 'Low average rating this week'];
         }
 
         return ['green', null];

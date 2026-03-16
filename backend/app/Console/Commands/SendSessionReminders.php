@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Notification;
 use App\Models\TrainingSession;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
@@ -11,6 +12,9 @@ class SendSessionReminders extends Command
 {
     protected $signature = 'notifications:session-reminders';
     protected $description = 'Send reminder notifications for sessions scheduled tomorrow';
+
+    /** Maximum execution time in seconds */
+    protected int $commandTimeout = 60;
 
     public function handle(NotificationService $notificationService): int
     {
@@ -33,11 +37,20 @@ class SendSessionReminders extends Command
 
             if (empty($swimmerUserIds)) continue;
 
+            // FIX: Idempotency — skip users already notified for this session today
+            $alreadyNotified = Notification::where('type', 'session_reminder')
+                ->whereIn('user_id', $swimmerUserIds)
+                ->whereDate('created_at', now()->toDateString())
+                ->pluck('user_id')
+                ->toArray();
+            $swimmerUserIds = array_values(array_diff($swimmerUserIds, $alreadyNotified));
+            if (empty($swimmerUserIds)) continue;
+
             $notificationService->notifyMany(
                 userIds: $swimmerUserIds,
                 type: 'session_reminder',
-                title: 'تذكير بجلسة غداً',
-                body: "لديك جلسة {$session->title} غداً الساعة {$session->start_time}",
+                title: 'Session Reminder — Tomorrow',
+                body: "You have a session: {$session->title} tomorrow at {$session->start_time}",
                 data: ['session_id' => $session->id],
                 clubId: $session->club_id,
             );

@@ -12,8 +12,17 @@
 - `statefulApi()` is commented out in `backend/bootstrap/app.php` — do NOT re-enable
 - CORS `supports_credentials` must stay `false` (no cookies); `allowed_origins` includes both `localhost` and `127.0.0.1`; methods/headers are explicit whitelists (not wildcards)
 - Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP — added by `SecurityHeaders` middleware
-- Structured exception handler in `bootstrap/app.php`: ValidationException→422, AuthenticationException→401, NotFoundHttpException→404, Throwable→500
-- Health check: `GET /api/v1/health` — returns `{status, database, timestamp}` with DB connectivity test
+- Structured exception handler in `bootstrap/app.php`: ValidationException→422, AuthenticationException→401, NotFoundHttpException→404, AccessDeniedHttpException→403, MethodNotAllowedHttpException→405, Throwable→500
+- Health check: `GET /api/v1/health` — returns `{status, checks: {database, redis, queue, disk}, timestamp}` with graceful degradation (200 if DB ok, 503 only if DB down)
+- Global RequestId middleware: generates UUID per request, stores in `app('request_id')`, adds `X-Request-ID` response header on ALL routes
+- Sentry error tracking: captures unhandled exceptions in Throwable handler, sets user context (id, email, club_id) in ClubContext middleware
+- Structured JSON logging: `json` channel uses Monolog RotatingFileHandler + AddRequestContext tap (request_id, club_id, environment); production default `LOG_CHANNEL=json`
+- Slow query logger: DB::listen in AppServiceProvider logs queries >100ms with SQL, bindings, time_ms, request_id, club_id, URL
+- Performance indexes: 3 migration passes (000045, 000066, 000067) covering attendance, sessions, evaluations, memberships, notifications, assignments
+- Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
+- Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
+- Job retry config: SendPushNotification (3 tries, 30/60/120s backoff, 30s timeout), SendGuardianSMSJob (3 tries, 60/120/240s backoff, 15s timeout)
+- Deployment: Procfile with 3 processes (web, worker, scheduler) for Railway.app; see `backend/docs/DEPLOYMENT.md`
 - Docker: PHP 8.2 FPM Alpine backend + MySQL 8.0 + Redis 7 Alpine (see `docker-compose.yml`)
 - API base URL is dynamic: `http://${window.location.hostname}:8000/api/v1` — works on both `localhost` and `127.0.0.1`; override with `VITE_API_URL` env var
 - Real-time: Laravel Reverb WebSockets — `broadcast()->toOthers()` OUTSIDE DB transactions
@@ -24,6 +33,7 @@
 - Audit logging on: registration.approved, registration.rejected, swimmer.deleted, coach.deleted, club.deleted, leaderboard.settings_changed, features.updated
 - White-label branding: Club model has display_name, cover_url, favicon_url, app_name, support_email, support_phone, social_links (JSON), custom_domain, is_domain_active, branding_tier (shared|branded)
 - Public branding API: `GET /api/v1/branding/{slug}` — cached 1hr, busted on update; returns club branding + feature flags
+- Club Manager branding: `GET /api/v1/club/branding` (read), `PUT /api/v1/club/branding` (update), `POST /api/v1/club/branding/upload` (upload assets) — full branding config available to CLUB_MANAGER, not just corporate
 - Training Engine: TrainingPlan → TrainingPlanAssignment → RecurringSchedule → SessionGeneratorService pipeline
 - TrainingPlan extended fields: duration_weeks, sessions_per_week, goals, difficulty_level (beginner|intermediate|advanced), is_template, coach_user_id, phases (JSON)
 - TrainingPlanAssignment: links plan to group or individual swimmer with start/end dates, status (active|paused|completed|cancelled), coach_notes
@@ -32,7 +42,7 @@
 - ScheduleHoliday: per-schedule exclusion dates — adding holiday auto-cancels any generated session on that date
 - Training plans feature-gated: `feature:training_plans` middleware on backend, `FeatureRoute` on frontend
 - Weekly Report: SwimmerWeeklyReportService computes attendance, evaluations, plan phase, risk signals (red/yellow/green) per swimmer per week
-- Weekly report risk signals: red (missed all of 2+ sessions), yellow (<60% attendance or avg rating <2.5), green (default) — Arabic reason strings
+- Weekly report risk signals: red (missed all of 2+ sessions), yellow (<60% attendance or avg rating <2.5), green (default) — English reason strings
 - Weekly report endpoints: swimmer (no risk), coach (own group swimmers), manager (all club swimmers) — `?week=YYYY-WNN` optional param
 - Public sports API: `GET /api/v1/sports` and alias `GET /api/v1/public/sports` — both under `club.header` middleware, no auth required
 - Sport Module Architecture: Corporate creates SportModule catalog → assigns to clubs via club_sport_modules → Manager sees sport cards dashboard → sport.context middleware sets app('current_sport_module_id') → all entities (Group, TrainingSession, TrainingPlan, Registration) have nullable sport_module_id
@@ -41,6 +51,21 @@
 - SessionManagementController.sessionStore() infers sport_module_id from group if not provided explicitly
 - TrainingPlanController.coachPlans() filters by sport_module_id if current_sport_module_id is bound, otherwise returns all (backward compat)
 - Registration.sport_module_id resolved from club's first active sport module in PublicRegistrationController.store()
+- Analytics: ClubAnalyticsService provides membership growth, retention, attendance trend, registration funnel, coach performance summary, coach detail
+- Coach Performance: CoachPerformanceController with index (ranked list), show (detail), comparison (up to 5 coaches) — routes BEFORE `{coach}` to avoid conflicts
+- Notification System: Notification + PushToken models, NotificationService (notify, notifyMany, markRead, markAllRead, registerPushToken), SendPushNotification job (Expo Push API, 3 retries)
+- Notification triggers: absence_alert (coach), repeated_absence (manager, 3+ consecutive), registration_approved/rejected (swimmer user), subscription_expiring (manager, 14/7/1 day), session_reminder (swimmers, 24h before)
+- Notification API: GET /notifications (paginated + unread_count), PUT /notifications/{id}/read, PUT /notifications/read-all, POST /notifications/push-token — all under auth:sanctum
+- Scheduled commands: `notifications:subscription-reminders` (daily 09:00), `notifications:session-reminders` (daily 08:00) — registered in routes/console.php; both are idempotent (check for existing notifications before creating)
+- Frontend NotificationBell: exported from Layout.jsx, reused in ManagerHomePage; polls every 60s, dropdown with last 5 notifications, mark read, navigate on click
+- Club Manager two-tier routing: `/club` renders full-screen ManagerHomePage (no sidebar, own top bar with club logo + NotificationBell + Sign Out); `/club/*` routes render inside Layout (with sidebar). Both wrapped in separate `SportModuleProvider` instances
+- Layout main content area: fixed content header bar (64px, backdrop blur, sticky z-index) with breadcrumb/brand on left + NotificationBell on right; page content scrolls independently below (`overflow: hidden` on main, `overflowY: auto` on content div)
+- ClubContext middleware aborts 403 if authenticated user has no `club_id` — prevents container binding exceptions in club-scoped controllers
+- Public coaches API returns both `photo` and `avatar_url` (same value) for backward compat with portal and mobile
+- Public coach schedule endpoint transforms raw CoachSchedule records into mobile-expected shape: `{ coach_id, slots: [{ day, start_time, end_time }] }`
+- Registration accepts guardian fields: `guardian_name`, `guardian_phone`, `guardian_email` — nullable, stored on Registration model
+- Session attendance endpoint (`GET /coach/sessions/{id}/attendance`) returns `end_time` and nested `group` object in session data — required by mobile
+- UI Language: English only — all frontend text, backend notification titles/bodies, risk reasons, SMS messages, and seeder data are in English (no Arabic)
 
 ## Common Commands
 - `cd backend && php artisan test` — run all tests (146 tests)
@@ -65,7 +90,7 @@
 - `SubscriptionPlan` reorder endpoint expects `ordered_ids` field (array of plan IDs in desired order)
 - Registration approval chain: `registration.coach_id` → `coach_profiles.id` → `user_id` → `groups.coach_user_id` — used to auto-assign swimmers to groups
 - User model `'password' => 'hashed'` cast auto-hashes plain passwords on create — no need to call `Hash::make()`
-- Migration numbering: sequential from `2024_01_01_000062_` — check last number before adding new migrations
+- Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
 - All `async` form handlers (handleSave, handleDelete, etc.) MUST use try/catch with error state — bare `await` silently fails on 422/500
@@ -92,7 +117,16 @@
 - `backend/routes/channels.php` — private channel authorization (`club.{clubId}`)
 - `backend/database/seeders/DemoSeeder.php` — all seed data (club, users, coaches, swimmers, branches, sports, plans, schedules)
 - `backend/routes/api.php` — all API routes, middleware stacking, broadcasting auth
-- `backend/bootstrap/app.php` — app config (statefulApi commented out) + structured exception handler
+- `backend/bootstrap/app.php` — app config (statefulApi commented out) + structured exception handler + Sentry capture
+- `backend/app/Http/Middleware/RequestId.php` — global middleware: UUID per request, stored in container, X-Request-ID header
+- `backend/app/Logging/AddRequestContext.php` — Monolog tap: JsonFormatter + request_id/club_id/environment processor
+- `backend/config/logging.php` — logging channels (json channel with RotatingFileHandler + AddRequestContext tap)
+- `backend/config/sentry.php` — Sentry configuration (published via vendor:publish)
+- `backend/database/migrations/2024_01_01_000067_add_performance_indexes_v3.php` — v3 indexes (session+present, session+rating, group+date+status, assignment composites)
+- `backend/docs/EXPLAIN_QUERIES.sql` — EXPLAIN QUERY PLAN reference for verifying index usage on critical queries
+- `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
+- `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
+- `Procfile` — Railway process definitions: web, worker, scheduler
 - `backend/config/cors.php` — CORS settings (explicit methods/headers whitelist)
 - `backend/app/Http/Middleware/SecurityHeaders.php` — security headers including CSP
 - `backend/Dockerfile` — production Docker image (PHP 8.2 FPM Alpine, composer --no-dev, config/route/view cache)
@@ -102,7 +136,7 @@
 - `frontend/src/contexts/AuthContext.jsx` — auth state management
 - `frontend/src/contexts/RegistrationContext.jsx` — registration wizard state (useReducer + sessionStorage + Outlet)
 - `frontend/src/lib/echo.js` — Laravel Echo instance factory (Reverb broadcaster, uses `crave_club_token`)
-- `frontend/src/components/Layout.jsx` — main layout with RouteErrorBoundary
+- `frontend/src/components/Layout.jsx` — main layout with sidebar + fixed content header bar (breadcrumb + NotificationBell) + scrollable content area; exports `NotificationBell` component
 - `frontend/src/components/ErrorBoundary.jsx` — error boundaries
 - `frontend/src/components/ui/FormControls.jsx` — shared FormField, Button, Input, Select, TextArea components
 - `frontend/src/components/ui/Modal.jsx` — Modal and ModalActions components
@@ -136,13 +170,32 @@
 - `frontend/src/pages/club/TrainingPlansPage.jsx` — dual-role training plan management (manager: plan cards + assign-to-coach; coach: plans + assignments table with progress bars)
 - `frontend/src/pages/club/ScheduleBuilderPage.jsx` — two-column schedule builder (form + calendar preview) with inline WeekdayPicker + ScheduleCalendar components
 - `frontend/src/pages/corporate/ClubBrandingPage.jsx` — corporate branding editor with live phone preview (colors, assets, domain, social links)
+- `frontend/src/pages/club/ClubBrandingPage.jsx` — club manager branding editor (same features as corporate, club-scoped API, cyan accent)
 - `backend/app/Services/SwimmerWeeklyReportService.php` — weekly performance report (attendance, evaluations, plan phase, risk signals)
 - `backend/app/Http/Controllers/Api/SwimmerReportController.php` — 3 endpoints: swimmerSelf, coachSwimmer, managerSwimmer
 - `backend/app/Http/Middleware/SportContext.php` — resolves sportSlug/sport route param or X-Sport-Module header to app('current_sport_module_id')
 - `backend/app/Models/SportModule.php` — platform-wide sport catalog (slug, name, icon, color)
 - `frontend/src/contexts/SportModuleContext.jsx` — React context for selected sport (sessionStorage persistence)
-- `frontend/src/pages/club/SportModuleDashboard.jsx` — sport picker cards with stats, auto-redirect for single sport clubs
+- `frontend/src/pages/club/ManagerHomePage.jsx` — full-screen manager home page at `/club` (no sidebar); greeting + sport module cards only; own top bar with club logo, NotificationBell, Sign Out
+- `frontend/src/pages/club/SportModuleDashboard.jsx` — sport picker cards with stats, auto-redirect for single sport clubs; exports `SportCard` component (reused by ManagerHomePage)
 - `frontend/src/api/clubSportModules.js` — API module for club sport module endpoints
+- `backend/app/Services/ClubAnalyticsService.php` — analytics: growth, retention, attendance trend, funnel, coach performance, coach detail
+- `backend/app/Http/Controllers/Api/CoachPerformanceController.php` — coach performance: index (ranked), show (detail), comparison
+- `frontend/src/pages/club/AnalyticsDashboard.jsx` — analytics dashboard (KPI strip, charts, funnel, coach table)
+- `frontend/src/pages/club/CoachPerformancePage.jsx` — ranked coach cards, multi-select, compare modal
+- `frontend/src/pages/club/CoachDetailPage.jsx` — coach detail: attendance chart, rating distribution, top/at-risk swimmers
+- `frontend/src/api/analytics.js` — analytics API module
+- `frontend/src/api/coachPerformance.js` — coach performance API module (index, detail, compare)
+- `backend/app/Models/Notification.php` — notification model (scopes: unread, forUser, forClub)
+- `backend/app/Models/PushToken.php` — push token model (expo/fcm/apns)
+- `backend/app/Services/NotificationService.php` — notify, notifyMany (chunked), markRead, markAllRead, registerPushToken
+- `backend/app/Jobs/SendPushNotification.php` — Expo Push API job (ShouldQueue, 3 retries, batched)
+- `backend/app/Http/Controllers/Api/NotificationController.php` — notification CRUD + push token registration
+- `backend/app/Console/Commands/SendSubscriptionReminders.php` — subscription expiry reminders (14/7/1 day)
+- `backend/app/Console/Commands/SendSessionReminders.php` — session reminders (24h before)
+- `frontend/src/api/notifications.js` — notifications API module (list, markRead, markAllRead)
+- `backend/app/Jobs/SendGuardianSMSJob.php` — SMS notification to guardians on consecutive absences
+- `backend/database/migrations/2024_01_01_000065_add_guardian_fields_to_registrations.php` — guardian_name, guardian_phone, guardian_email on registrations
 
 ## Registration Wizard Routes
 ```
@@ -200,3 +253,30 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Public sports endpoint at both `/sports` and `/public/sports` — same handler, `club.header` middleware resolves club from `X-Club-Slug` header
 - Sport module `sport_module_id` is nullable on all entities — never required for backward compat; existing `/club/*` routes continue to work without sport context
 - SportContext middleware checks `sportSlug` route param first, then `sport`, then `X-Sport-Module` header, then `sport_module_id` input
+- CoachPerformanceController routes (`/coaches/performance`, `/coaches/performance/compare`) must be registered BEFORE `/coaches/{coach}` in api.php to avoid route conflicts
+- CoachProfile has both `id` (profile ID) and `user_id` (User FK) — API routes use `user_id`, performance summary returns both; compare endpoint maps user_id→profile_id for filtering
+- `PageHeader` component uses internal `PAGE_DESCRIPTIONS` dict — does NOT accept a `subtitle` prop
+- `Modal` component signature is `Modal({ title, onClose, children, icon })` — does NOT accept `wide` prop
+- NotificationService.notify() dispatches push notifications outside DB transactions — safe for broadcast
+- Subscription expiry is computed from Registration.updated_at + SubscriptionPlan.duration_months — SwimmerProfile has no subscription_end_date field
+- `NotificationBell` is exported from Layout.jsx and accepts `navigate` as prop — used in both Layout content header and ManagerHomePage top bar
+- Layout sidebar nav for club managers: first item is "Dashboard" pointing to `/club/dashboard` (NOT "Home" at `/club`) — `/club` is the full-screen home page outside Layout
+- `attendance` table is singular (NOT `attendances`) — join queries must use `attendance.swimmer_id`, `attendance.present`, etc.
+- `group_memberships` table uses `swimmer_id` column (NOT `swimmer_profile_id`) — FK to `swimmer_profiles.id`
+- SQLite migration rollbacks: must drop unique indexes in a separate `Schema::table()` call before dropping columns — cannot combine in one call
+- CoachSchedule internal slot format is `{ time, is_available, max_capacity }` — public API transforms to `{ day, start_time, end_time }` for mobile compat
+- All UI text, notification messages, SMS messages, and risk reason strings must be in English — do NOT use Arabic text anywhere in frontend or backend
+- Analytics backend→frontend field mapping: `membership_growth[].total` (NOT `.count`), `retention.retention_rate_30d` (NOT `.retention_rate`), `registration_funnel.submitted_30d`/`.approved_30d`/`.rejected_30d`/`.pending_now` (NOT `.submitted`/`.approved`/`.rejected`/`.pending`), `coach_performance[].sessions_30d` (NOT `.sessions_count`)
+- `StatCard` component accepts both `title` and `label` props (`displayTitle = title || label`) — all callers use `label`; extra props like `delta`, `deltaType`, `accentColor` are silently ignored (not rendered)
+- `MiniChart` line chart: SVG uses `preserveAspectRatio="none"` for stretch — data point dots are HTML `<div>` elements (absolutely positioned) NOT SVG circles, to prevent oval distortion
+- Club Manager sidebar uses grouped navigation: `CLUB_MANAGER_NAV` array with 4 sections (Heroes, Training, Business, Club Management), each with section header + feature-gated items; other roles use flat nav list
+- Sport module card stats: `branches_count` (club-level), `new_registrations_count` (pending, sport-scoped), `active_swimmers_count` (sport-scoped) — computed in `ClubDashboardController.sportModules()`
+- Mobile app `.env` has `EXPO_PUBLIC_API_URL` — must match computer's current local IP (not localhost); use `--host=0.0.0.0` when running `php artisan serve` for mobile access
+- Monolog 3 uses immutable `LogRecord` objects (not arrays) — processors must implement `ProcessorInterface`, use `$record->with(extra: ...)` not `$record['extra'] = ...`
+- PHP `Error` extends `\Throwable` but NOT `\Exception` — health check and try/catch blocks for class-not-found must catch `\Throwable`
+- `daily` logging driver's `formatter` config key doesn't work for custom formatters — use `monolog` driver with explicit handler class + `tap` for full control
+- TrainingSession `effectiveSwimmers` attribute fires a DB query on every access — in loops, compute IDs from pre-loaded relations instead
+- ClubAnalyticsService methods are cached (1hr TTL) — N+1 fixes reduce cold-cache query count from 50+ to 5-8 per endpoint
+- `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
+- Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min) — registered via `Schedule::command()`
+- Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations

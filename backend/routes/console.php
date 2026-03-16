@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('notifications:subscription-reminders')->dailyAt('09:00');
 Schedule::command('notifications:session-reminders')->dailyAt('08:00');
+Schedule::command('queue:health-check')->everyFiveMinutes();
