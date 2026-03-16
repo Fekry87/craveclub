@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\SportModuleController;
 use App\Http\Controllers\Api\CoachPerformanceController;
 use App\Http\Controllers\Api\SwimmerReportController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AppVersionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,9 @@ Route::prefix('v1')->group(function () {
             'timestamp' => now()->toIso8601String(),
         ], $dbOk ? 200 : 503);
     });
+
+    // App Version Check (public, no auth — used by mobile for force-update)
+    Route::get('/app/version-check', [AppVersionController::class, 'check']);
 
     // API Documentation
     Route::get('/docs', [ApiDocController::class, 'docs']);

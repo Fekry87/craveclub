@@ -22,6 +22,9 @@
 - Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
 - Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
 - Job retry config: SendPushNotification (3 tries, 30/60/120s backoff, 30s timeout), SendGuardianSMSJob (3 tries, 60/120/240s backoff, 15s timeout)
+- API versioning: URL-prefix (`/api/v1`) + client headers (`X-App-Version`, `X-Platform`) read by `ApiVersionMiddleware`, stored in container as `client_app_version`/`client_platform`
+- Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
+- Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
 - Deployment: Procfile with 3 processes (web, worker, scheduler) for Railway.app; see `backend/docs/DEPLOYMENT.md`
 - Docker: PHP 8.2 FPM Alpine backend + MySQL 8.0 + Redis 7 Alpine (see `docker-compose.yml`)
 - API base URL is dynamic: `http://${window.location.hostname}:8000/api/v1` — works on both `localhost` and `127.0.0.1`; override with `VITE_API_URL` env var
@@ -196,6 +199,11 @@
 - `frontend/src/api/notifications.js` — notifications API module (list, markRead, markAllRead)
 - `backend/app/Jobs/SendGuardianSMSJob.php` — SMS notification to guardians on consecutive absences
 - `backend/database/migrations/2024_01_01_000065_add_guardian_fields_to_registrations.php` — guardian_name, guardian_phone, guardian_email on registrations
+- `backend/config/app_versions.php` — version check config (minimum versions, latest version, store URLs)
+- `backend/app/Http/Controllers/Api/AppVersionController.php` — version-check endpoint (force_update, update_available)
+- `backend/app/Http/Middleware/ApiVersionMiddleware.php` — reads X-App-Version/X-Platform from client + adds X-API-Version to response
+- `backend/docs/API_CHANGELOG.md` — API endpoint change history
+- `backend/docs/API_VERSIONING_STRATEGY.md` — versioning scheme, force-update mechanism, backward compat rules
 
 ## Registration Wizard Routes
 ```
@@ -280,3 +288,6 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
 - Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min) — registered via `Schedule::command()`
 - Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
+- `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
+- Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
+- `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false
