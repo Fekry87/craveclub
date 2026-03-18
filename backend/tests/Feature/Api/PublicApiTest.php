@@ -8,6 +8,7 @@ use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\Sport;
+use App\Models\SportModule;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,12 +75,13 @@ class PublicApiTest extends TestCase
 
     public function test_public_sports_returns_data(): void
     {
-        Sport::create([
-            'club_id' => $this->club->id,
+        $module = SportModule::create([
             'name' => 'Swimming',
             'slug' => 'swimming',
             'is_active' => true,
         ]);
+
+        $this->club->sportModules()->attach($module->id, ['is_active' => true]);
 
         $response = $this->withHeaders($this->clubHeader())
             ->getJson('/api/v1/sports');

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { DataTable, FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
+import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
 
 const CLUB_FEATURES = [
   {
@@ -150,6 +150,208 @@ const emptyForm = {
   max_branches: 1,
 };
 
+/* ── Club Card Component ── */
+function ClubCard({ club, index, onEdit, onDelete, onClick }) {
+  const ac = getAvatarColor(club.name);
+  const initials = club.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'C';
+  const rawColor = club.primary_color || club.theme_color;
+  const brandColor = rawColor ? (rawColor.startsWith('#') ? rawColor : `#${rawColor}`) : null;
+  const enabledFeatures = CLUB_FEATURES.filter(f => club.features?.[f.dbKey] !== false);
+  const usedBranches = club.branches_count ?? 0;
+  const maxBranches = club.max_branches ?? 1;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.25)';
+        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.06)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.borderColor = 'rgba(51,65,85,0.15)';
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+      }}
+      style={{
+        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
+        borderRadius: 20, padding: 0, overflow: 'hidden',
+        border: '1px solid rgba(51,65,85,0.15)',
+        cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        animation: `fadeInUp 0.4s ease-out ${index * 0.06}s both`,
+        position: 'relative',
+      }}
+    >
+      {/* Top color banner */}
+      <div style={{
+        height: 6, width: '100%',
+        background: brandColor
+          ? `linear-gradient(90deg, ${brandColor}, ${brandColor}88)`
+          : 'linear-gradient(90deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1))',
+      }} />
+
+      <div style={{ padding: '20px 22px 18px' }}>
+        {/* Header: Avatar + Name + Slug */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+          {club.logo_url ? (
+            <img src={club.logo_url} alt={club.name}
+              style={{ width: 48, height: 48, borderRadius: 14, objectFit: 'cover', border: '2px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
+            />
+          ) : (
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: ac.bg,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: ac.text,
+              flexShrink: 0, boxShadow: '0 3px 12px rgba(0,0,0,0.25)',
+            }}>{initials}</div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              color: '#f1f5f9', fontSize: 17, fontWeight: 700,
+              fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{club.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <span style={{
+                padding: '2px 9px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                background: 'rgba(51,65,85,0.3)', color: '#94a3b8',
+                fontFamily: "'DM Sans', monospace",
+              }}>{club.slug}</span>
+              {brandColor && (
+                <div style={{
+                  width: 14, height: 14, borderRadius: 5,
+                  background: brandColor, border: '1.5px solid rgba(255,255,255,0.12)',
+                  boxShadow: `0 0 8px ${brandColor}40`,
+                }} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+          marginBottom: 14,
+        }}>
+          {[
+            {
+              label: 'Users', value: club.users_count || 0,
+              color: '#a78bfa', bg: 'rgba(139,92,246,0.06)',
+              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>,
+            },
+            {
+              label: 'Swimmers', value: club.swimmer_profiles_count || 0,
+              color: '#22d3ee', bg: 'rgba(34,211,238,0.06)',
+              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M1 1l4 4m0 0l4-4M5 5v12" /><path d="M12 3a4 4 0 100 8 4 4 0 000-8z" /></svg>,
+            },
+            {
+              label: 'Branches', value: `${usedBranches}/${maxBranches}`,
+              color: usedBranches >= maxBranches ? '#f43f5e' : '#fbbf24',
+              bg: usedBranches >= maxBranches ? 'rgba(244,63,94,0.06)' : 'rgba(251,191,36,0.06)',
+              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={usedBranches >= maxBranches ? '#f43f5e' : '#fbbf24'} strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>,
+            },
+          ].map(stat => (
+            <div key={stat.label} style={{
+              padding: '10px 10px', borderRadius: 12,
+              background: stat.bg,
+              border: `1px solid ${stat.color}12`,
+              textAlign: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 3 }}>
+                {stat.icon}
+                <span style={{ color: stat.color, fontSize: 16, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                  {stat.value}
+                </span>
+              </div>
+              <div style={{ color: '#64748b', fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Features */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 16 }}>
+          {enabledFeatures.slice(0, 5).map(f => (
+            <span key={f.key} style={{
+              fontSize: 10, padding: '2px 7px',
+              borderRadius: 999, background: 'rgba(88,204,2,0.06)',
+              color: '#58CC02', border: '1px solid rgba(88,204,2,0.15)',
+              lineHeight: '16px',
+            }}>
+              {f.icon} {f.label}
+            </span>
+          ))}
+          {enabledFeatures.length > 5 && (
+            <span style={{
+              fontSize: 10, padding: '2px 7px', borderRadius: 999,
+              background: 'rgba(148,163,184,0.06)', color: '#94a3b8',
+              border: '1px solid rgba(148,163,184,0.15)', lineHeight: '16px',
+            }}>
+              +{enabledFeatures.length - 5} more
+            </span>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          paddingTop: 14, borderTop: '1px solid rgba(51,65,85,0.12)',
+        }}>
+          <button
+            onClick={e => { e.stopPropagation(); onClick(); }}
+            style={{
+              flex: 1, padding: '8px 0', borderRadius: 10,
+              background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)',
+              color: '#a78bfa', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.06)'; }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+            View Details
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onEdit(club); }}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.15)',
+              color: '#22d3ee', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.06)'; }}
+            title="Edit Club"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(club); }}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.15)',
+              color: '#f43f5e', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.12)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.06)'; }}
+            title="Delete Club"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CorporateClubs() {
   const [clubs, setClubs] = useState([]);
   const [search, setSearch] = useState('');
@@ -186,20 +388,36 @@ export default function CorporateClubs() {
     }
   };
 
-  const handleEdit = (club) => {
+  const handleEdit = async (club) => {
     setEditId(club.id);
     setEditClub(club);
     setError(null);
-    setForm({
-      name: club.name, slug: club.slug, about: club.about || '',
-      contact_email: club.contact_email || '', contact_phone: club.contact_phone || '',
-      theme_color: club.theme_color || '#0ea5e9',
-      primary_color: club.primary_color || '', secondary_color: club.secondary_color || '',
-      accent_color: club.accent_color || '', font_preference: club.font_preference || '',
-      manager_name: '', manager_email: '', manager_password: '',
-      max_branches: club.max_branches || 1,
-      features: extractFeatures(club.features),
-    });
+    try {
+      const res = await api.get(`/corporate/clubs/${club.id}`);
+      const full = res.data;
+      setEditClub(full);
+      setForm({
+        name: full.name, slug: full.slug, about: full.about || '',
+        contact_email: full.contact_email || '', contact_phone: full.contact_phone || '',
+        theme_color: full.theme_color || '#0ea5e9',
+        primary_color: full.primary_color || '', secondary_color: full.secondary_color || '',
+        accent_color: full.accent_color || '', font_preference: full.font_preference || '',
+        manager_name: full.manager?.name || '', manager_email: full.manager?.email || '', manager_password: '',
+        max_branches: full.max_branches || 1,
+        features: extractFeatures(full.features),
+      });
+    } catch {
+      setForm({
+        name: club.name, slug: club.slug, about: club.about || '',
+        contact_email: club.contact_email || '', contact_phone: club.contact_phone || '',
+        theme_color: club.theme_color || '#0ea5e9',
+        primary_color: club.primary_color || '', secondary_color: club.secondary_color || '',
+        accent_color: club.accent_color || '', font_preference: club.font_preference || '',
+        manager_name: '', manager_email: '', manager_password: '',
+        max_branches: club.max_branches || 1,
+        features: extractFeatures(club.features),
+      });
+    }
     setShowModal(true);
   };
 
@@ -213,69 +431,6 @@ export default function CorporateClubs() {
       }
     }
   };
-
-  const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'slug', label: 'Slug', render: r => (
-      <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: 'rgba(51,65,85,0.3)', color: '#94a3b8', fontFamily: "'DM Sans', monospace" }}>{r.slug}</span>
-    ) },
-    { key: 'branding', label: 'Branding', render: r => {
-      const color = r.primary_color || r.theme_color;
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {color ? (
-            <div style={{ width: 18, height: 18, borderRadius: 6, background: color.startsWith('#') ? color : `#${color}`, border: '1px solid rgba(255,255,255,0.1)', boxShadow: `0 0 8px ${color.startsWith('#') ? color : `#${color}`}30`, flexShrink: 0 }} />
-          ) : (
-            <div style={{ width: 18, height: 18, borderRadius: 6, background: 'rgba(51,65,85,0.3)', border: '1px dashed rgba(51,65,85,0.5)', flexShrink: 0 }} />
-          )}
-          <button
-            type="button"
-            onClick={e => { e.stopPropagation(); navigate(`/corporate/clubs/${r.id}/branding`); }}
-            style={{ padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, background: 'rgba(139,92,246,0.08)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer', transition: 'all 0.2s' }}
-          >Configure</button>
-        </div>
-      );
-    }},
-    { key: 'users_count', label: 'Users', render: r => (
-      <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: 'rgba(34,211,238,0.08)', color: '#22d3ee' }}>{r.users_count || 0}</span>
-    ) },
-    { key: 'branches', label: 'Branches', render: r => {
-      const used = r.branches_count ?? 0;
-      const max = r.max_branches ?? 1;
-      const full = used >= max;
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ fontSize: 13 }}>
-            <span style={{ fontWeight: 700, color: '#f1f5f9' }}>{used}</span>
-            <span style={{ color: '#718096' }}>/{max}</span>
-          </div>
-          {full && (
-            <span style={{ padding: '1px 8px', borderRadius: 20, fontSize: 10, fontWeight: 600, background: 'rgba(229,62,62,0.1)', color: '#E53E3E', border: '1px solid rgba(252,129,129,0.3)' }}>Full</span>
-          )}
-        </div>
-      );
-    }},
-    { key: 'features', label: 'Features', render: r => {
-      const f = r.features;
-      const enabled = CLUB_FEATURES.filter(feat => f?.[feat.dbKey] !== false);
-      if (enabled.length === 0) {
-        return <span style={{ color: '#E53E3E', fontSize: 12 }}>No features enabled</span>;
-      }
-      return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {enabled.map(feat => (
-            <span key={feat.key} style={{
-              fontSize: 11, padding: '2px 7px',
-              borderRadius: 999, background: 'rgba(88,204,2,0.08)',
-              color: '#58CC02', border: '1px solid rgba(88,204,2,0.2)',
-            }}>
-              {feat.icon} {feat.label}
-            </span>
-          ))}
-        </div>
-      );
-    }},
-  ];
 
   /* ── Full-page form for Create / Edit ── */
   if (showModal) {
@@ -366,20 +521,18 @@ export default function CorporateClubs() {
           ))}
         </div>
 
-        {/* Manager (only on create) */}
-        {!editId && (
-          <div style={{ marginTop: 12, padding: '18px 18px 6px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
-            <h4 style={{ color: '#2dd4bf', margin: '0 0 14px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              Club Manager Account
-            </h4>
-            <FormField label="Manager Name"><Input value={form.manager_name} onChange={e => setForm({ ...form, manager_name: e.target.value })} /></FormField>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FormField label="Manager Email"><Input type="email" value={form.manager_email} onChange={e => setForm({ ...form, manager_email: e.target.value })} /></FormField>
-              <FormField label="Manager Password"><Input type="password" value={form.manager_password} onChange={e => setForm({ ...form, manager_password: e.target.value })} /></FormField>
-            </div>
+        {/* Manager Account */}
+        <div style={{ marginTop: 12, padding: '18px 18px 6px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
+          <h4 style={{ color: '#2dd4bf', margin: '0 0 14px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            Club Manager Account
+          </h4>
+          <FormField label="Manager Name"><Input value={form.manager_name} onChange={e => setForm({ ...form, manager_name: e.target.value })} /></FormField>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <FormField label="Manager Email"><Input type="email" value={form.manager_email} onChange={e => setForm({ ...form, manager_email: e.target.value })} /></FormField>
+            <FormField label="Manager Password"><Input type="password" value={form.manager_password} onChange={e => setForm({ ...form, manager_password: e.target.value })} placeholder={editId ? 'Leave blank to keep current' : ''} /></FormField>
           </div>
-        )}
+        </div>
 
         {error && (
           <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.2)', color: '#fc8181', fontSize: 13 }}>{error}</div>
@@ -402,41 +555,97 @@ export default function CorporateClubs() {
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={clubs} onEdit={handleEdit} onDelete={handleDelete}
-        onRowClick={(row) => navigate(`/corporate/clubs/${row.id}`)}
-        mobileCard={(row, i, { onEdit: e, onDelete: d }) => {
-          const ac = getAvatarColor(row.name);
-          const initials = row.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'C';
-          return (
-            <MobileCardWrapper key={row.id} index={i} accentColor={ac.accent}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-                <div style={{ width: 46, height: 46, borderRadius: 13, background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: '0.9375rem', fontWeight: 700, color: ac.text, flexShrink: 0, boxShadow: '0 3px 10px rgba(0,0,0,0.25)' }}>{initials}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>{row.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
-                    <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: '0.6875rem', fontWeight: 600, background: 'rgba(51,65,85,0.25)', border: '1px solid rgba(51,65,85,0.35)', color: '#94a3b8' }}>{row.slug}</span>
-                    <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: '0.6875rem', fontWeight: 600, background: 'rgba(34,211,238,0.1)', border: '1px solid rgba(34,211,238,0.15)', color: '#22d3ee' }}>{row.users_count || 0} users</span>
-                  </div>
-                </div>
+      {/* Summary strip */}
+      {clubs.length > 0 && (
+        <div style={{
+          display: 'flex', gap: 14, marginBottom: 24,
+          animation: 'fadeInUp 0.4s ease-out',
+        }}>
+          {[
+            { label: 'Total Clubs', value: clubs.length, color: '#a78bfa', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" /></svg> },
+            { label: 'Total Users', value: clubs.reduce((s, c) => s + (c.users_count || 0), 0), color: '#22d3ee', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg> },
+            { label: 'Total Swimmers', value: clubs.reduce((s, c) => s + (c.swimmer_profiles_count || 0), 0), color: '#2dd4bf', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="7" r="4" /><path d="M5 21v-2a7 7 0 0114 0v2" /></svg> },
+          ].map(s => (
+            <div key={s.label} style={{
+              flex: 1, padding: '14px 18px', borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)',
+              border: `1px solid ${s.color}12`,
+              display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: `${s.color}0f`, border: `1px solid ${s.color}1a`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{s.icon}</div>
+              <div>
+                <div style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 700, fontFamily: "'Outfit', sans-serif", lineHeight: 1 }}>{s.value}</div>
+                <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</div>
               </div>
-              {/* Feature pills on mobile card */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
-                {CLUB_FEATURES.filter(f => row.features?.[f.dbKey] !== false).map(f => (
-                  <span key={f.key} style={{
-                    fontSize: 10, padding: '2px 6px',
-                    borderRadius: 999, background: 'rgba(88,204,2,0.08)',
-                    color: '#58CC02', border: '1px solid rgba(88,204,2,0.2)',
-                  }}>
-                    {f.icon} {f.label}
-                  </span>
-                ))}
-              </div>
-              <CardActions row={row} onEdit={e} onDelete={d} />
-            </MobileCardWrapper>
-          );
-        }}
-      />
+            </div>
+          ))}
+        </div>
+      )}
 
+      {/* Cards grid */}
+      {clubs.length === 0 ? (
+        <div style={{
+          textAlign: 'center', padding: '60px 20px', borderRadius: 20,
+          background: 'linear-gradient(135deg, rgba(13,31,60,0.3) 0%, rgba(10,22,40,0.2) 100%)',
+          border: '1px solid rgba(51,65,85,0.12)',
+          animation: 'fadeInUp 0.4s ease-out',
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
+            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+          </div>
+          <div style={{ color: '#f1f5f9', fontSize: 16, fontWeight: 600, fontFamily: "'Outfit', sans-serif", marginBottom: 6 }}>
+            {search ? 'No clubs match your search' : 'No clubs yet'}
+          </div>
+          <div style={{ color: '#64748b', fontSize: 13, marginBottom: 20 }}>
+            {search ? 'Try a different search term' : 'Create your first club to get started'}
+          </div>
+          {!search && (
+            <Button onClick={() => { setEditId(null); setEditClub(null); setError(null); setForm({ ...emptyForm }); setShowModal(true); }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              Create Club
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gap: 18,
+        }}>
+          {clubs.map((club, i) => (
+            <ClubCard
+              key={club.id}
+              club={club}
+              index={i}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onClick={() => navigate(`/corporate/clubs/${club.id}`)}
+            />
+          ))}
+        </div>
+      )}
+
+      {error && !showModal && (
+        <div style={{
+          position: 'fixed', bottom: 24, right: 24,
+          padding: '12px 18px', borderRadius: 12,
+          background: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.25)',
+          color: '#fda4af', fontSize: 13, fontWeight: 500,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+          animation: 'fadeInUp 0.3s ease-out',
+          zIndex: 100,
+        }}>
+          {error}
+        </div>
+      )}
     </div>
   );
 }

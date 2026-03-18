@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
             if ($query->time > 100) {
                 Log::channel('daily')->warning('SLOW_QUERY', [
                     'sql'        => $query->sql,
-                    'bindings'   => $query->bindings,
+                    'bindings'   => app()->isProduction() ? '[redacted]' : $query->bindings,
                     'time_ms'    => $query->time,
                     'request_id' => app()->has('request_id') ? app('request_id') : null,
                     'club_id'    => app()->has('current_club_id') ? app('current_club_id') : null,

@@ -196,6 +196,7 @@ class ClubBrandingController extends Controller
     /**
      * Shared file upload handler.
      * Uses content-hash filenames for CDN cache-busting without purge.
+     * Disk: 's3' in production (when AWS_BUCKET is set), 'public' in dev.
      */
     private function handleUpload(Request $request, Club $club): JsonResponse
     {
@@ -206,6 +207,18 @@ class ClubBrandingController extends Controller
 
         $file = $request->file('file');
         $type = $request->input('type');
+
+        // Validate MIME type from file content (not just extension)
+        $allowedMimes = ['image/png', 'image/jpeg', 'image/svg+xml'];
+        abort_if(!in_array($file->getMimeType(), $allowedMimes), 422, 'Invalid file type');
+
+        // Per-club upload rate limiting: max 20 uploads per hour
+        $uploadKey = "branding_uploads_{$club->id}";
+        $uploads = Cache::get($uploadKey, 0);
+        if ($uploads >= 20) {
+            abort(429, 'Upload limit exceeded. Try again later.');
+        }
+        Cache::put($uploadKey, $uploads + 1, now()->addHour());
         $ext = $file->getClientOriginalExtension();
 
         // Content hash for CDN cache-busting: new file = new filename = fresh CDN response
@@ -213,13 +226,17 @@ class ClubBrandingController extends Controller
         $filename = "{$type}-{$hash}.{$ext}";
         $storagePath = "clubs/{$club->slug}/{$filename}";
 
-        Storage::disk('s3')->put($storagePath, file_get_contents($file->getRealPath()), [
-            'visibility' => 'public',
-            'ContentType' => $file->getMimeType(),
-            'CacheControl' => 'public, max-age=31536000, immutable',
-        ]);
+        // Use S3 in production (when configured), public disk in dev
+        $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
+        $disk = Storage::disk($diskName);
 
-        $url = Storage::disk('s3')->url($storagePath);
+        $options = $diskName === 's3'
+            ? ['visibility' => 'public', 'ContentType' => $file->getMimeType(), 'CacheControl' => 'public, max-age=31536000, immutable']
+            : ['visibility' => 'public'];
+
+        $disk->put($storagePath, file_get_contents($file->getRealPath()), $options);
+
+        $url = $disk->url($storagePath);
 
         $columnMap = [
             'logo' => 'logo_url',

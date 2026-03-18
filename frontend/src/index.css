@@ -47,6 +47,44 @@
   --theme-secondary: #06b6d4;
   --theme-accent: #2dd4bf;
 
+  /* Semantic color tokens (used by newer pages) */
+  --color-bg: var(--abyss);
+  --color-surface: var(--deep);
+  --color-surface-2: var(--ocean);
+  --color-surface-3: var(--surface);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text: var(--pearl);
+  --color-text-secondary: var(--shell);
+  --color-text-muted: var(--mist);
+  --color-text-dim: var(--slate);
+  --color-primary: var(--cyan-glow);
+  --color-primary-dark: var(--aqua);
+  --color-primary-dim: rgba(34, 211, 238, 0.08);
+  --color-danger: var(--coral);
+  --color-danger-text: var(--coral-soft);
+  --color-danger-bg: rgba(244, 63, 94, 0.12);
+  --color-success: var(--algae);
+  --color-success-text: var(--algae);
+  --color-success-bg: rgba(52, 211, 153, 0.12);
+  --color-warning: var(--sun);
+  --color-warning-text: var(--sun);
+  --color-warning-bg: rgba(251, 191, 36, 0.12);
+  --color-info: var(--sky);
+  --color-info-text: var(--sky);
+  --color-info-bg: rgba(56, 189, 248, 0.12);
+  --color-swimmers: var(--cyan-glow);
+  --color-sessions: var(--teal-bright);
+  --color-plans: var(--sky);
+  --font-sans: 'DM Sans', sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --transition-fast: 0.2s ease;
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+
   font-family: var(--font-body);
   line-height: 1.6;
   font-weight: 400;

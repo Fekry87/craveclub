@@ -143,7 +143,7 @@ function TopSwimmers({ swimmers }) {
 
 /* ─── At-Risk Swimmers ─── */
 function AtRiskSwimmers({ swimmers, isMobile }) {
-  if (!swimmers?.length) return <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', padding: 24 }}>لا يوجد سباحين في خطر</div>;
+  if (!swimmers?.length) return <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', padding: 24 }}>No at-risk swimmers</div>;
 
   if (isMobile) {
     return (
@@ -303,7 +303,7 @@ export default function CoachDetailPage() {
       </Section>
 
       {/* At-Risk Swimmers */}
-      <Section title="سباحين في خطر" badge={data.at_risk_swimmers?.length} badgeColor="#f87171">
+      <Section title="At-Risk Swimmers" badge={data.at_risk_swimmers?.length} badgeColor="#f87171">
         <AtRiskSwimmers swimmers={data.at_risk_swimmers} isMobile={isMobile} />
       </Section>
     </div>

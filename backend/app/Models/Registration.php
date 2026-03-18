@@ -11,7 +11,8 @@ class Registration extends Model
     use SoftDeletes;
     protected $fillable = [
         'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'plan_id',
-        'full_name', 'phone', 'gender', 'birth_date', 'avatar_url',
+        'full_name', 'phone', 'guardian_name', 'guardian_phone', 'guardian_email',
+        'gender', 'birth_date', 'avatar_url',
         'height_cm', 'weight_kg', 'fitness_level', 'prior_experience',
         'medical_notes', 'sport_ids', 'experience_level', 'years_experience',
         'competed', 'primary_goal', 'weekly_frequency', 'preferred_time',

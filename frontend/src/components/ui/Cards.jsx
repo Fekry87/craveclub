@@ -1,6 +1,8 @@
 import { avatarCardColors } from './styles';
 
-export function StatCard({ title, value, icon }) {
+export function StatCard({ title, label, value, icon }) {
+  // Accept both "title" and "label" props for backward compat
+  const displayTitle = title || label;
   return (
     <div
       onMouseEnter={e => {
@@ -36,7 +38,7 @@ export function StatCard({ title, value, icon }) {
         color: '#94a3b8', fontSize: '0.75rem', marginBottom: 12,
         fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase',
         display: 'flex', alignItems: 'center', gap: 8,
-      }}>{icon} {title}</div>
+      }}>{icon} {displayTitle}</div>
       <div style={{
         color: '#f1f5f9', fontSize: '2rem', fontWeight: 700,
         fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em',

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { FormField, Input, Button } from '../../components/CrudTable';
+import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
 
 const colorPresets = ['#8b5cf6','#a78bfa','#6366f1','#22d3ee','#06b6d4','#2dd4bf','#10b981','#f472b6','#f43f5e','#fb923c','#fbbf24','#38bdf8'];
 
@@ -63,18 +63,7 @@ export default function CorporateSettings() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(145deg, rgba(13,31,60,0.85) 0%, rgba(139,92,246,0.08) 50%, rgba(13,31,60,0.65) 100%)', borderRadius: 22, padding: '32px 36px', border: '1px solid rgba(139,92,246,0.1)', position: 'relative', overflow: 'hidden', marginBottom: 28, animation: 'fadeInUp 0.5s ease-out' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent 10%, rgba(139,92,246,0.2) 50%, transparent 90%)' }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ color: '#a78bfa', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Platform Settings
-          </div>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: 0, letterSpacing: '-0.02em' }}>Corporate Branding</h1>
-          <p style={{ color: '#64748b', fontSize: 14, margin: '4px 0 0' }}>Customize how your platform appears to all clubs</p>
-        </div>
-      </div>
+      <PageHeader title="Platform Settings" />
 
       <div style={{ maxWidth: 640 }}>
         {/* Platform Identity */}

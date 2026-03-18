@@ -13,9 +13,12 @@ use App\Models\SessionExclusion;
 use App\Models\SwimmerProfile;
 use App\Models\GroupMembership;
 use App\Models\User;
+use App\Jobs\SendGuardianSMSJob;
+use App\Models\Club;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class CoachApiController extends Controller
@@ -444,7 +447,7 @@ class CoachApiController extends Controller
         if ($request->has('attendance')) {
             $clubId = app('current_club_id');
             $notificationService = app(NotificationService::class);
-            $coachUserId = $session->coach_user_id;
+            $coachUserId = $session->coach_user_id ?? $request->user()->id;
 
             foreach ($request->attendance as $att) {
                 if (!$att['present']) {
@@ -455,29 +458,57 @@ class CoachApiController extends Controller
                     $notificationService->notify(
                         userId: $coachUserId,
                         type: 'absence_alert',
-                        title: 'غياب سباح',
-                        body: "{$swimmer->full_name} لم يحضر جلسة {$session->title} بتاريخ {$session->date}",
+                        title: 'Swimmer Absence',
+                        body: "{$swimmer->full_name} was absent from session {$session->title} on {$session->date}",
                         data: ['swimmer_id' => $swimmer->id, 'session_id' => $session->id],
                         clubId: $clubId,
                     );
 
-                    // Check for 3 consecutive absences → notify manager
-                    $recentAbsences = Attendance::where('swimmer_id', $swimmer->id)
-                        ->where('present', false)
+                    // Notify swimmer (parent sees via shared account)
+                    if ($swimmer->user_id) {
+                        $notificationService->notify(
+                            userId: $swimmer->user_id,
+                            type: 'absence_recorded',
+                            title: 'Absence Recorded',
+                            body: "Your absence from session {$session->title} on " . \Carbon\Carbon::parse($session->date)->format('d/m/Y') . " has been recorded",
+                            data: ['session_id' => $session->id],
+                            clubId: $clubId,
+                        );
+                    }
+
+                    // Check consecutive absences
+                    $recentAbsences = Attendance::where('attendance.swimmer_id', $swimmer->id)
+                        ->where('attendance.present', false)
                         ->whereHas('session', fn ($q) => $q->where('club_id', $clubId)->where('status', 'Completed'))
-                        ->join('training_sessions', 'attendances.session_id', '=', 'training_sessions.id')
+                        ->join('training_sessions', 'attendance.session_id', '=', 'training_sessions.id')
                         ->orderByDesc('training_sessions.date')
                         ->take(3)
-                        ->pluck('attendances.present');
+                        ->pluck('attendance.present');
 
-                    if ($recentAbsences->count() >= 3 && $recentAbsences->every(fn ($v) => !$v)) {
+                    $consecutiveCount = $recentAbsences->count();
+
+                    // 2+ consecutive absences → notify guardian via SMS job
+                    if ($consecutiveCount >= 2 && $recentAbsences->every(fn ($v) => !$v) && $swimmer->guardian_phone) {
+                        $club = Club::find($clubId);
+                        SendGuardianSMSJob::dispatch(
+                            guardianPhone: $swimmer->guardian_phone,
+                            guardianName: $swimmer->guardian_name ?? 'Guardian',
+                            swimmerName: $swimmer->full_name,
+                            clubName: $club?->name ?? '',
+                            swimmerId: $swimmer->id,
+                            sessionId: $session->id,
+                        );
+                    }
+
+                    // 3+ consecutive absences → notify manager
+                    if ($consecutiveCount >= 3 && $recentAbsences->every(fn ($v) => !$v)) {
                         $manager = User::where('club_id', $clubId)->where('role', 'CLUB_MANAGER')->first();
                         if ($manager) {
                             $notificationService->notify(
                                 userId: $manager->id,
                                 type: 'repeated_absence',
-                                title: 'غياب متكرر',
-                                body: "{$swimmer->full_name} غاب 3 جلسات متتالية — يحتاج متابعة",
+                                title: 'Repeated Absence',
+                                body: "{$swimmer->full_name} has missed 3 consecutive sessions — needs follow-up",
                                 data: ['swimmer_id' => $swimmer->id, 'session_id' => $session->id],
                                 clubId: $clubId,
                             );
@@ -486,6 +517,13 @@ class CoachApiController extends Controller
                 }
             }
         }
+
+        // Bust dashboard and analytics caches after session completion
+        $clubId = app('current_club_id');
+        Cache::forget("dashboard_metrics_{$clubId}");
+        Cache::forget("analytics_coaches_{$clubId}");
+        Cache::forget("analytics_attendance_trend_{$clubId}");
+        Cache::forget("analytics_full_{$clubId}");
 
         return response()->json([
             'message' => 'Session completed',
@@ -549,8 +587,14 @@ class CoachApiController extends Controller
                 'title' => $session->title,
                 'date' => $session->date?->toDateString(),
                 'start_time' => $session->start_time,
+                'end_time' => $session->end_time,
                 'status' => $session->status,
                 'group_id' => $session->group_id,
+                'group' => $session->group ? [
+                    'id' => $session->group->id,
+                    'name' => $session->group->name,
+                    'description' => $session->group->description,
+                ] : null,
             ],
             'roster' => $roster,
             'summary' => [

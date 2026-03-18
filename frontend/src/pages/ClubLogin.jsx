@@ -103,8 +103,10 @@ export default function ClubLogin() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const primary = club?.primary_color || club?.theme_color || '#22d3ee';
-  const secondary = club?.secondary_color || '#06b6d4';
+  const rawPrimary = club?.primary_color || club?.theme_color || '';
+  const primary = rawPrimary ? (rawPrimary.startsWith('#') ? rawPrimary : `#${rawPrimary}`) : '#22d3ee';
+  const rawSecondary = club?.secondary_color || '';
+  const secondary = rawSecondary ? (rawSecondary.startsWith('#') ? rawSecondary : `#${rawSecondary}`) : '#06b6d4';
 
   // Check if already logged in for club scope (no auto-logout!)
   useEffect(() => {

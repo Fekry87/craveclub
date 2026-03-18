@@ -1,8 +1,10 @@
 .DS_Store
 *.swp
 *.swo
+.env
 backend/.env
 backend/vendor/
+backend/bootstrap/cache/*.php
 backend/storage/logs/*
 !backend/storage/logs/.gitkeep
 backend/database/database.sqlite

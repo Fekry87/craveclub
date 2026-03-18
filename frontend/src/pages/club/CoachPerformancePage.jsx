@@ -107,11 +107,11 @@ function CoachCard({ coach, index, selected, onToggle, onClick }) {
             {coach.coach_name}
           </div>
           <div style={{ color: '#526280', fontSize: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <span>{coach.groups_count} مجموعات</span>
+            <span>{coach.groups_count} groups</span>
             <span>·</span>
-            <span>{coach.swimmers_count} سباح</span>
+            <span>{coach.swimmers_count} swimmers</span>
             <span>·</span>
-            <span>{coach.sessions_30d} جلسة</span>
+            <span>{coach.sessions_30d} sessions</span>
           </div>
         </div>
       </div>
@@ -119,12 +119,12 @@ function CoachCard({ coach, index, selected, onToggle, onClick }) {
       {/* Metrics row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 140 }}>
-          <div style={{ color: '#64748b', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>حضور</div>
+          <div style={{ color: '#64748b', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Attendance</div>
           <RateBar rate={coach.avg_attendance} />
         </div>
 
         <div style={{ flexShrink: 0 }}>
-          <div style={{ color: '#64748b', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>تقييم</div>
+          <div style={{ color: '#64748b', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Rating</div>
           <Stars rating={coach.avg_rating} />
         </div>
 
@@ -136,7 +136,7 @@ function CoachCard({ coach, index, selected, onToggle, onClick }) {
             display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
           }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-            {coach.at_risk_count} في خطر
+            {coach.at_risk_count} at risk
           </div>
         )}
       </div>
@@ -156,7 +156,7 @@ function CompareModal({ coaches, onClose }) {
   ];
 
   return (
-    <Modal title="مقارنة المدربين" onClose={onClose}>
+    <Modal title="Compare Coaches" onClose={onClose}>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
@@ -194,7 +194,7 @@ function CompareModal({ coaches, onClose }) {
         </table>
       </div>
       <ModalActions>
-        <Button variant="secondary" onClick={onClose}>إغلاق</Button>
+        <Button variant="secondary" onClick={onClose}>Close</Button>
       </ModalActions>
     </Modal>
   );
@@ -276,10 +276,10 @@ export default function CoachPerformancePage() {
 
   return (
     <div>
-      <PageHeader title="أداء المدربين">
+      <PageHeader title="Coach Performance">
         {selected.length >= 2 && (
           <Button onClick={handleCompare} disabled={comparing}>
-            {comparing ? 'جاري...' : `قارن المحددين (${selected.length})`}
+            {comparing ? 'Comparing...' : `Compare Selected (${selected.length})`}
           </Button>
         )}
       </PageHeader>
@@ -293,8 +293,8 @@ export default function CoachPerformancePage() {
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 12 }}>
             <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>لا يوجد مدربين</div>
-          <div style={{ fontSize: 13 }}>أضف مدربين لمشاهدة أدائهم</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>No coaches found</div>
+          <div style={{ fontSize: 13 }}>Add coaches to view their performance</div>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(420px, 1fr))', gap: 14 }}>

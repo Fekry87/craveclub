@@ -32,7 +32,8 @@ class PlatformController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $clubs = $query->withCount('users')->latest()->paginate($request->input('per_page', 15));
+        $clubs = $query->withCount(['users', 'branches', 'sportModules', 'swimmerProfiles', 'coachProfiles', 'groups', 'trainingSessions'])
+            ->latest()->paginate($request->input('per_page', 15));
 
         return response()->json($clubs);
     }

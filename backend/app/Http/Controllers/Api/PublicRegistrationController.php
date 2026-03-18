@@ -15,6 +15,7 @@ use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -169,14 +170,20 @@ class PublicRegistrationController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Email-based rate limiting: max 5 registration attempts per phone per hour
+        $phoneKey = 'registration_attempt_' . hash('sha256', $request->input('phone', ''));
+        $attempts = Cache::get($phoneKey, 0);
+        abort_if($attempts >= 5, 429, 'Too many registration attempts. Please try again later.');
+        Cache::put($phoneKey, $attempts + 1, now()->addHour());
+
         $validated = $request->validate([
-            'full_name' => 'required|string|min:2',
-            'phone' => 'required|string|min:10',
-            'guardian_name' => 'nullable|string|max:100',
+            'full_name' => 'required|string|min:2|max:255',
+            'phone' => 'required|string|min:10|max:20',
+            'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => 'nullable|string|max:20',
-            'guardian_email' => 'nullable|email|max:100',
+            'guardian_email' => 'nullable|email|max:255',
             'gender' => 'required|in:male,female',
-            'birth_date' => 'required|date|before:today',
+            'birth_date' => 'required|date|before:today|after:1920-01-01',
             'height_cm' => 'nullable|integer|min:50|max:250',
             'weight_kg' => 'nullable|integer|min:20|max:300',
             'fitness_level' => 'nullable|in:excellent,good,average,beginner',

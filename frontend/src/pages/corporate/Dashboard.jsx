@@ -27,9 +27,9 @@ function WelcomeHero({ user, corporate }) {
           {platformName}
         </div>
         <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 30, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
-          {greeting}, <span style={{ background: 'linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{firstName}</span>
+          {greeting}, <span style={{ color: '#22d3ee' }}>{firstName}</span>
         </h1>
-        <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Manage your clubs, control features, and drive growth</p>
+        <p style={{ color: '#94a3b8', fontSize: 14, margin: 0 }}>Manage your clubs, control features, and drive growth</p>
       </div>
     </div>
   );
@@ -89,7 +89,7 @@ function ClubCard({ club, index, onClick }) {
       <div style={{ width: 46, height: 46, borderRadius: 13, background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: ac.text, flexShrink: 0, boxShadow: '0 3px 10px rgba(0,0,0,0.25)' }}>{initials}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{club.name}</div>
-        <div style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>{club.users_count || 0} users</div>
+        <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 2 }}>{club.users_count || 0} users</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ padding: '4px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.1)', color: '#a78bfa', fontSize: 12, fontWeight: 500 }}>
@@ -172,9 +172,9 @@ export default function CorporateDashboard() {
             {metrics.recent_clubs?.length > 0 ? metrics.recent_clubs.map((club, i) => (
               <ClubCard key={club.id} club={club} index={i} onClick={() => window.location.href = `/corporate/clubs`} />
             )) : (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#475569' }}>
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>No clubs yet</div>
-                <div style={{ fontSize: 13, color: '#334155', marginTop: 4 }}>Create your first club to get started</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Create your first club to get started</div>
               </div>
             )}
           </div>

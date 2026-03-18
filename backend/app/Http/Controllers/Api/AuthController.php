@@ -52,8 +52,11 @@ class AuthController extends Controller
         }
 
         // Create a personal access token (stateless — no session dependency)
+        // Mobile tokens last 30 days; web tokens use sanctum.expiration (24h)
         $scope = $request->filled('club_slug') ? 'club' : 'corporate';
-        $token = $user->createToken("auth-{$scope}")->plainTextToken;
+        $platform = $request->header('X-Platform', 'web');
+        $expiresAt = in_array($platform, ['ios', 'android']) ? now()->addDays(30) : null;
+        $token = $user->createToken("auth-{$scope}", ['*'], $expiresAt)->plainTextToken;
 
         // Clear the web session — we rely on bearer tokens only
         Auth::guard('web')->logout();

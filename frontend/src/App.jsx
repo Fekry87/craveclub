@@ -27,6 +27,7 @@ const PlatformDashboard = lazy(() => import('./pages/platform/Dashboard'));
 const Clubs = lazy(() => import('./pages/platform/Clubs'));
 
 // Club Manager
+const ManagerHomePage = lazy(() => import('./pages/club/ManagerHomePage'));
 const SportModuleDashboard = lazy(() => import('./pages/club/SportModuleDashboard'));
 const ClubDashboard = lazy(() => import('./pages/club/Dashboard'));
 const Plans = lazy(() => import('./pages/club/Plans'));
@@ -47,6 +48,7 @@ const ScheduleBuilderPage = lazy(() => import('./pages/club/ScheduleBuilderPage'
 const AnalyticsDashboard = lazy(() => import('./pages/club/AnalyticsDashboard'));
 const CoachPerformancePage = lazy(() => import('./pages/club/CoachPerformancePage'));
 const CoachDetailPage = lazy(() => import('./pages/club/CoachDetailPage'));
+const ClubBrandingSettings = lazy(() => import('./pages/club/ClubBrandingPage'));
 
 // Coach
 const CoachDashboard = lazy(() => import('./pages/coach/Dashboard'));
@@ -136,9 +138,17 @@ function App() {
             <Route path="/club/registration/success" element={<RegistrationSuccess />} />
           </Route>
 
-          {/* Club Manager — feature-gated routes */}
+          {/* Club Manager Home — full screen, no sidebar */}
+          <Route path="/club" element={
+            <ProtectedRoute roles={['CLUB_MANAGER']}>
+              <SportModuleProvider>
+                <ManagerHomePage />
+              </SportModuleProvider>
+            </ProtectedRoute>
+          } />
+
+          {/* Club Manager — feature-gated routes (with sidebar) */}
           <Route element={<ProtectedRoute roles={['CLUB_MANAGER']}><SportModuleProvider><Layout /></SportModuleProvider></ProtectedRoute>}>
-            <Route path="/club" element={<SportModuleDashboard />} />
             <Route path="/club/dashboard" element={<ClubDashboard />} />
             <Route path="/club/plans" element={<FeatureRoute feature="training_plans"><Plans /></FeatureRoute>} />
             <Route path="/club/training-plans" element={<FeatureRoute feature="training_plans"><TrainingPlansPage /></FeatureRoute>} />
@@ -157,6 +167,7 @@ function App() {
             <Route path="/club/subscription-plans" element={<FeatureRoute feature="subscription_plans"><SubscriptionPlansPage /></FeatureRoute>} />
             <Route path="/club/leaderboard" element={<FeatureRoute feature="leaderboard"><ClubLeaderboard /></FeatureRoute>} />
             <Route path="/club/analytics" element={<AnalyticsDashboard />} />
+            <Route path="/club/branding" element={<ClubBrandingSettings />} />
             <Route path="/club/settings" element={<Settings />} />
           </Route>
 

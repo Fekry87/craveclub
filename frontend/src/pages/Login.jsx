@@ -251,7 +251,7 @@ export default function Login() {
           }}>
             Your clubs,{' '}
             <span style={{
-              background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
+              backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
               one platform
@@ -309,7 +309,7 @@ export default function Login() {
         flex: '0 0 42%', height: '100vh', position: 'relative',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '36px 48px', overflow: 'hidden',
-        background: 'linear-gradient(180deg, rgba(15,8,35,0.3) 0%, rgba(6,3,18,0.1) 100%)',
+        background: 'linear-gradient(180deg, rgba(10,22,40,0.3) 0%, rgba(6,13,31,0.1) 100%)',
       }}>
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: 1,
@@ -346,17 +346,17 @@ export default function Login() {
       <>
         {alreadyLoggedIn && (
           <div style={{
-            background: `${primary}12`, border: `1px solid ${primary}2a`,
+            background: `${primary}1f`, border: `1px solid rgba(51,65,85,0.4)`,
             borderRadius: 10, padding: '10px 14px', marginBottom: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
             animation: 'fadeInUp 0.3s ease-out',
           }}>
-            <span style={{ color: '#c4b5fd', fontSize: 12, fontWeight: 500 }}>You have an active session</span>
+            <span style={{ color: primary, fontSize: 12, fontWeight: 500 }}>You have an active session</span>
             <button type="button" onClick={() => navigate('/corporate')}
               style={{
-                background: `${primary}20`, border: `1px solid ${primary}33`,
-                color: primary, borderRadius: 7, padding: '5px 12px', fontSize: 11,
-                fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                background: `${primary}1f`, border: `1px solid rgba(51,65,85,0.4)`,
+                color: primary, borderRadius: 8, padding: '5px 12px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                 fontFamily: "'DM Sans', sans-serif",
               }}>
               Go to Dashboard
@@ -366,26 +366,54 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
         {error && (
           <div style={{
-            background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)',
-            color: '#fda4af', padding: '10px 14px', borderRadius: 10, marginBottom: 16,
-            fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(244,63,94,0.08)', border: '1px solid #fda4af',
+            color: '#fda4af', padding: '10px 14px', borderRadius: 10,
+            marginBottom: 16, fontSize: 12,
+            display: 'flex', alignItems: 'center', gap: 8,
             animation: 'fadeInUp 0.3s ease-out',
           }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="#f43f5e" strokeWidth="1.5"/>
-              <path d="M8 5v3M8 10.5v.5" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round"/>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 5v3M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             {error}
           </div>
         )}
 
         {[
-          { key: 'email', label: 'Email address', placeholder: 'admin@craveclubs.com', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'email' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg> },
-          { key: 'password', label: 'Password', placeholder: 'Enter your password', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'password' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> },
+          {
+            key: 'email',
+            label: 'Email address',
+            placeholder: 'admin@craveclubs.com',
+            icon: (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke={focusedField === 'email' ? primary : '#94a3b8'}
+                strokeWidth="1.8" strokeLinecap="round"
+                style={{ transition: 'stroke 0.2s ease', flexShrink: 0 }}>
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2z"/>
+                <path d="M22 6l-10 7L2 6"/>
+              </svg>
+            ),
+          },
+          {
+            key: 'password',
+            label: 'Password',
+            placeholder: 'Enter your password',
+            icon: (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke={focusedField === 'password' ? primary : '#94a3b8'}
+                strokeWidth="1.8" strokeLinecap="round"
+                style={{ transition: 'stroke 0.2s ease', flexShrink: 0 }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+            ),
+          },
         ].map(field => (
           <div key={field.key} style={{ marginBottom: field.key === 'email' ? 16 : 24 }}>
             <label style={{
-              display: 'block', color: focusedField === field.key ? '#c9d1d9' : '#94a3b8',
+              display: 'block',
+              color: focusedField === field.key ? '#f1f5f9' : '#94a3b8',
               fontSize: 13, fontWeight: 500, marginBottom: 6,
               transition: 'color 0.2s ease',
               fontFamily: "'DM Sans', sans-serif",
@@ -393,12 +421,12 @@ export default function Login() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
               borderRadius: 10, padding: '0 14px',
-              background: focusedField === field.key
-                ? `${primary}0a`
-                : 'rgba(6,13,31,0.4)',
-              border: focusedField === field.key ? `1px solid ${primary}4d` : '1px solid rgba(51,65,85,0.4)',
-              transition: 'all 0.25s ease',
-              boxShadow: focusedField === field.key ? `0 0 0 3px ${primary}0f` : 'none',
+              background: focusedField === field.key ? `${primary}1f` : 'rgba(6,13,31,0.4)',
+              border: focusedField === field.key
+                ? `1px solid ${primary}`
+                : '1px solid rgba(51,65,85,0.4)',
+              transition: 'all 0.2s ease',
+              boxShadow: focusedField === field.key ? `0 0 0 3px ${primary}1f` : 'none',
             }}>
               {field.icon}
               <input
@@ -410,7 +438,7 @@ export default function Login() {
                 placeholder={field.placeholder}
                 style={{
                   width: '100%', padding: '12px 0', background: 'transparent',
-                  border: 'none', borderRadius: 0, color: '#e2e8f0', fontSize: 14,
+                  border: 'none', borderRadius: 0, color: '#f1f5f9', fontSize: 13,
                   boxSizing: 'border-box', outline: 'none', fontFamily: "'DM Sans', sans-serif",
                 }}
               />
@@ -423,10 +451,11 @@ export default function Login() {
           onMouseLeave={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = loading ? 'none' : `0 4px 20px ${primary}33`; }}
           style={{
             width: '100%', padding: '13px',
-            background: loading ? `${primary}40` : `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
-            color: '#fff', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700,
-            cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif",
-            letterSpacing: '0.01em', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            background: loading ? `${primary}1f` : primary,
+            color: '#fff', border: 'none', borderRadius: 10,
+            fontSize: 13, fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'DM Sans', sans-serif",
+            letterSpacing: '0.01em', transition: 'all 0.2s ease',
             boxShadow: loading ? 'none' : `0 4px 20px ${primary}33`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
@@ -458,7 +487,7 @@ export default function Login() {
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
-          <span style={{ color: '#475569', fontSize: 11, fontWeight: 500, flexShrink: 0 }}>demo account</span>
+          <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>demo account</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
         </div>
 
@@ -468,21 +497,21 @@ export default function Login() {
           ].map(acc => (
             <div key={acc.email}
               onClick={() => { setEmail(acc.email); setPassword('Password123!'); setError(''); }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${primary}0d`; e.currentTarget.style.borderColor = `${primary}1f`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(51,65,85,0.25)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${primary}1f`; e.currentTarget.style.borderColor = primary; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(51,65,85,0.4)'; }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                 padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
-                border: '1px solid rgba(51,65,85,0.25)',
+                border: '1px solid rgba(51,65,85,0.4)',
                 transition: 'all 0.2s ease',
               }}>
-              <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>{acc.label}</span>
-              <span style={{ color: primary, fontSize: 11, fontFamily: "'DM Sans', monospace", fontWeight: 500 }}>{acc.email}</span>
+              <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>{acc.label}</span>
+              <span style={{ color: primary, fontSize: 12, fontFamily: 'monospace', fontWeight: 500 }}>{acc.email}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ color: '#475569', fontSize: 10, marginTop: 8, textAlign: 'center' }}>
+        <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
           Password: <span style={{ color: '#64748b', fontFamily: 'monospace' }}>Password123!</span>
         </div>
       </>

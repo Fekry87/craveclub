@@ -8,6 +8,7 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingPlan;
 use App\Models\TrainingPlanAssignment;
 use App\Models\User;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -149,6 +150,39 @@ class TrainingPlanController extends Controller
             'status' => 'active',
             'coach_notes' => $request->notes,
         ]);
+
+        // ── Notify swimmer(s) about new plan assignment ──
+        $notificationService = app(NotificationService::class);
+
+        if ($swimmerProfileId) {
+            $swimmer = SwimmerProfile::find($swimmerProfileId);
+            if ($swimmer?->user_id) {
+                $notificationService->notify(
+                    userId: $swimmer->user_id,
+                    type: 'plan_assigned',
+                    title: 'New Training Plan Assigned',
+                    body: "A new training plan has been assigned to you: {$plan->name}",
+                    data: ['plan_id' => $plan->id, 'assignment_id' => $assignment->id],
+                    clubId: $clubId,
+                );
+            }
+        } elseif ($groupId) {
+            $userIds = SwimmerProfile::whereHas('groups', fn ($q) => $q->where('groups.id', $groupId))
+                ->whereNotNull('user_id')
+                ->pluck('user_id')
+                ->toArray();
+
+            if (!empty($userIds)) {
+                $notificationService->notifyMany(
+                    userIds: $userIds,
+                    type: 'plan_assigned',
+                    title: 'New Training Plan Assigned',
+                    body: "A new training plan has been assigned to your group: {$plan->name}",
+                    data: ['plan_id' => $plan->id, 'assignment_id' => $assignment->id],
+                    clubId: $clubId,
+                );
+            }
+        }
 
         return response()->json(
             $assignment->load(['trainingPlan', 'group', 'swimmer', 'assignedByCoach']),

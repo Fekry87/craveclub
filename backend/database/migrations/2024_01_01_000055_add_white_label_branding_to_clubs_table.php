@@ -24,6 +24,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        // FIX: Drop unique index on custom_domain before dropping columns (SQLite compat)
+        Schema::table('clubs', function (Blueprint $table) {
+            $table->dropUnique(['custom_domain']);
+        });
         Schema::table('clubs', function (Blueprint $table) {
             $table->dropColumn([
                 'display_name', 'cover_url', 'favicon_url', 'app_name',

@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use App\Models\Club;
 use App\Services\AuditService;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -109,7 +110,9 @@ class RegistrationController extends Controller
                     'last_name' => $lastName,
                     'date_of_birth' => $registration->birth_date,
                     'medical_notes' => $registration->medical_notes,
-                    'guardian_phone' => $registration->phone,
+                    'guardian_name' => $registration->guardian_name,
+                    'guardian_phone' => $registration->guardian_phone ?? $registration->phone,
+                    'guardian_email' => $registration->guardian_email,
                     'level' => $registration->experience_level ?? 'beginner',
                 ]);
 
@@ -150,6 +153,12 @@ class RegistrationController extends Controller
 
             $result['registration']->load(['branch', 'coach.user', 'plan']);
 
+            // Bust dashboard and analytics caches after registration approval
+            Cache::forget("dashboard_metrics_{$clubId}");
+            Cache::forget("analytics_growth_{$clubId}");
+            Cache::forget("analytics_funnel_{$clubId}");
+            Cache::forget("analytics_full_{$clubId}");
+
             AuditService::log('registration.approved', Registration::class, $registration->id, [
                 'swimmer_name' => $registration->full_name,
                 'user_id_created' => $result['swimmer']['user_id'],
@@ -161,8 +170,8 @@ class RegistrationController extends Controller
             app(NotificationService::class)->notify(
                 userId: $result['swimmer']['user_id'],
                 type: 'registration_approved',
-                title: 'تم قبول طلبك',
-                body: "مرحباً {$registration->full_name}! تم قبول طلب تسجيلك في {$club->name}.",
+                title: 'Registration Approved',
+                body: "Welcome {$registration->full_name}! Your registration at {$club->name} has been approved.",
                 data: ['registration_id' => $registration->id],
                 clubId: $clubId,
             );
@@ -201,8 +210,8 @@ class RegistrationController extends Controller
                 app(NotificationService::class)->notify(
                     userId: $swimmerUser->id,
                     type: 'registration_rejected',
-                    title: 'تعذّر قبول الطلب',
-                    body: 'نأسف، لم يتم قبول طلب تسجيلك. للمزيد تواصل مع النادي.',
+                    title: 'Registration Not Approved',
+                    body: 'Sorry, your registration was not approved. Please contact the club for more details.',
                     data: ['registration_id' => $registration->id],
                     clubId: $clubId,
                 );

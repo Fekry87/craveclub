@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -88,6 +89,13 @@ return Application::configure(basePath: dirname(__DIR__))
             return null; // Let other HttpExceptions fall through
         });
 
+        $exceptions->renderable(function (ThrottleRequestsException $e) {
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+            return response()->json([
+                'message' => "Too many attempts. Try again in {$retryAfter} seconds.",
+            ], 429)->withHeaders($e->getHeaders());
+        });
+
         $exceptions->renderable(function (\Throwable $e) {
             // Capture unhandled exceptions in Sentry
             if (app()->bound('sentry')) {
@@ -99,7 +107,8 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()->json([
-                'message' => 'Server error.',
+                'message' => 'An unexpected error occurred.',
+                'request_id' => app()->has('request_id') ? app('request_id') : null,
             ], 500);
         });
     })->create();

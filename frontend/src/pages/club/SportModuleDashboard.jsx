@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSportModule } from '../../contexts/SportModuleContext';
 import { getClubSportModules } from '../../api/clubSportModules';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export default function SportModuleDashboard() {
   const { user } = useAuth();
@@ -25,19 +26,19 @@ export default function SportModuleDashboard() {
           navigate('/club/dashboard', { replace: true });
         }
       })
-      .catch(() => setError('فشل في تحميل الأنشطة الرياضية'));
+      .catch(() => setError('Failed to load sport modules'));
   }, []);
 
   // Loading
   if (modules === null && !error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: 'var(--color-text-muted)' }}>
         <div style={{ textAlign: 'center' }}>
           <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
-            <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" />
-            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-primary-dim)" strokeWidth="3" />
+            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>جارٍ التحميل...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading...</div>
         </div>
       </div>
     );
@@ -46,22 +47,15 @@ export default function SportModuleDashboard() {
   // Empty state
   if (!modules || modules.length === 0) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center', maxWidth: 400 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: 'rgba(51,65,85,0.15)', border: '1px solid rgba(51,65,85,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
-            </svg>
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif", marginBottom: 8 }}>
-            لا توجد أنشطة رياضية مفعّلة لهذا النادي
-          </div>
-          <div style={{ color: '#475569', fontSize: 14 }}>
-            تواصل مع الإدارة لتفعيل الأنشطة
-          </div>
-          {error && <div style={{ color: '#fc8181', fontSize: 13, marginTop: 12 }}>{error}</div>}
-        </div>
-      </div>
+      <EmptyState
+        icon={
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
+          </svg>
+        }
+        title="No active sport modules for this club"
+        description={error || 'Contact management to activate sport modules'}
+      />
     );
   }
 
@@ -77,11 +71,14 @@ export default function SportModuleDashboard() {
     <div style={{ animation: 'fadeInUp 0.5s ease-out' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 700, color: '#f1f5f9', margin: 0, letterSpacing: '-0.02em' }}>
+        <h1 style={{
+          fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 700,
+          color: 'var(--color-text)', margin: 0, letterSpacing: '-0.02em',
+        }}>
           {clubName}
         </h1>
-        <div style={{ color: '#64748b', fontSize: 15, marginTop: 6, fontWeight: 500 }}>
-          اختر النشاط الرياضي
+        <div style={{ color: 'var(--color-text-muted)', fontSize: 15, marginTop: 6, fontWeight: 500 }}>
+          Select a sport module
         </div>
       </div>
 
@@ -95,7 +92,7 @@ export default function SportModuleDashboard() {
   );
 }
 
-function SportCard({ module, onEnter }) {
+export function SportCard({ module, onEnter }) {
   const [hovered, setHovered] = useState(false);
   const color = module.color || '#8b5cf6';
   const stats = module.stats || {};
@@ -105,15 +102,15 @@ function SportCard({ module, onEnter }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: `linear-gradient(135deg, ${color}0A 0%, rgba(6,13,31,0.4) 100%)`,
-        borderRadius: 18,
-        border: `1px solid ${color}20`,
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: `1px solid var(--color-border)`,
         borderTop: `4px solid ${color}`,
         padding: '28px 24px 22px',
         cursor: 'pointer',
         transition: 'all 0.25s ease',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
-        boxShadow: hovered ? `0 8px 30px ${color}15` : 'none',
+        boxShadow: hovered ? `var(--shadow-card), 0 8px 30px ${color}15` : 'var(--shadow-card)',
       }}
       onClick={onEnter}
     >
@@ -130,27 +127,33 @@ function SportCard({ module, onEnter }) {
           {module.icon ? module.icon.charAt(0).toUpperCase() : '?'}
         </div>
         <div>
-          <div style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+          <div style={{
+            color: 'var(--color-text)', fontSize: 20, fontWeight: 700,
+            fontFamily: "'Outfit', sans-serif",
+          }}>
             {module.name}
           </div>
           {module.description && (
-            <div style={{ color: '#475569', fontSize: 12, marginTop: 2 }}>{module.description}</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 12, marginTop: 2 }}>{module.description}</div>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-        <div style={{ color: '#94a3b8', fontSize: 13 }}>
-          <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats.members_count || 0}</span> أعضاء
-          <span style={{ margin: '0 8px', color: '#334155' }}>&middot;</span>
-          <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats.coaches_count || 0}</span> مدربين
-        </div>
-        <div style={{ color: '#94a3b8', fontSize: 13 }}>
-          <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats.groups_count || 0}</span> مجموعات
-          <span style={{ margin: '0 8px', color: '#334155' }}>&middot;</span>
-          <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats.sessions_this_week || 0}</span> جلسات/أسبوع
-        </div>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+        {[
+          { label: 'Branches', value: stats.branches_count || 0 },
+          { label: 'New Registrations', value: stats.new_registrations_count || 0 },
+          { label: 'Active Swimmers', value: stats.active_swimmers_count || 0 },
+        ].map((stat) => (
+          <div key={stat.label} style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{
+              color: 'var(--color-text)', fontSize: 18, fontWeight: 700,
+              fontFamily: "'DM Sans', sans-serif",
+            }}>{stat.value}</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 11, marginTop: 2 }}>{stat.label}</div>
+          </div>
+        ))}
       </div>
 
       {/* CTA */}
@@ -173,7 +176,7 @@ function SportCard({ module, onEnter }) {
         onMouseEnter={e => { e.currentTarget.style.background = `${color}22`; }}
         onMouseLeave={e => { e.currentTarget.style.background = `${color}12`; }}
       >
-        إدارة النشاط →
+        Manage Activity →
       </button>
     </div>
   );

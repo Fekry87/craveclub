@@ -9,15 +9,15 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead } from
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'الآن';
-  if (mins < 60) return `${mins}د`;
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}س`;
+  if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);
-  return `${days}ي`;
+  return `${days}d`;
 }
 
-function NotificationBell({ navigate }) {
+export function NotificationBell({ navigate }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -110,19 +110,19 @@ function NotificationBell({ navigate }) {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 16px', borderBottom: '1px solid rgba(51,65,85,0.2)',
           }}>
-            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>الإشعارات</span>
+            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Notifications</span>
             {unreadCount > 0 && (
               <button type="button" onClick={handleMarkAllRead} style={{
                 background: 'none', border: 'none', color: '#22d3ee', fontSize: 11,
                 fontWeight: 600, cursor: 'pointer', padding: '2px 6px',
-              }}>قراءة الكل</button>
+              }}>Mark all read</button>
             )}
           </div>
 
           <div style={{ overflowY: 'auto', maxHeight: 320 }}>
             {notifications.length === 0 ? (
               <div style={{ padding: 32, textAlign: 'center', color: '#475569', fontSize: 13 }}>
-                لا توجد إشعارات
+                No notifications
               </div>
             ) : notifications.map(notif => (
               <div
@@ -164,22 +164,7 @@ const allNavItems = {
     { to: '/corporate/sport-modules', label: 'Sport Modules', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zM8 12h8M12 8v8' },
     { to: '/corporate/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
   ],
-  CLUB_MANAGER: [
-    { to: '/club', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1' },
-    { to: '/club/coaches', label: 'Coaches', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-    { to: '/club/swimmers', label: 'Swimmers', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { to: '/club/groups', label: 'Groups', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-    { to: '/club/branches', label: 'Branches', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-    { to: '/club/training-plans', label: 'Training Plans', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', feature: 'training_plans' },
-    { to: '/club/skills', label: 'Skills', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', feature: 'skills' },
-    { to: '/club/sessions', label: 'Sessions', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-    { to: '/club/schedules', label: 'Schedules', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-    { to: '/club/registrations', label: 'Registrations', icon: 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 3a4 4 0 100 8 4 4 0 000-8zM20 8v6M23 11h-6' },
-    { to: '/club/subscription-plans', label: 'Subscriptions', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', feature: 'subscription_plans' },
-    { to: '/club/analytics', label: 'Analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { to: '/club/leaderboard', label: 'Leaderboard', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', feature: 'leaderboard' },
-    { to: '/club/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-  ],
+  CLUB_MANAGER: 'grouped', // Uses CLUB_MANAGER_NAV grouped structure below
   COACH: [
     { to: '/coach', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1' },
     { to: '/coach/sessions', label: 'Sessions', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
@@ -195,6 +180,44 @@ const allNavItems = {
     { to: '/swimmer/evaluations', label: 'Evaluations', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', feature: 'evaluations' },
   ],
 };
+
+const CLUB_MANAGER_NAV = [
+  {
+    section: 'Heroes',
+    items: [
+      { to: '/club/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1' },
+      { to: '/club/coaches', label: 'Coaches', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+      { to: '/club/swimmers', label: 'Swimmers', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+      { to: '/club/groups', label: 'Groups', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
+    ],
+  },
+  {
+    section: 'Training',
+    items: [
+      { to: '/club/training-plans', label: 'Training Plans', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', feature: 'training_plans' },
+      { to: '/club/skills', label: 'Skills', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z', feature: 'skills' },
+      { to: '/club/sessions', label: 'Sessions', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+      { to: '/club/schedules', label: 'Schedules', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+    ],
+  },
+  {
+    section: 'Business',
+    items: [
+      { to: '/club/registrations', label: 'Registrations', icon: 'M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 3a4 4 0 100 8 4 4 0 000-8zM20 8v6M23 11h-6' },
+      { to: '/club/subscription-plans', label: 'Subscriptions', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', feature: 'subscription_plans' },
+      { to: '/club/analytics', label: 'Analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+      { to: '/club/leaderboard', label: 'Leaderboard', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', feature: 'leaderboard' },
+    ],
+  },
+  {
+    section: 'Club Management',
+    items: [
+      { to: '/club/branches', label: 'Branches', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+      { to: '/club/branding', label: 'Branding', icon: 'M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83' },
+      { to: '/club/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+    ],
+  },
+];
 
 function NavIcon({ d, active }) {
   return (
@@ -224,20 +247,16 @@ export default function Layout() {
   const isClubManager = user?.role === 'CLUB_MANAGER';
   const showSportBreadcrumb = isClubManager && currentSport && location.pathname !== '/club';
 
-  // Filter nav items by enabled features
-  const items = (allNavItems[user?.role] || []).filter(item => {
-    if (!item.feature) return true; // Always show items without feature gate
-    if (!features) return true; // Platform admin or features not loaded
+  // Feature filter helper
+  const isFeatureVisible = (item) => {
+    if (!item.feature) return true;
+    if (!features) return true;
     return features[`${item.feature}_enabled`] ?? true;
-  }).map(item => {
-    // Club manager: Dashboard nav item points to sport picker or dashboard
-    if (isClubManager && item.to === '/club') {
-      return currentSport
-        ? { ...item, to: '/club/dashboard', label: 'Dashboard' }
-        : { ...item, to: '/club', label: 'Sports' };
-    }
-    return item;
-  });
+  };
+
+  // For non-CLUB_MANAGER roles: flat filtered array
+  const isGroupedNav = user?.role === 'CLUB_MANAGER';
+  const flatItems = isGroupedNav ? [] : (allNavItems[user?.role] || []).filter(isFeatureVisible);
 
   // Dynamic branding: club users see club name, corporate users see platform name
   const isClubUser = user?.role !== 'PLATFORM_ADMIN' && user?.club;
@@ -311,29 +330,72 @@ export default function Layout() {
               <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>{user?.name}</div>
               <div style={{ color: '#475569', fontSize: 9, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{roleLabels[user?.role] || user?.role}</div>
             </div>
-            <NotificationBell navigate={navigate} />
           </div>
         </div>
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {items.map((item, i) => (
-            <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
-              className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '11px 14px', color: isActive ? '#e2e8f0' : '#94a3b8',
-                background: isActive ? 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(6,182,212,0.05) 100%)' : 'transparent',
-                textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-                borderRadius: 10, border: isActive ? '1px solid rgba(34,211,238,0.12)' : '1px solid transparent',
-                animation: `slideInLeft 0.3s ease-out ${i * 0.04}s both`,
-                position: 'relative', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
-              })}
-            >
-              <NavIcon d={item.icon} active={false} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          {isGroupedNav ? (
+            /* Club Manager: grouped sections */
+            (() => {
+              let itemIndex = 0;
+              return CLUB_MANAGER_NAV.map((group, groupIndex) => {
+                const visibleItems = group.items.filter(isFeatureVisible);
+                if (visibleItems.length === 0) return null;
+                const startIndex = itemIndex;
+                itemIndex += visibleItems.length;
+                return (
+                  <div key={group.section}>
+                    {groupIndex > 0 && (
+                      <div style={{ height: 1, margin: '8px 14px', background: 'rgba(34,211,238,0.04)' }} />
+                    )}
+                    <div style={{
+                      padding: groupIndex === 0 ? '0 14px 6px' : '16px 14px 6px',
+                      color: '#334155', fontSize: 10,
+                      fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                      fontFamily: "'DM Sans', sans-serif",
+                    }}>{group.section}</div>
+                    {visibleItems.map((item, i) => (
+                      <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
+                        className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
+                        style={({ isActive }) => ({
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '11px 14px', color: isActive ? '#e2e8f0' : '#94a3b8',
+                          background: isActive ? 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(6,182,212,0.05) 100%)' : 'transparent',
+                          textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+                          borderRadius: 10, border: isActive ? '1px solid rgba(34,211,238,0.12)' : '1px solid transparent',
+                          animation: `slideInLeft 0.3s ease-out ${(startIndex + i) * 0.04}s both`,
+                          position: 'relative', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
+                        })}
+                      >
+                        <NavIcon d={item.icon} active={false} />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                );
+              });
+            })()
+          ) : (
+            /* Other roles: flat list */
+            flatItems.map((item, i) => (
+              <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
+                className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
+                style={({ isActive }) => ({
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '11px 14px', color: isActive ? '#e2e8f0' : '#94a3b8',
+                  background: isActive ? 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(6,182,212,0.05) 100%)' : 'transparent',
+                  textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+                  borderRadius: 10, border: isActive ? '1px solid rgba(34,211,238,0.12)' : '1px solid transparent',
+                  animation: `slideInLeft 0.3s ease-out ${i * 0.04}s both`,
+                  position: 'relative', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
+                })}
+              >
+                <NavIcon d={item.icon} active={false} />
+                <span>{item.label}</span>
+              </NavLink>
+            ))
+          )}
         </nav>
 
         {/* Bottom: Platform branding + Sign out */}
@@ -380,45 +442,92 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="main-content" style={{
-        flex: 1, padding: '28px 32px', overflowY: 'auto', color: '#e2e8f0',
+        flex: 1, display: 'flex', flexDirection: 'column', color: '#e2e8f0',
         background: 'radial-gradient(ellipse at 0% 0%, rgba(13,31,60,0.4) 0%, transparent 50%), #060d1f',
-        height: '100vh',
+        height: '100vh', overflow: 'hidden',
       }}>
-        {showSportBreadcrumb && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, animation: 'fadeInUp 0.3s ease-out' }}>
-            <button
-              onClick={() => { clearSport(); navigate('/club', { state: { forceShow: true } }); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: 'rgba(51,65,85,0.15)', border: '1px solid rgba(51,65,85,0.25)',
-                borderRadius: 8, padding: '5px 12px', color: '#94a3b8', fontSize: 13,
-                fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.25)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.15)'; }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
-              الأنشطة
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 8,
-                background: currentSport.color || '#8b5cf6',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
-              }}>
-                {currentSport.icon ? currentSport.icon.charAt(0).toUpperCase() : '?'}
+        {/* Content header bar (fixed, does not scroll) */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 32px', height: 64, minHeight: 64,
+          background: 'linear-gradient(180deg, rgba(10,22,40,0.97) 0%, rgba(10,22,40,0.92) 100%)',
+          borderBottom: '1px solid rgba(34,211,238,0.08)',
+          flexShrink: 0, zIndex: 20,
+        }}>
+          {/* Left: breadcrumb or page context */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {showSportBreadcrumb ? (
+              <>
+                <button
+                  onClick={() => { clearSport(); navigate('/club'); }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.1)'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.04)'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.1)'; }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.1)',
+                    borderRadius: 8, padding: '5px 10px', color: '#94a3b8', fontSize: 13,
+                    fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
+                    fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+                  Home
+                </button>
+                <div style={{ width: 1, height: 20, background: 'rgba(51,65,85,0.3)' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: currentSport.color || '#8b5cf6',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,
+                  }}>
+                    {currentSport.icon ? currentSport.icon.charAt(0).toUpperCase() : '?'}
+                  </div>
+                  <span style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>
+                    {currentSport.name}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {brandLogo ? (
+                  <img src={brandLogo} alt={brandName} style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(34,211,238,0.15)' }} />
+                ) : isClubUser ? (
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: `linear-gradient(135deg, ${user.club.primary_color || user.club.theme_color || '#22d3ee'}, ${user.club.secondary_color || '#06b6d4'})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
+                  }}>
+                    {brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                ) : (
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)',
+                    border: '1px solid rgba(34,211,238,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18C23 14 25.5 20 28 17" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                  </div>
+                )}
+                <span style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>
+                  {brandName}
+                </span>
               </div>
-              <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
-                {currentSport.name}
-              </span>
-            </div>
+            )}
           </div>
-        )}
-        <RouteErrorBoundary key={location.pathname}>
-          <Outlet />
-        </RouteErrorBoundary>
+
+          {/* Right: Notification bell */}
+          <NotificationBell navigate={navigate} />
+        </div>
+
+        {/* Page content (scrollable) */}
+        <div style={{ flex: 1, padding: '24px 32px', overflowY: 'auto' }}>
+          <RouteErrorBoundary key={location.pathname}>
+            <Outlet />
+          </RouteErrorBoundary>
+        </div>
       </main>
     </div>
   );

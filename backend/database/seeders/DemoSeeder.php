@@ -226,7 +226,7 @@ class DemoSeeder extends Seeder
             'description' => 'High intensity sprint training for competitive swimmers.',
             'duration_weeks' => 4,
             'sessions_per_week' => 5,
-            'goals' => 'تحسين سرعة السباحة الحرة وتطوير قوة الانطلاق',
+            'goals' => 'Improve freestyle speed and develop start power',
             'difficulty_level' => 'advanced',
             'is_template' => false,
             'phases' => [
@@ -258,7 +258,7 @@ class DemoSeeder extends Seeder
             'description' => 'Focus on building aerobic endurance and stroke technique.',
             'duration_weeks' => 8,
             'sessions_per_week' => 3,
-            'goals' => 'بناء التحمل وتحسين تقنية الضربات',
+            'goals' => 'Build endurance and improve stroke technique',
             'difficulty_level' => 'intermediate',
             'is_template' => false,
             'phases' => [
@@ -291,7 +291,7 @@ class DemoSeeder extends Seeder
             'description' => 'A starter program for new swimmers covering water safety and basic strokes.',
             'duration_weeks' => 12,
             'sessions_per_week' => 2,
-            'goals' => 'تعلم أساسيات السباحة والأمان في الماء',
+            'goals' => 'Learn swimming basics and water safety',
             'difficulty_level' => 'beginner',
             'is_template' => true,
             'phases' => [

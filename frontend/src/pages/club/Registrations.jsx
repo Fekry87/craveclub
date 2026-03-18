@@ -4,28 +4,10 @@ import { createEcho } from '../../lib/echo';
 import api from '../../api/axios';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/FormControls';
-
-/* ─────── Status Badge ─────── */
-function StatusBadge({ status }) {
-  const colors = {
-    pending:   { bg: 'rgba(250,204,21,0.12)', text: '#facc15', border: 'rgba(250,204,21,0.2)' },
-    approved:  { bg: 'rgba(34,197,94,0.12)',  text: '#22c55e', border: 'rgba(34,197,94,0.2)' },
-    rejected:  { bg: 'rgba(239,68,68,0.12)',  text: '#ef4444', border: 'rgba(239,68,68,0.2)' },
-    cancelled: { bg: 'rgba(239,68,68,0.12)',  text: '#ef4444', border: 'rgba(239,68,68,0.2)' },
-  };
-  const c = colors[status] || colors.pending;
-
-  return (
-    <span style={{
-      display: 'inline-block', padding: '3px 10px', borderRadius: 6,
-      fontSize: 11, fontWeight: 600, textTransform: 'capitalize',
-      background: c.bg, color: c.text, border: `1px solid ${c.border}`,
-      letterSpacing: '0.02em',
-    }}>
-      {status === 'cancelled' ? 'rejected' : status}
-    </span>
-  );
-}
+import { StatCard } from '../../components/ui/Cards';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { PageHeader } from '../../components/CrudTable';
 
 /* ─────── Toast Notification ─────── */
 function Toast({ message }) {
@@ -33,10 +15,13 @@ function Toast({ message }) {
   return (
     <div style={{
       position: 'fixed', top: 20, right: 20, zIndex: 1000,
-      background: 'linear-gradient(135deg, #0d1f3c 0%, #163060 100%)',
-      border: '1px solid rgba(34,211,238,0.2)',
-      borderRadius: 14, padding: '14px 20px',
-      color: '#e2e8f0', fontSize: 14, fontWeight: 500,
+      background: 'linear-gradient(145deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.95) 100%)',
+      border: '1px solid rgba(34,211,238,0.15)',
+      borderRadius: 14,
+      padding: '14px 20px',
+      color: '#f1f5f9',
+      fontSize: 13,
+      fontWeight: 500,
       fontFamily: "'DM Sans', sans-serif",
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       animation: 'fadeInUp 0.3s ease-out',
@@ -44,8 +29,9 @@ function Toast({ message }) {
     }}>
       <span style={{
         width: 8, height: 8, borderRadius: '50%',
-        background: '#22c55e', flexShrink: 0,
-        animation: 'pulse 2s infinite',
+        background: '#34d399',
+        flexShrink: 0,
+        animation: 'glowPulse 2s infinite',
       }} />
       {message}
     </div>
@@ -58,21 +44,29 @@ function LiveBadge({ isLive }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
-      color: isLive ? '#22c55e' : '#64748b',
+      color: isLive ? '#34d399' : '#64748b',
       textTransform: 'uppercase',
-      padding: '4px 10px', borderRadius: 8,
-      background: isLive ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.08)',
-      border: `1px solid ${isLive ? 'rgba(34,197,94,0.15)' : 'rgba(100,116,139,0.15)'}`,
+      padding: '4px 10px', borderRadius: 6,
+      background: isLive ? 'rgba(52,211,153,0.10)' : 'rgba(13,31,60,0.4)',
+      border: `1px solid ${isLive ? 'rgba(52,211,153,0.20)' : 'rgba(34,211,238,0.06)'}`,
     }}>
       <span style={{
         width: 7, height: 7, borderRadius: '50%',
-        backgroundColor: isLive ? '#22c55e' : '#64748b',
-        animation: isLive ? 'pulse 2s infinite' : 'none',
+        backgroundColor: isLive ? '#34d399' : '#64748b',
+        animation: isLive ? 'glowPulse 2s infinite' : 'none',
       }} />
       {isLive ? 'Live' : 'Connecting\u2026'}
     </span>
   );
 }
+
+/* ─────── Status to Badge variant map ─────── */
+const STATUS_VARIANT = {
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  cancelled: 'danger',
+};
 
 /* ─────── Main Page ─────── */
 export default function Registrations() {
@@ -126,7 +120,7 @@ export default function Registrations() {
           });
         }, 4000);
 
-        setToast(`\u{1F3CA} ${payload.swimmer_name} just registered`);
+        setToast(`${payload.swimmer_name} just registered`);
         setTimeout(() => setToast(null), 5000);
 
         if (document.hidden && Notification.permission === 'granted') {
@@ -158,12 +152,11 @@ export default function Registrations() {
       const res = await api.patch(`/club/registrations/${approveTarget.id}/status`, {
         status: 'approved',
       });
-      // Update local state
       setRegistrations(prev =>
         prev.map(r => r.id === approveTarget.id ? res.data.registration : r)
       );
       setApproveResult(res.data.swimmer);
-      setToast(`\u2705 ${approveTarget.full_name} approved successfully`);
+      setToast(`${approveTarget.full_name} approved successfully`);
       setTimeout(() => setToast(null), 5000);
     } catch (err) {
       const msg = err.response?.data?.errors
@@ -215,16 +208,17 @@ export default function Registrations() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
         <div style={{
-          color: '#64748b', fontSize: 14, fontFamily: "'DM Sans', sans-serif",
+          color: '#94a3b8', fontSize: 13,
+          fontFamily: "'DM Sans', sans-serif",
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <div style={{
             width: 20, height: 20, borderRadius: '50%',
-            border: '2px solid rgba(34,211,238,0.2)',
+            border: '2px solid rgba(255,255,255,0.08)',
             borderTopColor: '#22d3ee',
             animation: 'spin 0.8s linear infinite',
           }} />
-          Loading registrations\u2026
+          Loading registrations...
         </div>
       </div>
     );
@@ -234,15 +228,15 @@ export default function Registrations() {
   if (error) {
     return (
       <div style={{
-        background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
-        borderRadius: 14, padding: '24px 28px', textAlign: 'center',
+        background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.20)',
+        borderRadius: 18, padding: '24px 28px', textAlign: 'center',
       }}>
-        <p style={{ color: '#fca5a5', fontSize: 14, margin: '0 0 14px' }}>{error}</p>
+        <p style={{ color: '#f43f5e', fontSize: 13, margin: '0 0 14px' }}>{error}</p>
         <button
           onClick={() => window.location.reload()}
           style={{
-            background: 'rgba(34,211,238,0.1)', color: '#22d3ee',
-            border: '1px solid rgba(34,211,238,0.2)', borderRadius: 10,
+            background: 'rgba(34,211,238,0.08)', color: '#22d3ee',
+            border: '1px solid rgba(34,211,238,0.15)', borderRadius: 10,
             padding: '8px 20px', fontSize: 13, fontWeight: 600,
             cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
           }}
@@ -253,23 +247,32 @@ export default function Registrations() {
     );
   }
 
+  // ── Compute stats ─────────────────────────────────────
+  const pendingCount = registrations.filter(r => r.status === 'pending').length;
+  const approvedCount = registrations.filter(r => r.status === 'approved').length;
+  const rejectedCount = registrations.filter(r => r.status === 'cancelled' || r.status === 'rejected').length;
+  const totalCount = registrations.length;
+
   const thStyle = {
     padding: '12px 16px', textAlign: 'left', fontSize: 11,
     fontWeight: 600, color: '#64748b', textTransform: 'uppercase',
-    letterSpacing: '0.06em', borderBottom: '1px solid rgba(34,211,238,0.06)',
+    letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.04)',
     fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap',
+    background: 'rgba(13,31,60,0.4)',
   };
 
   const tdStyle = {
-    padding: '14px 16px', fontSize: 13, color: '#cbd5e1',
-    borderBottom: '1px solid rgba(34,211,238,0.04)',
+    padding: '14px 16px', fontSize: 13, color: '#94a3b8',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
     fontFamily: "'DM Sans', sans-serif",
   };
 
   const actionBtnBase = {
-    padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+    padding: '5px 12px', borderRadius: 6,
+    fontSize: 11, fontWeight: 600,
     cursor: 'pointer', border: 'none', transition: 'all 0.2s ease',
     fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.01em',
+    display: 'inline-flex', alignItems: 'center', gap: 4,
   };
 
   return (
@@ -277,80 +280,110 @@ export default function Registrations() {
       <Toast message={toast} />
 
       {/* ── Page Header ─────────────────────────────────── */}
-      <div style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.85) 0%, rgba(6,182,212,0.06) 50%, rgba(13,31,60,0.65) 100%)',
-        borderRadius: 22, padding: '28px 32px 24px',
-        border: '1px solid rgba(34,211,238,0.1)',
-        position: 'relative', overflow: 'hidden', marginBottom: 24,
-        animation: 'fadeInUp 0.5s ease-out',
-      }}>
-        <div style={{
-          position: 'absolute', top: -40, right: -20, width: 200, height: 200,
-          borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-          background: 'linear-gradient(90deg, transparent 10%, rgba(34,211,238,0.2) 50%, transparent 90%)',
-        }} />
+      <PageHeader title="Registrations">
+        <LiveBadge isLive={isLive} />
+      </PageHeader>
 
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{
-              color: '#22d3ee', fontSize: 11, fontWeight: 600,
-              letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-              Registrations
-            </div>
-            <h1 style={{
-              fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 700,
-              color: '#f1f5f9', margin: 0, letterSpacing: '-0.02em',
-            }}>
-              Incoming Registrations
-            </h1>
-          </div>
-          <LiveBadge isLive={isLive} />
-        </div>
+      {/* ── Stat Cards ────────────────────────────────────── */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 14, marginBottom: 22,
+        animation: 'fadeInUp 0.4s ease-out both',
+      }}>
+        <StatCard
+          label="Pending"
+          value={
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              {pendingCount}
+              {pendingCount > 0 && (
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#fbbf24',
+                  animation: 'glowPulse 2s infinite',
+                  display: 'inline-block',
+                }} />
+              )}
+            </span>
+          }
+          accentColor="#fbbf24"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Approved"
+          value={approvedCount}
+          accentColor="#34d399"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Rejected"
+          value={rejectedCount}
+          accentColor="#f43f5e"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+          }
+        />
+        <StatCard
+          label="Total"
+          value={totalCount}
+          accentColor="#22d3ee"
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
+              <line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />
+            </svg>
+          }
+        />
       </div>
 
       {/* ── Empty State ─────────────────────────────────── */}
       {registrations.length === 0 && (
         <div style={{
-          textAlign: 'center', padding: '60px 20px',
-          color: '#64748b', fontSize: 14, fontFamily: "'DM Sans', sans-serif",
+          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
+          borderRadius: 18,
+          border: '1px solid rgba(34,211,238,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
+          animation: 'fadeInUp 0.4s ease-out 0.1s both',
         }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 16 }}>
-            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <line x1="20" y1="8" x2="20" y2="14" />
-            <line x1="23" y1="11" x2="17" y2="11" />
-          </svg>
-          <p style={{ margin: 0, fontWeight: 500 }}>No registrations yet</p>
-          <p style={{ margin: '6px 0 0', fontSize: 12, color: '#475569' }}>
-            New registrations will appear here in real time
-          </p>
+          <EmptyState
+            title="No pending registrations"
+            description="Share your registration link to start receiving applications."
+            icon={
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="20" y1="8" x2="20" y2="14" />
+                <line x1="23" y1="11" x2="17" y2="11" />
+              </svg>
+            }
+          />
         </div>
       )}
 
       {/* ── Registrations Table ─────────────────────────── */}
       {registrations.length > 0 && (
         <div style={{
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.8) 100%)',
-          borderRadius: 18, border: '1px solid rgba(34,211,238,0.08)',
-          overflow: 'hidden', animation: 'fadeInUp 0.5s ease-out 0.1s both',
+          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
+          borderRadius: 18,
+          border: '1px solid rgba(34,211,238,0.06)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
+          overflow: 'hidden',
+          animation: 'fadeInUp 0.4s ease-out 0.1s both',
         }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Swimmer</th>
+                  <th style={thStyle}>Name</th>
                   <th style={thStyle}>Phone</th>
                   <th style={thStyle}>Branch</th>
                   <th style={thStyle}>Coach</th>
@@ -365,13 +398,14 @@ export default function Registrations() {
                 {registrations.map(reg => (
                   <tr
                     key={reg.id}
+                    className="data-table-row"
                     style={{
                       backgroundColor: newIds.has(reg.id)
-                        ? 'rgba(34,197,94,0.08)' : 'transparent',
+                        ? 'rgba(52,211,153,0.08)' : 'transparent',
                       transition: 'background-color 1s ease',
                     }}
                   >
-                    <td style={{ ...tdStyle, fontWeight: 600, color: '#e2e8f0' }}>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: '#f1f5f9' }}>
                       {reg.swimmer_name ?? reg.full_name}
                     </td>
                     <td style={tdStyle}>{reg.swimmer_phone ?? reg.phone}</td>
@@ -382,9 +416,12 @@ export default function Registrations() {
                       {reg.total_amount} EGP
                     </td>
                     <td style={tdStyle}>
-                      <StatusBadge status={reg.status} />
+                      <Badge
+                        label={reg.status === 'cancelled' ? 'rejected' : reg.status}
+                        variant={STATUS_VARIANT[reg.status] || 'neutral'}
+                      />
                     </td>
-                    <td style={{ ...tdStyle, color: '#64748b', fontSize: 12 }}>
+                    <td style={{ ...tdStyle, color: '#64748b', fontSize: 11 }}>
                       {new Date(reg.created_at).toLocaleDateString()}
                     </td>
                     <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
@@ -393,16 +430,14 @@ export default function Registrations() {
                           <button
                             type="button"
                             onClick={() => { setApproveTarget(reg); setActionError(null); setApproveResult(null); }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,197,94,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,197,94,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}
                             style={{
                               ...actionBtnBase,
-                              background: 'rgba(34,197,94,0.12)',
-                              color: '#4ade80',
-                              border: '1px solid rgba(34,197,94,0.2)',
+                              background: 'rgba(52,211,153,0.10)',
+                              color: '#34d399',
+                              border: '1px solid rgba(52,211,153,0.20)',
                             }}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                             Approve
@@ -410,16 +445,14 @@ export default function Registrations() {
                           <button
                             type="button"
                             onClick={() => { setRejectTarget(reg); setActionError(null); }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.25)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}
                             style={{
                               ...actionBtnBase,
-                              background: 'rgba(239,68,68,0.12)',
-                              color: '#fca5a5',
-                              border: '1px solid rgba(239,68,68,0.2)',
+                              background: 'rgba(244,63,94,0.10)',
+                              color: '#f43f5e',
+                              border: '1px solid rgba(244,63,94,0.20)',
                             }}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: 'middle' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18" />
                               <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -427,7 +460,7 @@ export default function Registrations() {
                           </button>
                         </div>
                       ) : (
-                        <span style={{ color: '#475569', fontSize: 12 }}>\u2014</span>
+                        <span style={{ color: '#475569', fontSize: 11 }}>{'\u2014'}</span>
                       )}
                     </td>
                   </tr>
@@ -444,7 +477,7 @@ export default function Registrations() {
           title="Approve Registration"
           onClose={closeApproveModal}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -454,48 +487,49 @@ export default function Registrations() {
             /* ── Success view ── */
             <div>
               <div style={{
-                background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)',
-                borderRadius: 14, padding: '20px 24px', marginBottom: 20,
+                background: 'var(--color-success-bg)', border: '1px solid var(--color-success)',
+                borderRadius: 'var(--radius-lg)', padding: '20px 24px', marginBottom: 20,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: 'rgba(34,197,94,0.15)',
+                    background: 'var(--color-surface)',
+                    border: '2px solid var(--color-success)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success-text)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
                   <div>
-                    <div style={{ color: '#22c55e', fontWeight: 600, fontSize: 15, fontFamily: "'Outfit', sans-serif" }}>
+                    <div style={{ color: 'var(--color-success-text)', fontWeight: 600, fontSize: 'var(--text-md)', fontFamily: 'var(--font-sans)' }}>
                       Registration Approved
                     </div>
-                    <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginTop: 2 }}>
                       Swimmer account created successfully
                     </div>
                   </div>
                 </div>
 
                 <div style={{
-                  background: 'rgba(6,13,31,0.5)', borderRadius: 10, padding: '14px 16px',
-                  border: '1px solid rgba(51,65,85,0.3)',
+                  background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '14px 16px',
+                  border: '1px solid var(--color-border)',
                 }}>
-                  <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
                     Account Credentials
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#94a3b8' }}>Email</span>
-                      <span style={{ color: '#e2e8f0', fontWeight: 500, fontFamily: 'monospace', fontSize: 12 }}>{approveResult.email}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Email</span>
+                      <span style={{ color: 'var(--color-text)', fontWeight: 500, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.email}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#94a3b8' }}>Temp Password</span>
-                      <span style={{ color: '#22d3ee', fontWeight: 600, fontFamily: 'monospace', fontSize: 12 }}>{approveResult.temp_password}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Temp Password</span>
+                      <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.temp_password}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#94a3b8' }}>Group Assigned</span>
-                      <span style={{ color: approveResult.group_assigned ? '#22c55e' : '#f59e0b', fontWeight: 500 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Group Assigned</span>
+                      <span style={{ color: approveResult.group_assigned ? 'var(--color-success-text)' : 'var(--color-warning-text)', fontWeight: 500 }}>
                         {approveResult.group_assigned ? 'Yes' : 'No group found'}
                       </span>
                     </div>
@@ -510,29 +544,29 @@ export default function Registrations() {
           ) : (
             /* ── Confirmation view ── */
             <div>
-              <p style={{ color: '#cbd5e1', fontSize: 14, margin: '0 0 16px', lineHeight: 1.6 }}>
-                Are you sure you want to approve <strong style={{ color: '#f1f5f9' }}>{approveTarget.full_name}</strong>?
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
+                Are you sure you want to approve <strong style={{ color: 'var(--color-text)' }}>{approveTarget.full_name}</strong>?
               </p>
 
               <div style={{
-                background: 'rgba(6,13,31,0.5)', borderRadius: 12, padding: '16px 18px',
-                border: '1px solid rgba(51,65,85,0.3)', marginBottom: 8,
+                background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: '16px 18px',
+                border: '1px solid var(--color-border)', marginBottom: 8,
               }}>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
                   This will automatically
                 </div>
-                <ul style={{ margin: 0, padding: '0 0 0 18px', color: '#94a3b8', fontSize: 13, lineHeight: 2 }}>
-                  <li>Create a <span style={{ color: '#e2e8f0' }}>swimmer account</span> with login credentials</li>
-                  <li>Assign to <span style={{ color: '#22d3ee' }}>{approveTarget.branch?.name ?? 'selected branch'}</span></li>
-                  <li>Place under <span style={{ color: '#22d3ee' }}>{approveTarget.coach?.user?.name ?? 'selected coach'}</span>{'\u2019'}s group</li>
+                <ul style={{ margin: 0, padding: '0 0 0 18px', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
+                  <li>Create a <span style={{ color: 'var(--color-text)' }}>swimmer account</span> with login credentials</li>
+                  <li>Assign to <span style={{ color: 'var(--color-primary)' }}>{approveTarget.branch?.name ?? 'selected branch'}</span></li>
+                  <li>Place under <span style={{ color: 'var(--color-primary)' }}>{approveTarget.coach?.user?.name ?? 'selected coach'}</span>{'\u2019'}s group</li>
                 </ul>
               </div>
 
               {actionError && (
                 <div style={{
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                  borderRadius: 10, padding: '10px 14px', marginTop: 12,
-                  color: '#fca5a5', fontSize: 13,
+                  background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
+                  borderRadius: 'var(--radius-md)', padding: '10px 14px', marginTop: 12,
+                  color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)',
                 }}>
                   {actionError}
                 </div>
@@ -549,11 +583,11 @@ export default function Registrations() {
                     <>
                       <div style={{
                         width: 14, height: 14, borderRadius: '50%',
-                        border: '2px solid rgba(6,13,31,0.3)',
-                        borderTopColor: '#060d1f',
+                        border: '2px solid var(--color-border)',
+                        borderTopColor: 'var(--color-primary)',
                         animation: 'spin 0.8s linear infinite',
                       }} />
-                      Approving\u2026
+                      Approving...
                     </>
                   ) : (
                     <>
@@ -576,24 +610,24 @@ export default function Registrations() {
           title="Reject Registration"
           onClose={closeRejectModal}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           }
         >
-          <p style={{ color: '#cbd5e1', fontSize: 14, margin: '0 0 16px', lineHeight: 1.6 }}>
-            Are you sure you want to reject <strong style={{ color: '#f1f5f9' }}>{rejectTarget.full_name}</strong>{'\u2019'}s registration?
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
+            Are you sure you want to reject <strong style={{ color: 'var(--color-text)' }}>{rejectTarget.full_name}</strong>{'\u2019'}s registration?
           </p>
 
           <div style={{
-            background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)',
-            borderRadius: 10, padding: '12px 16px', marginBottom: 8,
-            color: '#fca5a5', fontSize: 13, lineHeight: 1.5,
+            background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
+            borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 8,
+            color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)', lineHeight: 1.5,
             display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -603,9 +637,9 @@ export default function Registrations() {
 
           {actionError && (
             <div style={{
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-              borderRadius: 10, padding: '10px 14px', marginTop: 12,
-              color: '#fca5a5', fontSize: 13,
+              background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
+              borderRadius: 'var(--radius-md)', padding: '10px 14px', marginTop: 12,
+              color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)',
             }}>
               {actionError}
             </div>
@@ -622,11 +656,11 @@ export default function Registrations() {
                 <>
                   <div style={{
                     width: 14, height: 14, borderRadius: '50%',
-                    border: '2px solid rgba(239,68,68,0.3)',
-                    borderTopColor: '#fca5a5',
+                    border: '2px solid var(--color-danger-bg)',
+                    borderTopColor: 'var(--color-danger-text)',
                     animation: 'spin 0.8s linear infinite',
                   }} />
-                  Rejecting\u2026
+                  Rejecting...
                 </>
               ) : (
                 <>
@@ -641,21 +675,6 @@ export default function Registrations() {
           </ModalActions>
         </Modal>
       )}
-
-      {/* ── Keyframe Animations ─────────────────────────── */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50%      { opacity: 0.3; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -133,6 +133,17 @@ return [
             'days' => 90,
         ],
 
+        'json' => [
+            'driver'  => 'monolog',
+            'handler' => Monolog\Handler\RotatingFileHandler::class,
+            'handler_with' => [
+                'filename' => storage_path('logs/laravel.json.log'),
+                'maxFiles' => 30,
+            ],
+            'level'  => env('LOG_LEVEL', 'debug'),
+            'tap'    => [App\Logging\AddRequestContext::class],
+        ],
+
     ],
 
 ];

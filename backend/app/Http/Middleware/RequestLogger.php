@@ -12,8 +12,8 @@ class RequestLogger
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $requestId = Str::uuid()->toString();
-        $request->headers->set('X-Request-Id', $requestId);
+        // Reuse request_id from global RequestId middleware
+        $requestId = app()->has('request_id') ? app('request_id') : Str::uuid()->toString();
         $startTime = microtime(true);
 
         $response = $next($request);
@@ -31,7 +31,6 @@ class RequestLogger
             'ip' => $request->ip(),
         ]);
 
-        $response->headers->set('X-Request-Id', $requestId);
         $response->headers->set('X-Response-Time', $duration . 'ms');
 
         return $response;

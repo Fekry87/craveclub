@@ -49,6 +49,12 @@
 - Club Manager branding: `GET /api/v1/club/branding` (read), `PUT /api/v1/club/branding` (update), `POST /api/v1/club/branding/upload` (upload assets) — full branding config available to CLUB_MANAGER, not just corporate
 - CDN for assets: `CDN_URL` env var in `config/filesystems.php` s3 disk — when set, `Storage::disk('s3')->url()` returns CDN URL; branding uploads use content-hash filenames with `Cache-Control: immutable`
 - Frontend bundle split: Vite `manualChunks` — `vendor` (react/react-dom/react-router-dom) and `axios` are separate chunks
+- Token expiry: web tokens 24h (`config/sanctum.php`), mobile tokens 30d (AuthController checks `X-Platform` header)
+- Registration rate limit: 5 attempts per phone hash per hour (Cache-based in PublicRegistrationController)
+- Push token limit: max 5 active devices per user, auto-cleanup of tokens >90 days (NotificationController)
+- File upload MIME validation: content-based check (`getMimeType()`) in addition to extension validation
+- ThrottleRequestsException handler in bootstrap/app.php returns JSON with Retry-After header (not HTML)
+- Telescope: installed as dev dependency for query analysis — `http://localhost:8000/telescope/queries`
 - Training Engine: TrainingPlan → TrainingPlanAssignment → RecurringSchedule → SessionGeneratorService pipeline
 - TrainingPlan extended fields: duration_weeks, sessions_per_week, goals, difficulty_level (beginner|intermediate|advanced), is_template, coach_user_id, phases (JSON)
 - TrainingPlanAssignment: links plan to group or individual swimmer with start/end dates, status (active|paused|completed|cancelled), coach_notes
@@ -83,7 +89,7 @@
 - UI Language: English only — all frontend text, backend notification titles/bodies, risk reasons, SMS messages, and seeder data are in English (no Arabic)
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (146 tests)
+- `cd backend && php artisan test` — run all tests (229 tests)
 - `cd frontend && npx vitest run` — run all frontend tests (22 tests)
 - `cd backend && php artisan serve` — start API server (port 8000)
 - `cd frontend && npm run dev` — start Vite dev server (port 5173)
@@ -91,6 +97,9 @@
 - `cd backend && php artisan migrate:fresh --seed` — reset DB with seed data
 - `cd backend && php artisan reverb:start` — start WebSocket server (port 8080)
 - `docker compose up -d` — start all services (backend, MySQL, Redis) via Docker
+- `RATE_LIMIT_AUTH=10000 php artisan serve` — start server with high rate limit for k6 load testing
+- `k6 run tests/load/scenarios/dashboard.js` — run dashboard load test (50 VUs)
+- `k6 run tests/load/stress.js` — run stress test ramping to 200 VUs
 - Demo club slug is `future-academy` — use `/portal/future-academy` to login (manager@futureacademy.com / Password123!)
 
 ## Key Patterns
@@ -106,6 +115,7 @@
 - Registration approval chain: `registration.coach_id` → `coach_profiles.id` → `user_id` → `groups.coach_user_id` — used to auto-assign swimmers to groups
 - User model `'password' => 'hashed'` cast auto-hashes plain passwords on create — no need to call `Hash::make()`
 - Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
+- Rate limits: env-configurable via `RATE_LIMIT_AUTH` (default 60) and `RATE_LIMIT_GUEST` (default 20) in AppServiceProvider — useful for load testing without code changes
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
 - All `async` form handlers (handleSave, handleDelete, etc.) MUST use try/catch with error state — bare `await` silently fails on 422/500
@@ -141,7 +151,7 @@
 - `backend/docs/EXPLAIN_QUERIES.sql` — EXPLAIN QUERY PLAN reference for verifying index usage on critical queries
 - `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
 - `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
-- `Procfile` — Railway process definitions: web, worker, scheduler
+- `Procfile` — Railway process definitions: web, worker, scheduler, reverb
 - `backend/config/cors.php` — CORS settings (explicit methods/headers whitelist)
 - `backend/app/Http/Middleware/SecurityHeaders.php` — security headers including CSP
 - `backend/Dockerfile` — production Docker image (PHP 8.2 FPM Alpine, composer --no-dev, config/route/view cache)
@@ -227,6 +237,20 @@
 - `backend/docs/SCALING_GUIDE.md` — read replicas, connection pool sizing, horizontal scaling phases, caching strategy, stateless audit, WebSocket architecture
 - `backend/docs/FAILOVER_RUNBOOK.md` — incident response: DB failover, Redis outage, queue worker down, maintenance mode procedures
 - `backend/docs/PRODUCTION_ARCHITECTURE.md` — full production architecture: Railway services, external services, data flows, SLA targets, environment variables
+- `backend/docs/PERFORMANCE_REPORT.md` — k6 load test results (dashboard, notifications, weekly-report, stress), slow query analysis, breaking point, verdict (GREEN)
+- `tests/load/` — k6 load test suite: config.js, helpers.js, scenarios/ (dashboard, notifications, weekly-report), stress.js
+- `backend/docs/E2E_TEST_REPORT.md` — full portal E2E test report: 62 scenarios across 5 journeys (corporate, manager, coach, registration, security), verdict GREEN
+- `backend/tests/Feature/MultiTenancyTest.php` — 8 tests proving cross-tenant isolation (swimmer/session/plan/cache)
+- `backend/tests/Feature/AuthorizationTest.php` — 8 tests for role enforcement (coach→manager, swimmer→coach, token expiry)
+- `backend/tests/Feature/ValidationTest.php` — 8 tests for input validation (email, DOB, file upload, mass assignment)
+- `backend/tests/Feature/DataExposureTest.php` — 8 tests for API response filtering (password, risk data, medical notes)
+- `backend/tests/Feature/BusinessLogicTest.php` — 8 tests for workflow integrity (session state, registration, is_popular)
+- `backend/tests/Feature/RateLimitTest.php` — 8 tests for rate limiting (login, registration, upload, push token)
+- `backend/tests/Feature/InfrastructureTest.php` — 8 tests for security headers, CORS, maintenance mode
+- `backend/tests/Feature/PerformanceTest.php` — 8 tests with query count limits and N+1 detection per endpoint
+- `backend/docs/SECURITY.md` — secrets management, auth, multi-tenancy, rate limiting, CORS, headers
+- `backend/docs/PRODUCTION_ENV_CHECKLIST.md` — every env var categorized (critical/security/storage/queue)
+- `backend/docs/QUERY_AUDIT_REPORT.md` — endpoint query counts, N+1 fixes, EXPLAIN results, verdict
 
 ## Registration Wizard Routes
 ```
@@ -251,14 +275,17 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Login endpoint has its own `throttle:10,1` — separate from authenticated routes
 - Club portal login is at `/portal/:slug`, corporate login at `/login` — different auth flows
 - Coach schedule FK references `coach_profiles` table (not `users`) — `coach_id` points to `coach_profiles.id`
-- `broadcast()->toOthers()` must be called OUTSIDE DB transactions — transactions hold locks and delay the broadcast
+- `broadcast()->toOthers()` must be called OUTSIDE DB transactions — transactions hold locks and delay the broadcast; broadcast must also be wrapped in its own try/catch for graceful degradation when Reverb is offline
 - Registration wizard steps must NOT use `<form>` tags — use `type="button"` on all buttons to prevent accidental submits
 - `RegistrationProvider` renders `{children || <Outlet />}` — works both as a wrapper component and as a route layout element
-- Registration wizard uses public API endpoints (not authenticated) — `club.header` middleware resolves club from `X-Club-Slug` header; no authenticated POST route for `/registrations` exists
+- Registration wizard uses public API endpoints (not authenticated) — `club.header` middleware resolves club from `X-Club-Slug` header; public routes are at `/branches`, `/coaches`, `/subscription-plans`, `/registrations` (NOT `/public/...`); only `/public/sports` and `/public/branding` use the `/public/` prefix
 - `clearRegistrationDraft()` from RegistrationContext clears the `crave_registration_draft` sessionStorage key — always use this function, not hardcoded key
 - `localhost` and `127.0.0.1` are different origins for CORS — both must be in `allowed_origins` in `backend/config/cors.php`
 - API calls via `api` (axios instance) must NOT include `/v1/` prefix — base URL already has `/api/v1`, so `/v1/club/...` becomes `/api/v1/v1/club/...`
 - `Registration` model requires `sport_ids` (NOT NULL) — always include when creating registrations programmatically
+- Registration field names: `full_name` (not first_name/last_name), `plan_id` (not subscription_plan_id), `height_cm`/`weight_kg` (not height/weight), `birth_date` (not date_of_birth), `primary_goal`, `weekly_frequency`, `preferred_time`, `payment_method` — all required
+- Registration approve route is `PATCH /club/registrations/{id}/status` with `{"status": "approved"}` — NOT `PUT .../approve`
+- Sport module `color` field requires `#` prefix (e.g. `#276749`) — validated via regex, unlike branding colors which are stored WITHOUT `#`
 - CoachSchedule slot validation requires `time`, `is_available`, `max_capacity` — NOT `start_time`/`end_time`
 - SubscriptionPlan reorder uses `ordered_ids` key — NOT `order`
 - In tests, models using `BelongsToClub` trait need `::withoutGlobalScopes()` when querying across clubs
@@ -275,6 +302,8 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - SessionGeneratorService sets session `status: 'Scheduled'` and `type: 'training'` — title comes from schedule name
 - TrainingPlanAssignment prevents duplicate active plans per swimmer — checked in controller before creation
 - TrainingPlan `phases` field is JSON — each phase: `{ week_start, week_end, focus, exercises[] }`, each exercise: `{ name, sets, reps, notes }`
+- Training plan routes are sport-scoped: `GET/POST /club/{sportSlug}/training-plans` — NOT `/club/training-plans`; leaderboard at `/club/leaderboard/overview` — NOT `/club/leaderboard`
+- Branch creation requires `name`, `address`, `city`, `capacity` — NOT just name + location
 - Recurring schedule routes under `/club/recurring-schedules` (not `/club/schedules`) — frontend route is `/club/schedules` but API path differs
 - WeekdayPicker and ScheduleCalendar are inline components within ScheduleBuilderPage.jsx (not separate files)
 - Schedule builder preview is read-only (no DB writes) — generation is a separate POST step that sets status to 'active'
@@ -295,7 +324,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `attendance` table is singular (NOT `attendances`) — join queries must use `attendance.swimmer_id`, `attendance.present`, etc.
 - `group_memberships` table uses `swimmer_id` column (NOT `swimmer_profile_id`) — FK to `swimmer_profiles.id`
 - SQLite migration rollbacks: must drop unique indexes in a separate `Schema::table()` call before dropping columns — cannot combine in one call
-- CoachSchedule internal slot format is `{ time, is_available, max_capacity }` — public API transforms to `{ day, start_time, end_time }` for mobile compat
+- CoachSchedule internal slot format is `{ time, is_available, max_capacity }` — public API transforms to `{ coach_id, slots: [{ day, start_time, end_time }] }` for mobile compat; Step7_CoachSelection.jsx transforms this back to `[{ day_of_week, slots: [{ time, is_available }] }]` for display
 - All UI text, notification messages, SMS messages, and risk reason strings must be in English — do NOT use Arabic text anywhere in frontend or backend
 - Analytics backend→frontend field mapping: `membership_growth[].total` (NOT `.count`), `retention.retention_rate_30d` (NOT `.retention_rate`), `registration_funnel.submitted_30d`/`.approved_30d`/`.rejected_30d`/`.pending_now` (NOT `.submitted`/`.approved`/`.rejected`/`.pending`), `coach_performance[].sessions_30d` (NOT `.sessions_count`)
 - `StatCard` component accepts both `title` and `label` props (`displayTitle = title || label`) — all callers use `label`; extra props like `delta`, `deltaType`, `accentColor` are silently ignored (not rendered)
@@ -316,3 +345,9 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false
 - Branding upload uses content-hash filenames (`logo-a1b2c3d4.png`) — new file = new hash = CDN serves fresh without purge; `CacheControl: public, max-age=31536000, immutable`
 - `CDN_URL` env var: when set, `Storage::disk('s3')->url()` returns CDN URL; when empty, falls back to direct `AWS_URL` — no code changes needed in controllers
+- Branding upload disk: auto-selects `s3` when `AWS_BUCKET` is set, falls back to `public` disk in dev — requires `php artisan storage:link` for local uploads
+- `XpCalculationService::getTopSwimmers()` uses batch queries (3 total) not per-swimmer loop — do NOT reintroduce N+1 by calling `computeForSwimmer()` in a loop
+- `SubscriptionPlanController` store/update wrap `is_popular` clearing in `DB::transaction` — do NOT remove the transaction
+- User model `$hidden` includes `email_verified_at` in addition to `password` and `remember_token` — do NOT expose in API responses
+- `DB::forgetRecordedQueries()` does not exist on SQLite — use plain `DB::listen()` without cleanup in tests
+- Telescope is dev-only (`--dev`) — do NOT require it in production; tables exist in migration but package only loads in dev

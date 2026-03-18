@@ -172,11 +172,18 @@ class CorporateController extends Controller
 
         $club->branches_remaining = $club->max_branches - $club->branches_count;
 
-        return response()->json($club);
+        $manager = User::where('club_id', $club->id)->where('role', UserRole::CLUB_MANAGER)->first();
+
+        $data = $club->toArray();
+        $data['manager'] = $manager ? $manager->only(['id', 'name', 'email']) : null;
+
+        return response()->json($data);
     }
 
     public function clubUpdate(Request $request, Club $club): JsonResponse
     {
+        $manager = User::where('club_id', $club->id)->where('role', UserRole::CLUB_MANAGER)->first();
+
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'slug' => 'sometimes|string|max:255|unique:clubs,slug,' . $club->id,
@@ -190,6 +197,9 @@ class CorporateController extends Controller
             'contact_email' => 'nullable|email|max:255',
             'contact_phone' => 'nullable|string|max:20',
             'max_branches' => 'sometimes|integer|min:1|max:100',
+            'manager_name' => 'sometimes|string|max:255',
+            'manager_email' => 'sometimes|email|max:255|unique:users,email,' . ($manager?->id ?? 0),
+            'manager_password' => 'nullable|string|min:8',
         ]);
 
         $club->update($request->only([
@@ -198,7 +208,24 @@ class CorporateController extends Controller
             'about', 'contact_email', 'contact_phone', 'max_branches',
         ]));
 
-        return response()->json($club->load('features'));
+        // Update manager account if fields provided
+        if ($manager) {
+            if ($request->filled('manager_name')) {
+                $manager->name = $request->manager_name;
+            }
+            if ($request->filled('manager_email')) {
+                $manager->email = $request->manager_email;
+            }
+            if ($request->filled('manager_password')) {
+                $manager->password = $request->manager_password;
+            }
+            $manager->save();
+        }
+
+        $data = $club->load('features')->toArray();
+        $data['manager'] = $manager ? $manager->only(['id', 'name', 'email']) : null;
+
+        return response()->json($data);
     }
 
     public function clubDestroy(Club $club): JsonResponse

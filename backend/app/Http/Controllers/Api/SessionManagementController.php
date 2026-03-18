@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSessionRequest;
 use App\Http\Requests\UpdateSessionRequest;
+use App\Models\Attendance;
+use App\Models\DailyEvaluation;
 use App\Models\Group;
 use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +38,12 @@ class SessionManagementController extends Controller
         }
         if ($branchId = $request->input('branch_id')) {
             $query->where('branch_id', $branchId);
+        }
+        if ($request->boolean('with_attendance')) {
+            $query->withCount([
+                'attendances as attendance_total',
+                'attendances as attendance_present' => fn ($q) => $q->where('present', true),
+            ]);
         }
         return response()->json($query->orderBy('date', 'desc')->orderBy('start_time')->paginate($request->input('per_page', 15)));
     }
@@ -88,6 +96,52 @@ class SessionManagementController extends Controller
     {
         $this->assertOwnership($session);
         return response()->json($session->load(['group.swimmers', 'plan.items', 'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation']));
+    }
+
+    public function sessionAttendance(TrainingSession $session): JsonResponse
+    {
+        $this->assertOwnership($session);
+        $session->load(['group.swimmers', 'sessionSwimmers', 'sessionExclusions']);
+
+        $effectiveSwimmers = $session->effective_swimmers;
+        $attendances = Attendance::where('session_id', $session->id)->get()->keyBy('swimmer_id');
+        $evaluations = DailyEvaluation::where('session_id', $session->id)->get()->keyBy('swimmer_id');
+
+        $roster = $effectiveSwimmers->map(function ($swimmer) use ($attendances, $evaluations) {
+            $att = $attendances->get($swimmer->id);
+            $eval = $evaluations->get($swimmer->id);
+
+            return [
+                'swimmer_id' => $swimmer->id,
+                'first_name' => $swimmer->first_name,
+                'last_name' => $swimmer->last_name,
+                'avatar_url' => $swimmer->avatar_url ?? null,
+                'present' => $att ? (bool) $att->present : false,
+                'evaluated' => $eval !== null,
+                'rating' => $eval?->rating,
+                'notes' => $eval?->notes,
+            ];
+        })->values();
+
+        $presentCount = $roster->where('present', true)->count();
+
+        return response()->json([
+            'session' => [
+                'id' => $session->id,
+                'title' => $session->title,
+                'date' => $session->date?->toDateString(),
+                'start_time' => $session->start_time,
+                'status' => $session->status,
+                'group_id' => $session->group_id,
+            ],
+            'roster' => $roster,
+            'summary' => [
+                'total' => $roster->count(),
+                'present' => $presentCount,
+                'absent' => $roster->count() - $presentCount,
+                'evaluated' => $roster->where('evaluated', true)->count(),
+            ],
+        ]);
     }
 
     public function sessionUpdate(UpdateSessionRequest $request, TrainingSession $session): JsonResponse

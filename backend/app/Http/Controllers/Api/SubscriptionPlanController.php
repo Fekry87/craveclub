@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SubscriptionPlanController extends Controller
@@ -36,18 +37,20 @@ class SubscriptionPlanController extends Controller
         ]);
 
         try {
-            // If marking as popular, clear other popular plans first
-            if ($request->boolean('is_popular')) {
-                SubscriptionPlan::where('club_id', $clubId)->update(['is_popular' => false]);
-            }
+            $plan = DB::transaction(function () use ($request, $clubId) {
+                // If marking as popular, clear other popular plans first (atomic)
+                if ($request->boolean('is_popular')) {
+                    SubscriptionPlan::where('club_id', $clubId)->update(['is_popular' => false]);
+                }
 
-            // Auto-assign display_order if not provided
-            $data = $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order']);
-            if (!$request->has('display_order')) {
-                $data['display_order'] = SubscriptionPlan::where('club_id', $clubId)->max('display_order') + 1;
-            }
+                // Auto-assign display_order if not provided
+                $data = $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order']);
+                if (!$request->has('display_order')) {
+                    $data['display_order'] = SubscriptionPlan::where('club_id', $clubId)->max('display_order') + 1;
+                }
 
-            $plan = SubscriptionPlan::create(array_merge($data, ['club_id' => $clubId]));
+                return SubscriptionPlan::create(array_merge($data, ['club_id' => $clubId]));
+            });
 
             return response()->json($plan->loadCount('registrations'), 201);
         } catch (\Exception $e) {
@@ -83,16 +86,18 @@ class SubscriptionPlanController extends Controller
         ]);
 
         try {
-            // If marking as popular, clear other popular plans first
-            if ($request->boolean('is_popular')) {
-                SubscriptionPlan::where('club_id', $clubId)
-                    ->where('id', '!=', $subscriptionPlan->id)
-                    ->update(['is_popular' => false]);
-            }
+            DB::transaction(function () use ($request, $clubId, $subscriptionPlan) {
+                // If marking as popular, clear other popular plans first (atomic)
+                if ($request->boolean('is_popular')) {
+                    SubscriptionPlan::where('club_id', $clubId)
+                        ->where('id', '!=', $subscriptionPlan->id)
+                        ->update(['is_popular' => false]);
+                }
 
-            $subscriptionPlan->update(
-                $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order'])
-            );
+                $subscriptionPlan->update(
+                    $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order'])
+                );
+            });
 
             return response()->json($subscriptionPlan->loadCount('registrations'));
         } catch (\Exception $e) {
