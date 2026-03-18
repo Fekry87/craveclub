@@ -88,4 +88,4 @@ http {\n\
     }\n\
 }\n' > /etc/nginx/nginx.conf
 
-CMD ["/bin/sh", "-c", "sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php artisan route:cache && php artisan view:cache && php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php-fpm -D && nginx -g 'daemon off;'"]
