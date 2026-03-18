@@ -48,6 +48,14 @@ COPY . .
 # Run post-install scripts
 RUN composer run-script post-autoload-dump 2>/dev/null || true
 
+# Create empty .env so Laravel can bootstrap (Railway injects env vars at runtime)
+RUN touch /var/www/.env
+
+# Enable PHP error logging to stderr (visible in Railway logs)
+RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
+    && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini \
+    && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/error-logging.ini
+
 # Set permissions
 RUN mkdir -p /var/www/storage/logs \
     /var/www/storage/framework/cache \
