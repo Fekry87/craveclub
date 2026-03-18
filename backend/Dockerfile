@@ -54,7 +54,11 @@ RUN touch /var/www/.env
 # Enable PHP error logging to stderr (visible in Railway logs)
 RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
     && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini \
-    && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/error-logging.ini
+    && echo "display_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini
+
+# Enable php-fpm to capture worker output in logs
+RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Set permissions
 RUN mkdir -p /var/www/storage/logs \
