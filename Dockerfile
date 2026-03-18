@@ -5,21 +5,18 @@ WORKDIR /var/www/html
 RUN apk add --no-cache \
     curl \
     libpng-dev \
-    libjpeg-turbo-dev \
-    libwebp-dev \
-    zlib-dev \
-    libzip-dev \
     oniguruma-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql mbstring zip bcmath pcntl
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY backend/ .
 
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
+    storage/framework/views bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
 RUN composer install --no-dev --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-EXPOSE $PORT
-
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
