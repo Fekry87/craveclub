@@ -4,11 +4,9 @@ namespace Tests\Feature\Coach;
 
 use App\Enums\UserRole;
 use App\Models\Attendance;
-use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
-use App\Models\DailyEvaluation;
 use App\Models\Group;
 use App\Models\GroupMembership;
 use App\Models\SwimmerProfile;
@@ -22,11 +20,17 @@ class CoachApiTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $coach;
+
     private CoachProfile $coachProfile;
+
     private Group $group;
+
     private SwimmerProfile $swimmer1;
+
     private SwimmerProfile $swimmer2;
+
     private TrainingSession $session;
 
     protected function setUp(): void

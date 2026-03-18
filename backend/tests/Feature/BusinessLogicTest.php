@@ -25,10 +25,15 @@ class BusinessLogicTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $coachUser;
+
     private CoachProfile $coachProfile;
+
     private Group $group;
+
     private SwimmerProfile $swimmer;
 
     protected function setUp(): void

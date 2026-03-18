@@ -14,7 +14,9 @@ class FeatureGuardTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $admin;
 
     protected function setUp(): void
@@ -49,7 +51,7 @@ class FeatureGuardTest extends TestCase
     {
         $token = $user->createToken('test')->plainTextToken;
 
-        return ['Authorization' => 'Bearer ' . $token];
+        return ['Authorization' => 'Bearer '.$token];
     }
 
     // ── Tests ───────────────────────────────────────────────
@@ -94,7 +96,7 @@ class FeatureGuardTest extends TestCase
         $request = \Illuminate\Http\Request::create('/test', 'GET');
         $request->setUserResolver(fn () => $this->admin);
 
-        $middleware = new \App\Http\Middleware\FeatureGuard();
+        $middleware = new \App\Http\Middleware\FeatureGuard;
 
         $response = $middleware->handle($request, function ($req) {
             return response()->json(['ok' => true]);

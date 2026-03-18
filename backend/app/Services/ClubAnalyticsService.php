@@ -25,6 +25,7 @@ class ClubAnalyticsService
             return Cache::remember($key, $ttl, $callback);
         } catch (\Exception $e) {
             Log::warning('Cache unavailable, using direct query', ['club_id' => $clubId, 'method' => $method]);
+
             return $callback();
         }
     }
@@ -165,8 +166,7 @@ class ClubAnalyticsService
                 $weekEnd = now()->subWeeks($i)->endOfWeek();
                 $weekLabel = now()->subWeeks($i)->format('Y-\\WW');
 
-                $weekSessions = $sessions->filter(fn ($s) =>
-                    $s->date->between($weekStart, $weekEnd)
+                $weekSessions = $sessions->filter(fn ($s) => $s->date->between($weekStart, $weekEnd)
                 );
 
                 $sessionsCount = $weekSessions->count();
@@ -271,8 +271,7 @@ class ClubAnalyticsService
                 : collect();
 
             // Map sessions to coach_user_id
-            $groupToCoach = $allGroups->flatMap(fn ($groups, $coachId) =>
-                $groups->mapWithKeys(fn ($g) => [$g->id => $coachId])
+            $groupToCoach = $allGroups->flatMap(fn ($groups, $coachId) => $groups->mapWithKeys(fn ($g) => [$g->id => $coachId])
             );
 
             $sessionsByCoach = $allSessions30d->groupBy(fn ($s) => $groupToCoach->get($s->group_id));
@@ -320,13 +319,17 @@ class ClubAnalyticsService
                     $sessionAtt = $attendanceBySession->get($sid, collect());
                     foreach ($sessionAtt as $att) {
                         $totalMarks++;
-                        if ($att->present) $presentMarks++;
+                        if ($att->present) {
+                            $presentMarks++;
+                        }
 
-                        if (!isset($swimmerAttendance[$att->swimmer_id])) {
+                        if (! isset($swimmerAttendance[$att->swimmer_id])) {
                             $swimmerAttendance[$att->swimmer_id] = ['total' => 0, 'present' => 0];
                         }
                         $swimmerAttendance[$att->swimmer_id]['total']++;
-                        if ($att->present) $swimmerAttendance[$att->swimmer_id]['present']++;
+                        if ($att->present) {
+                            $swimmerAttendance[$att->swimmer_id]['present']++;
+                        }
                     }
                 }
 
@@ -366,7 +369,7 @@ class ClubAnalyticsService
             ->with('user:id,name')
             ->first();
 
-        if (!$coach) {
+        if (! $coach) {
             return [];
         }
 
@@ -486,7 +489,7 @@ class ClubAnalyticsService
 
                     return [
                         'swimmer_id' => $row->swimmer_id,
-                        'name' => $swimmer ? ($swimmer->first_name . ' ' . $swimmer->last_name) : 'Unknown',
+                        'name' => $swimmer ? ($swimmer->first_name.' '.$swimmer->last_name) : 'Unknown',
                         'avg_rating' => round($row->avg_rating, 1),
                         'attendance_rate' => $total > 0 ? round(($present / $total) * 100, 1) : 0,
                     ];
@@ -521,7 +524,7 @@ class ClubAnalyticsService
 
                     $atRiskSwimmers[] = [
                         'swimmer_id' => $swimmerId,
-                        'name' => $swimmer ? ($swimmer->first_name . ' ' . $swimmer->last_name) : 'Unknown',
+                        'name' => $swimmer ? ($swimmer->first_name.' '.$swimmer->last_name) : 'Unknown',
                         'attendance_rate' => $rate,
                         'last_seen' => $att?->last_present_at ? \Carbon\Carbon::parse($att->last_present_at)->toDateString() : null,
                     ];

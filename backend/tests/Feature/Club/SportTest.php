@@ -15,6 +15,7 @@ class SportTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
 
     protected function setUp(): void

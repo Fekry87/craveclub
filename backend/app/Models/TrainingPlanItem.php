@@ -13,5 +13,8 @@ class TrainingPlanItem extends Model
         'club_id', 'plan_id', 'sort_order', 'stroke', 'drill', 'distance', 'reps', 'interval', 'notes',
     ];
 
-    public function plan() { return $this->belongsTo(TrainingPlan::class, 'plan_id'); }
+    public function plan()
+    {
+        return $this->belongsTo(TrainingPlan::class, 'plan_id');
+    }
 }

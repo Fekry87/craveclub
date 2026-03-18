@@ -19,10 +19,15 @@ class ValidationTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private Club $otherClub;
+
     private User $manager;
+
     private CoachProfile $coach;
+
     private Branch $branch;
+
     private SubscriptionPlan $plan;
 
     protected function setUp(): void

@@ -51,7 +51,7 @@ class NotificationController extends Controller
     {
         $marked = $this->notificationService->markRead($id, $request->user()->id);
 
-        if (!$marked) {
+        if (! $marked) {
             return response()->json(['message' => 'Notification not found or already read.'], 404);
         }
 
@@ -85,7 +85,7 @@ class NotificationController extends Controller
 
         // Map device_type to platform if platform not provided
         $platform = $request->input('platform');
-        if (!$platform && $request->has('device_type')) {
+        if (! $platform && $request->has('device_type')) {
             $platform = 'expo'; // Expo tokens from both iOS and Android
         }
 

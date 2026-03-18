@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 class CheckQueueHealth extends Command
 {
     protected $signature = 'queue:health-check';
+
     protected $description = 'Check queue health: pending jobs, failed jobs in last hour, alert if degraded';
 
     public function handle(): int
@@ -53,7 +54,7 @@ class CheckQueueHealth extends Command
             $this->warn("ALERT: {$failedLastHour} failed jobs in the last hour!");
         }
 
-        $this->info("Queue Health Summary:");
+        $this->info('Queue Health Summary:');
         $this->info("  Pending jobs:          {$pendingJobs}");
         $this->info("  Failed (last hour):    {$failedLastHour}");
         $this->info("  Failed (total):        {$totalFailed}");

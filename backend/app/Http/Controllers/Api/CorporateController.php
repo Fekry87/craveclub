@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Enums\UserRole;
+use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Club;
 use App\Models\ClubFeature;
@@ -13,7 +13,6 @@ use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-
 
 class CorporateController extends Controller
 {
@@ -186,7 +185,7 @@ class CorporateController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|max:255|unique:clubs,slug,' . $club->id,
+            'slug' => 'sometimes|string|max:255|unique:clubs,slug,'.$club->id,
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'primary_color' => 'nullable|string|max:7',
@@ -198,7 +197,7 @@ class CorporateController extends Controller
             'contact_phone' => 'nullable|string|max:20',
             'max_branches' => 'sometimes|integer|min:1|max:100',
             'manager_name' => 'sometimes|string|max:255',
-            'manager_email' => 'sometimes|email|max:255|unique:users,email,' . ($manager?->id ?? 0),
+            'manager_email' => 'sometimes|email|max:255|unique:users,email,'.($manager?->id ?? 0),
             'manager_password' => 'nullable|string|min:8',
         ]);
 

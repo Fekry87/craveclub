@@ -64,7 +64,7 @@ class TrainingPlanController extends Controller
         $query = TrainingPlan::where('club_id', $clubId)
             ->where(function ($q) use ($user) {
                 $q->where('coach_user_id', $user->id)
-                  ->orWhere('is_template', true);
+                    ->orWhere('is_template', true);
             });
 
         if (app()->bound('current_sport_module_id')) {
@@ -172,7 +172,7 @@ class TrainingPlanController extends Controller
                 ->pluck('user_id')
                 ->toArray();
 
-            if (!empty($userIds)) {
+            if (! empty($userIds)) {
                 $notificationService->notifyMany(
                     userIds: $userIds,
                     type: 'plan_assigned',
@@ -251,7 +251,7 @@ class TrainingPlanController extends Controller
         $assignment = TrainingPlanAssignment::where('status', 'active')
             ->where(function ($q) use ($swimmerProfile, $groupIds) {
                 $q->where('swimmer_profile_id', $swimmerProfile->id)
-                  ->orWhereIn('group_id', $groupIds);
+                    ->orWhereIn('group_id', $groupIds);
             })
             ->with(['trainingPlan.items', 'assignedByCoach'])
             ->latest()

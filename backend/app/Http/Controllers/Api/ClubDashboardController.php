@@ -35,7 +35,7 @@ class ClubDashboardController extends Controller
         $clubId = $request->user()->club_id;
 
         try {
-            $features = Cache::remember("club_features_{$clubId}", 3600, fn() => ClubFeature::forClub($clubId));
+            $features = Cache::remember("club_features_{$clubId}", 3600, fn () => ClubFeature::forClub($clubId));
         } catch (\Exception $e) {
             Log::warning('Cache unavailable, using direct query', ['club_id' => $clubId, 'method' => 'features']);
             $features = ClubFeature::forClub($clubId);
@@ -49,7 +49,7 @@ class ClubDashboardController extends Controller
         $clubId = $request->user()->club_id;
 
         try {
-            $metrics = Cache::remember("dashboard_metrics_{$clubId}", 300, fn() => $this->computeDashboardMetrics($clubId));
+            $metrics = Cache::remember("dashboard_metrics_{$clubId}", 300, fn () => $this->computeDashboardMetrics($clubId));
         } catch (\Exception $e) {
             Log::warning('Cache unavailable, using direct query', ['club_id' => $clubId, 'method' => 'dashboard']);
             $metrics = $this->computeDashboardMetrics($clubId);
@@ -179,7 +179,7 @@ class ClubDashboardController extends Controller
             ->wherePivot('is_active', true)
             ->exists();
 
-        abort_if(!$isAssigned, 404);
+        abort_if(! $isAssigned, 404);
 
         $moduleId = $module->id;
         $weekStart = now()->startOfWeek()->toDateString();
@@ -260,7 +260,7 @@ class ClubDashboardController extends Controller
         $clubId = app('current_club_id');
 
         try {
-            $data = Cache::remember("analytics_full_{$clubId}", 1800, fn() => $this->computeAnalytics($clubId));
+            $data = Cache::remember("analytics_full_{$clubId}", 1800, fn () => $this->computeAnalytics($clubId));
         } catch (\Exception $e) {
             Log::warning('Cache unavailable, using direct query', ['club_id' => $clubId, 'method' => 'analytics']);
             $data = $this->computeAnalytics($clubId);

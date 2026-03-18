@@ -148,7 +148,7 @@ class LeaderboardController extends Controller
 
             $topSwimmers[] = [
                 'swimmer_id' => $swimmer->id,
-                'name' => $swimmer->first_name . ' ' . $swimmer->last_name,
+                'name' => $swimmer->first_name.' '.$swimmer->last_name,
                 'total_xp' => $xpData['total_xp'],
                 'level_name' => $level['name'],
                 'level_color' => $level['color'],
@@ -158,7 +158,7 @@ class LeaderboardController extends Controller
             $distribution[$levelName] = ($distribution[$levelName] ?? 0) + 1;
         }
 
-        usort($topSwimmers, fn($a, $b) => $b['total_xp'] - $a['total_xp']);
+        usort($topSwimmers, fn ($a, $b) => $b['total_xp'] - $a['total_xp']);
         $topSwimmers = array_slice($topSwimmers, 0, 10);
 
         return response()->json([

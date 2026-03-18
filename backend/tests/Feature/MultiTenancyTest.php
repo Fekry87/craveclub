@@ -22,14 +22,23 @@ class MultiTenancyTest extends TestCase
     use RefreshDatabase;
 
     private Club $clubA;
+
     private Club $clubB;
+
     private User $managerA;
+
     private User $managerB;
+
     private User $coachUserA;
+
     private CoachProfile $coachProfileA;
+
     private SwimmerProfile $swimmerA;
+
     private SwimmerProfile $swimmerB;
+
     private TrainingSession $sessionA;
+
     private TrainingSession $sessionB;
 
     protected function setUp(): void

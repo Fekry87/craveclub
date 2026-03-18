@@ -15,7 +15,9 @@ class CoachScheduleTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private CoachProfile $coachProfile;
 
     protected function setUp(): void

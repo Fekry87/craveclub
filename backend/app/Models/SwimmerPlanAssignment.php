@@ -11,6 +11,13 @@ class SwimmerPlanAssignment extends Model
 
     protected $fillable = ['club_id', 'swimmer_id', 'plan_id'];
 
-    public function swimmer() { return $this->belongsTo(SwimmerProfile::class, 'swimmer_id'); }
-    public function plan() { return $this->belongsTo(TrainingPlan::class, 'plan_id'); }
+    public function swimmer()
+    {
+        return $this->belongsTo(SwimmerProfile::class, 'swimmer_id');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(TrainingPlan::class, 'plan_id');
+    }
 }

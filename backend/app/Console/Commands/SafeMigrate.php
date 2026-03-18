@@ -18,7 +18,7 @@ class SafeMigrate extends Command
         $this->info('Checking for pending migrations...');
 
         $pendingOutput = '';
-        Artisan::call('migrate:status', [], $output = new \Symfony\Component\Console\Output\BufferedOutput());
+        Artisan::call('migrate:status', [], $output = new \Symfony\Component\Console\Output\BufferedOutput);
         $statusOutput = $output->fetch();
 
         // Count pending migrations (lines with "Pending" status)
@@ -38,7 +38,7 @@ class SafeMigrate extends Command
             $exitCode = Artisan::call('migrate', ['--force' => true]);
 
             if ($exitCode !== 0) {
-                $this->error('Migration failed with exit code: ' . $exitCode);
+                $this->error('Migration failed with exit code: '.$exitCode);
                 Log::channel('daily')->error('migrate:safe — migration failed', [
                     'exit_code' => $exitCode,
                 ]);
@@ -48,7 +48,7 @@ class SafeMigrate extends Command
 
             $this->info('Migrations completed successfully.');
         } catch (\Throwable $e) {
-            $this->error('Migration error: ' . $e->getMessage());
+            $this->error('Migration error: '.$e->getMessage());
             Log::channel('daily')->error('migrate:safe — migration exception', [
                 'error' => $e->getMessage(),
             ]);
@@ -78,7 +78,7 @@ class SafeMigrate extends Command
             'pending_count' => $pendingCount,
         ]);
 
-        $this->info('Done. ' . $pendingCount . ' migration(s) applied and caches rebuilt.');
+        $this->info('Done. '.$pendingCount.' migration(s) applied and caches rebuilt.');
 
         return self::SUCCESS;
     }

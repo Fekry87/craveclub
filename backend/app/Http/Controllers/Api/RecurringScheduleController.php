@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\RecurringSchedule;
 use App\Models\Group;
+use App\Models\RecurringSchedule;
 use App\Models\ScheduleHoliday;
 use App\Models\TrainingSession;
 use App\Services\SessionGeneratorService;
@@ -61,7 +61,7 @@ class RecurringScheduleController extends Controller
             ->where('club_id', app('current_club_id'))
             ->first();
 
-        if (!$group) {
+        if (! $group) {
             return response()->json([
                 'message' => 'Group not found in this club.',
                 'errors' => ['group_id' => ['Group not found in this club.']],
@@ -153,7 +153,7 @@ class RecurringScheduleController extends Controller
         }
 
         return response()->json([
-            'message' => count($created) . ' holiday(s) added.',
+            'message' => count($created).' holiday(s) added.',
             'holidays' => $created,
         ]);
     }
@@ -168,7 +168,7 @@ class RecurringScheduleController extends Controller
             ->whereDate('holiday_date', $date)
             ->delete();
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json(['message' => 'Holiday not found.'], 404);
         }
 
@@ -210,7 +210,7 @@ class RecurringScheduleController extends Controller
             $group = Group::where('id', $validated['group_id'])
                 ->where('club_id', app('current_club_id'))
                 ->first();
-            if (!$group) {
+            if (! $group) {
                 return response()->json([
                     'message' => 'Group not found in this club.',
                     'errors' => ['group_id' => ['Group not found in this club.']],

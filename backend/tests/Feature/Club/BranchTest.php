@@ -18,7 +18,7 @@ class BranchTest extends TestCase
     {
         $club = Club::create([
             'name' => 'Branch Test Club',
-            'slug' => 'branch-test-' . uniqid(),
+            'slug' => 'branch-test-'.uniqid(),
             'is_active' => true,
             'max_branches' => $maxBranches,
         ]);
@@ -27,7 +27,7 @@ class BranchTest extends TestCase
 
         $manager = User::create([
             'name' => 'Manager',
-            'email' => 'manager-branch-' . uniqid() . '@test.com',
+            'email' => 'manager-branch-'.uniqid().'@test.com',
             'password' => 'password',
             'role' => UserRole::CLUB_MANAGER,
             'club_id' => $club->id,

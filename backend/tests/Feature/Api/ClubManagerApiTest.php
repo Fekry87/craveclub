@@ -18,6 +18,7 @@ class ClubManagerApiTest extends TestCase
     use RefreshDatabase;
 
     private User $manager;
+
     private Club $club;
 
     protected function setUp(): void
@@ -49,7 +50,7 @@ class ClubManagerApiTest extends TestCase
     {
         $token = $this->manager->createToken('test')->plainTextToken;
 
-        return ['Authorization' => 'Bearer ' . $token];
+        return ['Authorization' => 'Bearer '.$token];
     }
 
     // ── Dashboard ────────────────────────────────────────────

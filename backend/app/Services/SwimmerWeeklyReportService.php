@@ -101,7 +101,7 @@ class SwimmerWeeklyReportService
         }
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
-        $weekLabel = $week ?? $weekStart->format('o') . '-W' . str_pad($weekStart->isoWeek(), 2, '0', STR_PAD_LEFT);
+        $weekLabel = $week ?? $weekStart->format('o').'-W'.str_pad($weekStart->isoWeek(), 2, '0', STR_PAD_LEFT);
 
         return [$weekLabel, $weekStart, $weekEnd];
     }
@@ -144,7 +144,7 @@ class SwimmerWeeklyReportService
             ->first();
 
         // If no direct assignment, check group assignments
-        if (!$assignment) {
+        if (! $assignment) {
             // FIX: group_memberships column is 'swimmer_id', not 'swimmer_profile_id'
             $groupIds = \DB::table('group_memberships')
                 ->where('swimmer_id', $swimmerId)
@@ -164,14 +164,14 @@ class SwimmerWeeklyReportService
             }
         }
 
-        if (!$assignment || !$assignment->trainingPlan) {
+        if (! $assignment || ! $assignment->trainingPlan) {
             return null;
         }
 
         $plan = $assignment->trainingPlan;
         $phases = $plan->phases;
 
-        if (empty($phases) || !is_array($phases)) {
+        if (empty($phases) || ! is_array($phases)) {
             return null;
         }
 

@@ -4,10 +4,10 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -91,6 +91,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->renderable(function (ThrottleRequestsException $e) {
             $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+
             return response()->json([
                 'message' => "Too many attempts. Try again in {$retryAfter} seconds.",
             ], 429)->withHeaders($e->getHeaders());

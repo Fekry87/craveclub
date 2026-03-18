@@ -4,14 +4,12 @@ namespace Tests\Feature\Security;
 
 use App\Enums\SkillType;
 use App\Enums\UserRole;
-use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\Group;
-use App\Models\SubscriptionPlan;
-use App\Models\SwimmerProfile;
 use App\Models\Skill;
+use App\Models\SwimmerProfile;
 use App\Models\TrainingPlan;
 use App\Models\TrainingSession;
 use App\Models\User;
@@ -24,7 +22,9 @@ class CrossTenantIsolationTest extends TestCase
     use RefreshDatabase;
 
     private Club $clubA;
+
     private Club $clubB;
+
     private User $managerA;
 
     protected function setUp(): void

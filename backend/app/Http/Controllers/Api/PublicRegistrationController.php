@@ -5,19 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Events\NewRegistrationSubmitted;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\CoachSchedule;
 use App\Models\Registration;
-use App\Models\Club;
 use App\Models\Sport;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class PublicRegistrationController extends Controller
 {
@@ -40,7 +40,7 @@ class PublicRegistrationController extends Controller
     {
         $club = Club::find(app('current_club_id'));
 
-        if (!$club) {
+        if (! $club) {
             return response()->json([]);
         }
 
@@ -58,7 +58,7 @@ class PublicRegistrationController extends Controller
     public function plans(): JsonResponse
     {
         $features = ClubFeature::forClub(app('current_club_id'));
-        if (!$features->isEnabled('subscription_plans')) {
+        if (! $features->isEnabled('subscription_plans')) {
             return response()->json([]);
         }
 
@@ -84,7 +84,7 @@ class PublicRegistrationController extends Controller
             $query->whereJsonContains('sport_ids', $request->sport_id);
         }
 
-        $coaches = $query->get()->map(fn($coach) => [
+        $coaches = $query->get()->map(fn ($coach) => [
             'id' => $coach->id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
@@ -148,7 +148,7 @@ class PublicRegistrationController extends Controller
             $dayName = $dayNames[$schedule->day_of_week] ?? $schedule->day_of_week;
             if (is_array($schedule->slots)) {
                 foreach ($schedule->slots as $slot) {
-                    if (!empty($slot['is_available'])) {
+                    if (! empty($slot['is_available'])) {
                         $slots[] = [
                             'day' => $dayName,
                             'start_time' => $slot['time'] ?? $slot['start_time'] ?? null,
@@ -171,7 +171,7 @@ class PublicRegistrationController extends Controller
     public function store(Request $request): JsonResponse
     {
         // Email-based rate limiting: max 5 registration attempts per phone per hour
-        $phoneKey = 'registration_attempt_' . hash('sha256', $request->input('phone', ''));
+        $phoneKey = 'registration_attempt_'.hash('sha256', $request->input('phone', ''));
         $attempts = Cache::get($phoneKey, 0);
         abort_if($attempts >= 5, 429, 'Too many registration attempts. Please try again later.');
         Cache::put($phoneKey, $attempts + 1, now()->addHour());
@@ -209,19 +209,19 @@ class PublicRegistrationController extends Controller
         // Cross-club scope checks
         $branch = Branch::where('id', $validated['branch_id'])
             ->where('club_id', $clubId)->first();
-        if (!$branch) {
+        if (! $branch) {
             abort(422, 'Branch does not belong to this club.');
         }
 
         $plan = SubscriptionPlan::where('id', $validated['plan_id'])
             ->where('club_id', $clubId)->first();
-        if (!$plan) {
+        if (! $plan) {
             abort(422, 'Plan does not belong to this club.');
         }
 
         $coach = CoachProfile::where('id', $validated['coach_id'])
             ->where('club_id', $clubId)->first();
-        if (!$coach) {
+        if (! $coach) {
             abort(422, 'Coach does not belong to this club.');
         }
 

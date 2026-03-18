@@ -31,7 +31,7 @@ class RequestLogger
             'ip' => $request->ip(),
         ]);
 
-        $response->headers->set('X-Response-Time', $duration . 'ms');
+        $response->headers->set('X-Response-Time', $duration.'ms');
 
         return $response;
     }

@@ -31,6 +31,7 @@ class ClubController extends Controller
         if ($search = $request->input('search')) {
             $query->where('title', 'like', "%{$search}%");
         }
+
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
     }
 
@@ -54,6 +55,7 @@ class ClubController extends Controller
     public function planShow(TrainingPlan $plan): JsonResponse
     {
         $this->assertOwnership($plan);
+
         return response()->json($plan->load('items'));
     }
 
@@ -94,6 +96,7 @@ class ClubController extends Controller
     {
         $this->assertOwnership($plan);
         $plan->delete();
+
         return response()->json(['message' => 'Plan deleted']);
     }
 
@@ -107,12 +110,14 @@ class ClubController extends Controller
         if ($type = $request->input('type')) {
             $query->where('type', $type);
         }
+
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
     }
 
     public function skillStore(StoreSkillRequest $request): JsonResponse
     {
         $skill = Skill::create($request->only(['name', 'type', 'description']));
+
         return response()->json($skill, 201);
     }
 
@@ -126,6 +131,7 @@ class ClubController extends Controller
         ]);
 
         $skill->update($request->only(['name', 'type', 'description']));
+
         return response()->json($skill);
     }
 
@@ -133,6 +139,7 @@ class ClubController extends Controller
     {
         $this->assertOwnership($skill);
         $skill->delete();
+
         return response()->json(['message' => 'Skill deleted']);
     }
 }

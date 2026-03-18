@@ -22,6 +22,13 @@ class AuditLog extends Model
         ];
     }
 
-    public function actor() { return $this->belongsTo(User::class, 'actor_user_id'); }
-    public function club() { return $this->belongsTo(Club::class); }
+    public function actor()
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    public function club()
+    {
+        return $this->belongsTo(Club::class);
+    }
 }

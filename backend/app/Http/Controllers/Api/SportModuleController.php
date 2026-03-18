@@ -54,8 +54,8 @@ class SportModuleController extends Controller
     public function update(Request $request, SportModule $sportModule): JsonResponse
     {
         $request->validate([
-            'name' => 'sometimes|string|max:255|unique:sport_modules,name,' . $sportModule->id,
-            'slug' => 'sometimes|string|max:255|alpha_dash|unique:sport_modules,slug,' . $sportModule->id,
+            'name' => 'sometimes|string|max:255|unique:sport_modules,name,'.$sportModule->id,
+            'slug' => 'sometimes|string|max:255|alpha_dash|unique:sport_modules,slug,'.$sportModule->id,
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:7|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -94,6 +94,7 @@ class SportModuleController extends Controller
 
         $result = $allModules->map(function ($module) use ($assigned) {
             $pivot = $assigned->get($module->id);
+
             return [
                 'id' => $module->id,
                 'name' => $module->name,
@@ -140,6 +141,7 @@ class SportModuleController extends Controller
 
         return $allModules->map(function ($module) use ($assigned) {
             $pivot = $assigned->get($module->id);
+
             return [
                 'id' => $module->id,
                 'name' => $module->name,

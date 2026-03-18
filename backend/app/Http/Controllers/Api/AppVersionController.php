@@ -45,7 +45,7 @@ class AppVersionController extends Controller
             $forceUpdate = version_compare($clientVersion, $minimumVersion, '<');
 
             // Update available if client is below the latest (but above minimum)
-            $updateAvailable = !$forceUpdate && version_compare($clientVersion, $latestVersion, '<');
+            $updateAvailable = ! $forceUpdate && version_compare($clientVersion, $latestVersion, '<');
         }
 
         // Store URL based on platform

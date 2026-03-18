@@ -26,6 +26,7 @@ class CoachPerformanceController extends Controller
             ->values()
             ->map(function ($coach, $index) {
                 $coach['rank'] = $index + 1;
+
                 return $coach;
             });
 
@@ -41,7 +42,7 @@ class CoachPerformanceController extends Controller
             ->where('user_id', $coach)
             ->first();
 
-        if (!$coachProfile) {
+        if (! $coachProfile) {
             abort(404);
         }
 
@@ -56,7 +57,7 @@ class CoachPerformanceController extends Controller
 
         $ids = $request->input('ids', []);
 
-        if (!is_array($ids) || count($ids) === 0) {
+        if (! is_array($ids) || count($ids) === 0) {
             return response()->json(['message' => 'At least one coach ID is required.'], 422);
         }
 
@@ -70,7 +71,7 @@ class CoachPerformanceController extends Controller
             ->pluck('id', 'user_id');
 
         $invalidIds = array_diff(array_map('intval', $ids), $validProfiles->keys()->toArray());
-        if (!empty($invalidIds)) {
+        if (! empty($invalidIds)) {
             abort(404);
         }
 

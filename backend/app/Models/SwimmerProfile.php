@@ -21,14 +21,33 @@ class SwimmerProfile extends Model
         return ['date_of_birth' => 'date'];
     }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function branch() { return $this->belongsTo(Branch::class); }
-    public function groups() { return $this->belongsToMany(Group::class, 'group_memberships', 'swimmer_id', 'group_id'); }
-    public function attendances() { return $this->hasMany(Attendance::class, 'swimmer_id'); }
-    public function evaluations() { return $this->hasMany(DailyEvaluation::class, 'swimmer_id'); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_memberships', 'swimmer_id', 'group_id');
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'swimmer_id');
+    }
+
+    public function evaluations()
+    {
+        return $this->hasMany(DailyEvaluation::class, 'swimmer_id');
+    }
 
     public function getFullNameAttribute(): string
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 }

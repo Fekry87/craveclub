@@ -22,7 +22,7 @@ class AuthController extends Controller
         ]);
 
         // Brute-force lockout: 5 failed attempts → 15-minute lockout
-        $lockoutKey = 'login_attempts_' . $request->ip();
+        $lockoutKey = 'login_attempts_'.$request->ip();
         $attempts = Cache::get($lockoutKey, 0);
 
         if ($attempts >= 5) {
@@ -31,7 +31,7 @@ class AuthController extends Controller
             ], 429);
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             Cache::put($lockoutKey, $attempts + 1, now()->addMinutes(15));
 
             return response()->json(['message' => 'Invalid credentials'], 401);
@@ -47,6 +47,7 @@ class AuthController extends Controller
             $club = Club::where('slug', $request->club_slug)->first();
             if ($club && $user->club_id !== $club->id) {
                 Auth::guard('web')->logout();
+
                 return response()->json(['message' => 'You are not a member of this club'], 403);
             }
         }

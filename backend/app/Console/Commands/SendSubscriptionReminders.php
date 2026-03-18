@@ -13,6 +13,7 @@ use Illuminate\Console\Command;
 class SendSubscriptionReminders extends Command
 {
     protected $signature = 'notifications:subscription-reminders';
+
     protected $description = 'Send notifications for expiring subscriptions (14, 7, 1 day before)';
 
     /** Maximum execution time in seconds */
@@ -31,7 +32,9 @@ class SendSubscriptionReminders extends Command
                 ->where('role', 'CLUB_MANAGER')
                 ->first();
 
-            if (!$manager) continue;
+            if (! $manager) {
+                continue;
+            }
 
             $approvedRegistrations = Registration::where('club_id', $club->id)
                 ->where('status', 'approved')
@@ -40,12 +43,16 @@ class SendSubscriptionReminders extends Command
                 ->get();
 
             foreach ($approvedRegistrations as $reg) {
-                if (!$reg->plan || !$reg->plan->duration_months) continue;
+                if (! $reg->plan || ! $reg->plan->duration_months) {
+                    continue;
+                }
 
                 $endDate = $reg->updated_at->copy()->addMonths($reg->plan->duration_months);
                 $daysLeft = (int) now()->startOfDay()->diffInDays($endDate->startOfDay(), false);
 
-                if (!in_array($daysLeft, [14, 7, 1])) continue;
+                if (! in_array($daysLeft, [14, 7, 1])) {
+                    continue;
+                }
 
                 // FIX: Idempotency — skip if manager already notified for this registration today
                 $alreadyNotified = Notification::where('type', 'subscription_expiring')
@@ -53,7 +60,9 @@ class SendSubscriptionReminders extends Command
                     ->whereDate('created_at', now()->toDateString())
                     ->whereRaw("json_extract(data, '$.registration_id') = ?", [$reg->id])
                     ->exists();
-                if ($alreadyNotified) continue;
+                if ($alreadyNotified) {
+                    continue;
+                }
 
                 $bodyText = $daysLeft === 1
                     ? "{$reg->full_name}'s subscription expires tomorrow"

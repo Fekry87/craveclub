@@ -14,7 +14,9 @@ class MiddlewareTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $swimmer;
 
     protected function setUp(): void

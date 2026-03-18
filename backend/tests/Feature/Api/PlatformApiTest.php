@@ -14,6 +14,7 @@ class PlatformApiTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Club $club;
 
     protected function setUp(): void

@@ -11,7 +11,6 @@ use App\Models\Group;
 use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class SessionManagementController extends Controller
 {
@@ -45,13 +44,14 @@ class SessionManagementController extends Controller
                 'attendances as attendance_present' => fn ($q) => $q->where('present', true),
             ]);
         }
+
         return response()->json($query->orderBy('date', 'desc')->orderBy('start_time')->paginate($request->input('per_page', 15)));
     }
 
     public function sessionStore(StoreSessionRequest $request): JsonResponse
     {
         $sportModuleId = $request->sport_module_id;
-        if (!$sportModuleId && $request->group_id) {
+        if (! $sportModuleId && $request->group_id) {
             $group = Group::find($request->group_id);
             $sportModuleId = $group?->sport_module_id;
         }
@@ -95,6 +95,7 @@ class SessionManagementController extends Controller
     public function sessionShow(TrainingSession $session): JsonResponse
     {
         $this->assertOwnership($session);
+
         return response()->json($session->load(['group.swimmers', 'plan.items', 'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation']));
     }
 
@@ -149,6 +150,7 @@ class SessionManagementController extends Controller
         $this->assertOwnership($session);
 
         $session->update($request->only(['group_id', 'plan_id', 'date', 'start_time', 'end_time', 'location', 'notes']));
+
         return response()->json($session->load(['group', 'plan']));
     }
 
@@ -156,6 +158,7 @@ class SessionManagementController extends Controller
     {
         $this->assertOwnership($session);
         $session->delete();
+
         return response()->json(['message' => 'Session deleted']);
     }
 }

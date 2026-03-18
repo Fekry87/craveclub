@@ -36,6 +36,7 @@ class SessionGeneratorService
 
             if (in_array($dateStr, $existingDates) || in_array($dateStr, $holidayDates)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -114,7 +115,7 @@ class SessionGeneratorService
         $effectiveDates = [];
         foreach ($allDates as $date) {
             $dateStr = $date->toDateString();
-            if (!in_array($dateStr, $holidayDates)) {
+            if (! in_array($dateStr, $holidayDates)) {
                 $effectiveDates[] = $dateStr;
             }
         }

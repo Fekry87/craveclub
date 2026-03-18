@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 class SendSessionReminders extends Command
 {
     protected $signature = 'notifications:session-reminders';
+
     protected $description = 'Send reminder notifications for sessions scheduled tomorrow';
 
     /** Maximum execution time in seconds */
@@ -35,7 +36,9 @@ class SendSessionReminders extends Command
                 ->pluck('swimmer_profiles.user_id')
                 ->toArray();
 
-            if (empty($swimmerUserIds)) continue;
+            if (empty($swimmerUserIds)) {
+                continue;
+            }
 
             // FIX: Idempotency — skip users already notified for this session today
             $alreadyNotified = Notification::where('type', 'session_reminder')
@@ -44,7 +47,9 @@ class SendSessionReminders extends Command
                 ->pluck('user_id')
                 ->toArray();
             $swimmerUserIds = array_values(array_diff($swimmerUserIds, $alreadyNotified));
-            if (empty($swimmerUserIds)) continue;
+            if (empty($swimmerUserIds)) {
+                continue;
+            }
 
             $notificationService->notifyMany(
                 userIds: $swimmerUserIds,
@@ -58,7 +63,7 @@ class SendSessionReminders extends Command
             $sent += count($swimmerUserIds);
         }
 
-        $this->info("Sent {$sent} session reminder(s) for " . $sessions->count() . " session(s).");
+        $this->info("Sent {$sent} session reminder(s) for ".$sessions->count().' session(s).');
 
         return self::SUCCESS;
     }

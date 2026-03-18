@@ -22,8 +22,8 @@ class ClubContext
         if (app()->bound('sentry')) {
             \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($request): void {
                 $scope->setUser([
-                    'id'      => $request->user()?->id,
-                    'email'   => $request->user()?->email,
+                    'id' => $request->user()?->id,
+                    'email' => $request->user()?->email,
                     'club_id' => app()->has('current_club_id') ? app('current_club_id') : null,
                 ]);
             });

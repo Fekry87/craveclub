@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\UserRole;
 use App\Models\Attendance;
 use App\Models\Club;
 use App\Models\DailyEvaluation;
@@ -11,7 +12,6 @@ use App\Models\LevelTier;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
-use App\Enums\UserRole;
 use App\Services\XpCalculationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,15 +21,18 @@ class XpCalculationServiceTest extends TestCase
     use RefreshDatabase;
 
     private XpCalculationService $service;
+
     private Club $club;
+
     private SwimmerProfile $swimmer;
+
     private LeaderboardSetting $settings;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->service = new XpCalculationService();
+        $this->service = new XpCalculationService;
 
         $this->club = Club::create([
             'name' => 'Test Club',
@@ -215,6 +218,7 @@ class XpCalculationServiceTest extends TestCase
     {
         static $counter = 0;
         $counter++;
+
         return User::create([
             'name' => "Coach {$counter}",
             'email' => "coach{$counter}@test.com",

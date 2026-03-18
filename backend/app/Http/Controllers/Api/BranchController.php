@@ -39,10 +39,10 @@ class BranchController extends Controller
         ]);
 
         $club = Club::find(app('current_club_id'));
-        if (!$club->canAddBranch()) {
+        if (! $club->canAddBranch()) {
             return response()->json([
                 'message' => 'Branch limit reached. Your plan allows a maximum of '
-                    . $club->max_branches . ' branch(es).',
+                    .$club->max_branches.' branch(es).',
                 'limit' => $club->max_branches,
             ], 422);
         }
@@ -166,7 +166,7 @@ class BranchController extends Controller
         $coaches = CoachProfile::where('club_id', app('current_club_id'))
             ->where(function ($q) use ($branch) {
                 $q->whereNull('branch_id')
-                  ->orWhere('branch_id', '!=', $branch->id);
+                    ->orWhere('branch_id', '!=', $branch->id);
             })
             ->with('user')
             ->get();
@@ -183,7 +183,7 @@ class BranchController extends Controller
         $swimmers = SwimmerProfile::where('club_id', app('current_club_id'))
             ->where(function ($q) use ($branch) {
                 $q->whereNull('branch_id')
-                  ->orWhere('branch_id', '!=', $branch->id);
+                    ->orWhere('branch_id', '!=', $branch->id);
             })
             ->get();
 

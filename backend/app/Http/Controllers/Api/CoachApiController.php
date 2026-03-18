@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Group;
-use App\Models\TrainingSession;
-use App\Models\Attendance;
-use App\Models\DailyEvaluation;
-use App\Models\GroupEvaluation;
-use App\Models\SessionSwimmer;
-use App\Models\SessionExclusion;
-use App\Models\SwimmerProfile;
-use App\Models\GroupMembership;
-use App\Models\User;
 use App\Jobs\SendGuardianSMSJob;
+use App\Models\Attendance;
 use App\Models\Club;
+use App\Models\DailyEvaluation;
+use App\Models\Group;
+use App\Models\GroupEvaluation;
+use App\Models\GroupMembership;
+use App\Models\SessionExclusion;
+use App\Models\SessionSwimmer;
+use App\Models\SwimmerProfile;
+use App\Models\TrainingSession;
+use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -180,7 +180,7 @@ class CoachApiController extends Controller
 
         $statusCounts = [
             'Scheduled' => $allForCounts->get('Scheduled', 0),
-            'Live'      => $allForCounts->get('Live', 0),
+            'Live' => $allForCounts->get('Live', 0),
             'Completed' => $allForCounts->get('Completed', 0),
             'Cancelled' => $allForCounts->get('Cancelled', 0),
         ];
@@ -350,6 +350,7 @@ class CoachApiController extends Controller
             ->findOrFail($id);
 
         $session->delete();
+
         return response()->json(['message' => 'Session deleted']);
     }
 
@@ -450,9 +451,11 @@ class CoachApiController extends Controller
             $coachUserId = $session->coach_user_id ?? $request->user()->id;
 
             foreach ($request->attendance as $att) {
-                if (!$att['present']) {
+                if (! $att['present']) {
                     $swimmer = SwimmerProfile::find($att['swimmer_id']);
-                    if (!$swimmer) continue;
+                    if (! $swimmer) {
+                        continue;
+                    }
 
                     // Notify coach: single absence
                     $notificationService->notify(
@@ -470,7 +473,7 @@ class CoachApiController extends Controller
                             userId: $swimmer->user_id,
                             type: 'absence_recorded',
                             title: 'Absence Recorded',
-                            body: "Your absence from session {$session->title} on " . \Carbon\Carbon::parse($session->date)->format('d/m/Y') . " has been recorded",
+                            body: "Your absence from session {$session->title} on ".\Carbon\Carbon::parse($session->date)->format('d/m/Y').' has been recorded',
                             data: ['session_id' => $session->id],
                             clubId: $clubId,
                         );
@@ -488,7 +491,7 @@ class CoachApiController extends Controller
                     $consecutiveCount = $recentAbsences->count();
 
                     // 2+ consecutive absences → notify guardian via SMS job
-                    if ($consecutiveCount >= 2 && $recentAbsences->every(fn ($v) => !$v) && $swimmer->guardian_phone) {
+                    if ($consecutiveCount >= 2 && $recentAbsences->every(fn ($v) => ! $v) && $swimmer->guardian_phone) {
                         $club = Club::find($clubId);
                         SendGuardianSMSJob::dispatch(
                             guardianPhone: $swimmer->guardian_phone,
@@ -501,7 +504,7 @@ class CoachApiController extends Controller
                     }
 
                     // 3+ consecutive absences → notify manager
-                    if ($consecutiveCount >= 3 && $recentAbsences->every(fn ($v) => !$v)) {
+                    if ($consecutiveCount >= 3 && $recentAbsences->every(fn ($v) => ! $v)) {
                         $manager = User::where('club_id', $clubId)->where('role', 'CLUB_MANAGER')->first();
                         if ($manager) {
                             $notificationService->notify(
@@ -615,12 +618,12 @@ class CoachApiController extends Controller
             ->with(['group.swimmers', 'sessionSwimmers', 'sessionExclusions'])
             ->findOrFail($sessionId);
 
-        if (!in_array($session->status, ['Live', 'Completed'])) {
+        if (! in_array($session->status, ['Live', 'Completed'])) {
             return response()->json(['message' => 'Cannot update attendance for a session that is not Live or Completed.'], 422);
         }
 
         $effectiveIds = $session->effective_swimmers->pluck('id');
-        if (!$effectiveIds->contains($swimmerId)) {
+        if (! $effectiveIds->contains($swimmerId)) {
             return response()->json(['message' => 'Swimmer is not in this session roster.'], 422);
         }
 
@@ -748,7 +751,7 @@ class CoachApiController extends Controller
             })
             ->with(['session' => function ($q) {
                 $q->select('id', 'date', 'start_time', 'end_time', 'group_id', 'title')
-                   ->with('group:id,name');
+                    ->with('group:id,name');
             }])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -772,7 +775,7 @@ class CoachApiController extends Controller
                 'full_name' => $swimmer->fullName,
                 'level' => $swimmer->level,
                 'date_of_birth' => $swimmer->date_of_birth,
-                'groups' => $swimmer->groups->map(fn($g) => ['id' => $g->id, 'name' => $g->name]),
+                'groups' => $swimmer->groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]),
             ],
             'evaluations' => $evaluations,
             'stats' => [
@@ -808,7 +811,7 @@ class CoachApiController extends Controller
             ->orderBy('date', 'desc')
             ->first();
 
-        if (!$latestSession) {
+        if (! $latestSession) {
             return response()->json(['message' => 'No completed session found to attach evaluation to'], 422);
         }
 
@@ -851,7 +854,7 @@ class CoachApiController extends Controller
 
         // Verify coach owns this session via their groups
         $coachGroupIds = $this->coachGroupIds($request);
-        abort_if(!$coachGroupIds->contains($session->group_id), 403, 'You do not own this session.');
+        abort_if(! $coachGroupIds->contains($session->group_id), 403, 'You do not own this session.');
 
         foreach ($request->attendance as $att) {
             Attendance::updateOrCreate(

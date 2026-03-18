@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSwimmerRequest;
 use App\Http\Requests\UpdateSwimmerRequest;
-use App\Enums\UserRole;
 use App\Models\Group;
 use App\Models\SwimmerProfile;
 use App\Models\User;
@@ -33,12 +33,13 @@ class SwimmerManagementController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%");
             });
         }
         if ($branchId = $request->input('branch_id')) {
             $query->where('branch_id', $branchId);
         }
+
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
     }
 
@@ -64,7 +65,7 @@ class SwimmerManagementController extends Controller
         $userId = null;
         if ($request->create_login) {
             $user = User::create([
-                'name' => $request->first_name . ' ' . $request->last_name,
+                'name' => $request->first_name.' '.$request->last_name,
                 'email' => $request->email,
                 'password' => $request->password,
                 'role' => UserRole::SWIMMER,
@@ -92,6 +93,7 @@ class SwimmerManagementController extends Controller
     public function swimmerShow(SwimmerProfile $swimmer): JsonResponse
     {
         $this->assertOwnership($swimmer);
+
         return response()->json($swimmer->load(['user', 'groups']));
     }
 
@@ -112,7 +114,7 @@ class SwimmerManagementController extends Controller
         $this->assertOwnership($swimmer);
 
         AuditService::log('swimmer.deleted', SwimmerProfile::class, $swimmer->id, [
-            'swimmer_name' => $swimmer->first_name . ' ' . $swimmer->last_name,
+            'swimmer_name' => $swimmer->first_name.' '.$swimmer->last_name,
             'user_id' => $swimmer->user_id,
         ]);
 
@@ -120,6 +122,7 @@ class SwimmerManagementController extends Controller
             $swimmer->user->delete();
         }
         $swimmer->delete();
+
         return response()->json(['message' => 'Swimmer deleted']);
     }
 }

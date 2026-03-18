@@ -30,7 +30,7 @@ class NotificationService
 
         // Dispatch push notification to all user's devices
         $tokens = PushToken::where('user_id', $userId)->pluck('token')->toArray();
-        if (!empty($tokens)) {
+        if (! empty($tokens)) {
             SendPushNotification::dispatch($tokens, $title, $body, $data);
         }
 
@@ -67,7 +67,7 @@ class NotificationService
 
         // Collect all push tokens for these users
         $tokens = PushToken::whereIn('user_id', $userIds)->pluck('token')->toArray();
-        if (!empty($tokens)) {
+        if (! empty($tokens)) {
             // Send in batches of 100 (Expo limit)
             foreach (array_chunk($tokens, 100) as $batch) {
                 SendPushNotification::dispatch($batch, $title, $body, $data);

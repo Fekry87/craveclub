@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\Club;
 use App\Models\User;
-use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,6 +13,7 @@ class AuthApiTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
 
     protected function setUp(): void

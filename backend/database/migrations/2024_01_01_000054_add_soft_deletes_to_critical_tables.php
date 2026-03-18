@@ -20,7 +20,7 @@ return new class extends Migration
     public function up(): void
     {
         foreach ($this->tables as $table) {
-            if (Schema::hasTable($table) && !Schema::hasColumn($table, 'deleted_at')) {
+            if (Schema::hasTable($table) && ! Schema::hasColumn($table, 'deleted_at')) {
                 Schema::table($table, function (Blueprint $t) {
                     $t->softDeletes();
                 });

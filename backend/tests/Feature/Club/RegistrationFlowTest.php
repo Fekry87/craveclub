@@ -19,9 +19,13 @@ class RegistrationFlowTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private Branch $branch;
+
     private SubscriptionPlan $plan;
+
     private CoachProfile $coachProfile;
 
     protected function setUp(): void

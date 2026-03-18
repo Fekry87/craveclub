@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCoachRequest;
 use App\Http\Requests\UpdateCoachRequest;
-use App\Enums\UserRole;
 use App\Models\CoachProfile;
 use App\Models\Group;
 use App\Models\User;
@@ -38,6 +38,7 @@ class CoachManagementController extends Controller
         if ($branchId = $request->input('branch_id')) {
             $query->where('branch_id', $branchId);
         }
+
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
     }
 
@@ -82,6 +83,7 @@ class CoachManagementController extends Controller
     public function coachShow(CoachProfile $coach): JsonResponse
     {
         $this->assertOwnership($coach);
+
         return response()->json($coach->load('user'));
     }
 
@@ -94,6 +96,7 @@ class CoachManagementController extends Controller
         }
 
         $coach->update($request->only(['bio', 'specialization', 'phone']));
+
         return response()->json($coach->load('user'));
     }
 
@@ -110,6 +113,7 @@ class CoachManagementController extends Controller
             $coach->user->delete();
         }
         $coach->delete();
+
         return response()->json(['message' => 'Coach deleted']);
     }
 }

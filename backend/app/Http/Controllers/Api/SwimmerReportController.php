@@ -85,7 +85,7 @@ class SwimmerReportController extends Controller
         $week = $request->query('week');
 
         if ($week !== null) {
-            if (!preg_match('/^\d{4}-W(0[1-9]|[1-4]\d|5[0-3])$/', $week)) {
+            if (! preg_match('/^\d{4}-W(0[1-9]|[1-4]\d|5[0-3])$/', $week)) {
                 abort(422, 'Invalid week format. Use YYYY-WNN (e.g. 2025-W12).');
             }
         }

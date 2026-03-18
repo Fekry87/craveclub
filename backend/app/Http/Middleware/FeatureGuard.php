@@ -20,13 +20,13 @@ class FeatureGuard
         $clubId = $request->user()?->club_id;
 
         // Platform admins have no club_id — skip guard
-        if (!$clubId) {
+        if (! $clubId) {
             return $next($request);
         }
 
         $features = ClubFeature::forClub($clubId);
 
-        if (!$features->isEnabled($feature)) {
+        if (! $features->isEnabled($feature)) {
             return response()->json([
                 'message' => 'This feature is not enabled for your club.',
                 'feature' => $feature,

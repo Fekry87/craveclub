@@ -2,32 +2,31 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
 use App\Enums\SkillType;
+use App\Enums\UserRole;
+use App\Models\Branch;
 use App\Models\Club;
-use App\Models\User;
+use App\Models\ClubFeature;
 use App\Models\CoachProfile;
-use App\Models\SwimmerProfile;
+use App\Models\CoachSchedule;
+use App\Models\CorporateSetting;
 use App\Models\Group;
 use App\Models\GroupMembership;
+use App\Models\LeaderboardSetting;
+use App\Models\LevelTier;
+use App\Models\Skill;
+use App\Models\Sport;
+use App\Models\SportModule;
+use App\Models\SubscriptionPlan;
+use App\Models\SwimmerProfile;
 use App\Models\TrainingPlan;
 use App\Models\TrainingPlanAssignment;
 use App\Models\TrainingPlanItem;
 use App\Models\TrainingSession;
-use App\Models\Skill;
-use App\Models\LeaderboardSetting;
-use App\Models\LevelTier;
-use App\Models\ClubFeature;
-use App\Models\CorporateSetting;
-use App\Models\Branch;
-use App\Models\Sport;
-use App\Models\SubscriptionPlan;
-use App\Models\CoachSchedule;
-use App\Models\SportModule;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class DemoSeeder extends Seeder
 {
@@ -35,10 +34,10 @@ class DemoSeeder extends Seeder
     {
         // Demo password — matches the login page hint. CHANGE before deploying to shared/production.
         $seederPassword = 'Password123!';
-        Log::info('[DemoSeeder] Using demo password: ' . $seederPassword);
+        Log::info('[DemoSeeder] Using demo password: '.$seederPassword);
         file_put_contents(
             storage_path('logs/seeder.log'),
-            '[' . now()->toIso8601String() . '] Seeder password: ' . $seederPassword . PHP_EOL,
+            '['.now()->toIso8601String().'] Seeder password: '.$seederPassword.PHP_EOL,
             FILE_APPEND
         );
 
@@ -179,7 +178,7 @@ class DemoSeeder extends Seeder
                 'level' => ['Beginner', 'Intermediate', 'Advanced'][$i % 3],
                 'date_of_birth' => Carbon::now()->subYears(rand(8, 16))->subDays(rand(0, 365))->toDateString(),
                 'guardian_name' => "Parent of $first",
-                'guardian_phone' => '+1-555-' . str_pad(300 + $i, 4, '0', STR_PAD_LEFT),
+                'guardian_phone' => '+1-555-'.str_pad(300 + $i, 4, '0', STR_PAD_LEFT),
             ]);
         }
 

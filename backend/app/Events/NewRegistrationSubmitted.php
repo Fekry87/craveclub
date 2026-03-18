@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\Registration;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -22,7 +21,7 @@ class NewRegistrationSubmitted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('club.' . $this->registration->club_id),
+            new PrivateChannel('club.'.$this->registration->club_id),
         ];
     }
 

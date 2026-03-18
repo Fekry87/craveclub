@@ -21,9 +21,13 @@ class RateLimitTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private CoachProfile $coach;
+
     private Branch $branch;
+
     private SubscriptionPlan $plan;
 
     protected function setUp(): void
@@ -262,7 +266,7 @@ class RateLimitTest extends TestCase
         $reg = array_merge($this->validRegistration(), ['phone' => $phone]);
 
         // Fill up rate limit
-        $key = 'registration_attempt_' . hash('sha256', $phone);
+        $key = 'registration_attempt_'.hash('sha256', $phone);
         Cache::put($key, 5, now()->addHour());
 
         // Should be blocked

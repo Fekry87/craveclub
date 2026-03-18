@@ -12,7 +12,6 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
 
 class AuthorizationTest extends TestCase
@@ -20,15 +19,25 @@ class AuthorizationTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $coachUserA;
+
     private User $coachUserB;
+
     private User $swimmer;
+
     private SwimmerProfile $swimmerProfile;
+
     private SwimmerProfile $swimmerProfileB;
+
     private Group $groupA;
+
     private Group $groupB;
+
     private TrainingSession $sessionA;
+
     private TrainingSession $sessionB;
 
     protected function setUp(): void

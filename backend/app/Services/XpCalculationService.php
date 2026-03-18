@@ -33,7 +33,7 @@ class XpCalculationService
 
             // Attendance XP — single count query
             $attendedCount = Attendance::where('swimmer_id', $swimmerId)
-                ->whereHas('session', fn($q) => $q->where('club_id', $clubId))
+                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId))
                 ->where('present', true)
                 ->count();
 
@@ -41,7 +41,7 @@ class XpCalculationService
 
             // Streak XP — single ordered query
             $attendanceRecords = Attendance::where('swimmer_id', $swimmerId)
-                ->whereHas('session', fn($q) => $q->where('club_id', $clubId))
+                ->whereHas('session', fn ($q) => $q->where('club_id', $clubId))
                 ->join('training_sessions', 'attendance.session_id', '=', 'training_sessions.id')
                 ->orderBy('training_sessions.date', 'asc')
                 ->select('attendance.present')
@@ -81,6 +81,7 @@ class XpCalculationService
                 break;
             }
         }
+
         return $current;
     }
 
@@ -162,7 +163,7 @@ class XpCalculationService
 
             $results[] = [
                 'swimmer_id' => $swimmer->id,
-                'name' => $swimmer->first_name . ' ' . mb_substr($swimmer->last_name ?? '', 0, 1) . '.',
+                'name' => $swimmer->first_name.' '.mb_substr($swimmer->last_name ?? '', 0, 1).'.',
                 'total_xp' => $totalXp,
                 'level_name' => $level['name'],
                 'level_color' => $level['color'],
@@ -170,7 +171,8 @@ class XpCalculationService
             ];
         }
 
-        usort($results, fn($a, $b) => $b['total_xp'] - $a['total_xp']);
+        usort($results, fn ($a, $b) => $b['total_xp'] - $a['total_xp']);
+
         return array_slice($results, 0, $limit);
     }
 

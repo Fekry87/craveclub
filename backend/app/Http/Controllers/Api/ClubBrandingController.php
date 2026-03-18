@@ -20,7 +20,7 @@ class ClubBrandingController extends Controller
     public function show(string $slug): JsonResponse
     {
         try {
-            $data = Cache::remember("branding_{$slug}", 3600, fn() => $this->computeBranding($slug));
+            $data = Cache::remember("branding_{$slug}", 3600, fn () => $this->computeBranding($slug));
         } catch (\Exception $e) {
             Log::warning('Cache unavailable, using direct query', ['slug' => $slug, 'method' => 'branding.show']);
             $data = $this->computeBranding($slug);
@@ -44,7 +44,7 @@ class ClubBrandingController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$club) {
+        if (! $club) {
             return null;
         }
 
@@ -154,6 +154,7 @@ class ClubBrandingController extends Controller
     public function uploadOwn(Request $request): JsonResponse
     {
         $club = Club::findOrFail(app('current_club_id'));
+
         return $this->handleUpload($request, $club);
     }
 
@@ -187,7 +188,7 @@ class ClubBrandingController extends Controller
             'social_links.instagram' => 'nullable|string|max:255',
             'social_links.twitter' => 'nullable|string|max:255',
             'social_links.facebook' => 'nullable|string|max:255',
-            'custom_domain' => 'nullable|string|max:255|unique:clubs,custom_domain,' . $clubId,
+            'custom_domain' => 'nullable|string|max:255|unique:clubs,custom_domain,'.$clubId,
             'is_domain_active' => 'nullable|boolean',
             'branding_tier' => 'nullable|string|in:shared,branded',
         ];
@@ -210,7 +211,7 @@ class ClubBrandingController extends Controller
 
         // Validate MIME type from file content (not just extension)
         $allowedMimes = ['image/png', 'image/jpeg', 'image/svg+xml'];
-        abort_if(!in_array($file->getMimeType(), $allowedMimes), 422, 'Invalid file type');
+        abort_if(! in_array($file->getMimeType(), $allowedMimes), 422, 'Invalid file type');
 
         // Per-club upload rate limiting: max 20 uploads per hour
         $uploadKey = "branding_uploads_{$club->id}";

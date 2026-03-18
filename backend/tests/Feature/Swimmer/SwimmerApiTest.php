@@ -22,9 +22,13 @@ class SwimmerApiTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $swimmer;
+
     private SwimmerProfile $swimmerProfile;
+
     private Group $group;
+
     private ClubFeature $features;
 
     protected function setUp(): void

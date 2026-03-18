@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Enums\UserRole;
+use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Club;
 use App\Models\User;
-use App\Models\AuditLog;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class PlatformController extends Controller
 {
@@ -92,7 +91,7 @@ class PlatformController extends Controller
     {
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|max:255|unique:clubs,slug,' . $club->id,
+            'slug' => 'sometimes|string|max:255|unique:clubs,slug,'.$club->id,
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'about' => 'nullable|string',

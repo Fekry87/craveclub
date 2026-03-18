@@ -11,6 +11,13 @@ class GroupEvaluation extends Model
 
     protected $fillable = ['club_id', 'session_id', 'group_id', 'rating', 'notes'];
 
-    public function session() { return $this->belongsTo(TrainingSession::class, 'session_id'); }
-    public function group() { return $this->belongsTo(Group::class); }
+    public function session()
+    {
+        return $this->belongsTo(TrainingSession::class, 'session_id');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
 }

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\SwimmerProfile;
-use App\Models\TrainingSession;
 use App\Models\Attendance;
 use App\Models\DailyEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
+use App\Models\SwimmerProfile;
+use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +22,7 @@ class SwimmerApiController extends Controller
     public function dashboard(Request $request): JsonResponse
     {
         $profile = $this->getSwimmerProfile($request);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
@@ -51,9 +51,9 @@ class SwimmerApiController extends Controller
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy(fn($eval) => $eval->created_at->format('Y-m'))
+            ->groupBy(fn ($eval) => $eval->created_at->format('Y-m'))
             ->take(6)
-            ->map(fn($group, $month) => [
+            ->map(fn ($group, $month) => [
                 'month' => $month,
                 'avg_rating' => round($group->avg('rating'), 2),
                 'count' => $group->count(),
@@ -76,7 +76,7 @@ class SwimmerApiController extends Controller
     public function sessions(Request $request): JsonResponse
     {
         $profile = $this->getSwimmerProfile($request);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
@@ -95,7 +95,7 @@ class SwimmerApiController extends Controller
     public function evaluations(Request $request): JsonResponse
     {
         $profile = $this->getSwimmerProfile($request);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
@@ -116,7 +116,7 @@ class SwimmerApiController extends Controller
 
     private function getClubLevels(int $clubId): array
     {
-        return LevelTier::forClub($clubId)->map(fn($t, $i) => [
+        return LevelTier::forClub($clubId)->map(fn ($t, $i) => [
             'level' => $i + 1,
             'name' => $t->name,
             'xp' => $t->xp_threshold,
@@ -127,9 +127,9 @@ class SwimmerApiController extends Controller
 
     private function getLevelInfo(int $totalXp, ?array $levels = null): array
     {
-        if (!$levels) {
+        if (! $levels) {
             $levels = LevelTier::defaults();
-            $levels = array_map(fn($t, $i) => ['level' => $i + 1, 'name' => $t['name'], 'xp' => $t['xp_threshold'], 'color' => $t['color']], $levels, array_keys($levels));
+            $levels = array_map(fn ($t, $i) => ['level' => $i + 1, 'name' => $t['name'], 'xp' => $t['xp_threshold'], 'color' => $t['color']], $levels, array_keys($levels));
         }
 
         $current = $levels[0];
@@ -182,7 +182,7 @@ class SwimmerApiController extends Controller
 
         // Attendance XP
         $attendedCount = Attendance::where('swimmer_id', $swimmerId)
-            ->whereHas('session', fn($q) => $q->where('club_id', $clubId))
+            ->whereHas('session', fn ($q) => $q->where('club_id', $clubId))
             ->where('present', true)
             ->count();
 
@@ -190,7 +190,7 @@ class SwimmerApiController extends Controller
 
         // Streak XP
         $attendanceRecords = Attendance::where('swimmer_id', $swimmerId)
-            ->whereHas('session', fn($q) => $q->where('club_id', $clubId))
+            ->whereHas('session', fn ($q) => $q->where('club_id', $clubId))
             ->join('training_sessions', 'attendance.session_id', '=', 'training_sessions.id')
             ->orderBy('training_sessions.date', 'asc')
             ->select('attendance.present')
@@ -224,7 +224,7 @@ class SwimmerApiController extends Controller
     public function leaderboard(Request $request): JsonResponse
     {
         $profile = $this->getSwimmerProfile($request);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
@@ -244,8 +244,8 @@ class SwimmerApiController extends Controller
             $rankings[] = [
                 'swimmer_id' => $swimmer->id,
                 'first_name' => $swimmer->first_name,
-                'last_initial' => mb_substr($swimmer->last_name ?? '', 0, 1) . '.',
-                'full_name' => $swimmer->first_name . ' ' . $swimmer->last_name,
+                'last_initial' => mb_substr($swimmer->last_name ?? '', 0, 1).'.',
+                'full_name' => $swimmer->first_name.' '.$swimmer->last_name,
                 'total_xp' => $xpData['total_xp'],
                 'level' => $levelInfo['level'],
                 'level_name' => $levelInfo['name'],
@@ -259,6 +259,7 @@ class SwimmerApiController extends Controller
             if ($b['total_xp'] !== $a['total_xp']) {
                 return $b['total_xp'] - $a['total_xp'];
             }
+
             return strcmp($a['first_name'], $b['first_name']);
         });
 
@@ -273,14 +274,15 @@ class SwimmerApiController extends Controller
 
         // Apply privacy: remove full_name for non-current users
         $allRankings = array_map(function ($entry) {
-            if (!$entry['is_current_user']) {
+            if (! $entry['is_current_user']) {
                 unset($entry['full_name']);
             }
+
             return $entry;
         }, $rankings);
 
         foreach ($top5 as &$entry) {
-            if (!$entry['is_current_user']) {
+            if (! $entry['is_current_user']) {
                 unset($entry['full_name']);
             }
         }
@@ -320,7 +322,7 @@ class SwimmerApiController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $profile = $this->getSwimmerProfile($request);
-        if (!$profile) {
+        if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
@@ -332,9 +334,9 @@ class SwimmerApiController extends Controller
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->groupBy(fn($eval) => $eval->created_at->format('Y-m'))
+            ->groupBy(fn ($eval) => $eval->created_at->format('Y-m'))
             ->take(6)
-            ->map(fn($group, $month) => [
+            ->map(fn ($group, $month) => [
                 'month' => $month,
                 'avg_rating' => round($group->avg('rating'), 2),
                 'count' => $group->count(),

@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\Club;
 use App\Models\Group;
 use App\Models\GroupMembership;
 use App\Models\Registration;
 use App\Models\SwimmerProfile;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use App\Models\Club;
 use App\Services\AuditService;
 use App\Services\NotificationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -78,19 +78,19 @@ class RegistrationController extends Controller
                 $lastName = $nameParts[1] ?? '';
 
                 // 2. Generate unique email for swimmer account
-                $baseEmail = 'swimmer_' . preg_replace('/[^0-9]/', '', $registration->phone) . '@club' . $clubId . '.craveclubs.local';
+                $baseEmail = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'@club'.$clubId.'.craveclubs.local';
                 $email = $baseEmail;
                 $counter = 1;
                 while (User::where('email', $email)->exists()) {
-                    $email = 'swimmer_' . preg_replace('/[^0-9]/', '', $registration->phone) . '_' . $counter . '@club' . $clubId . '.craveclubs.local';
+                    $email = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'_'.$counter.'@club'.$clubId.'.craveclubs.local';
                     $counter++;
                 }
 
                 // 3. Generate temporary password
                 $tempPassword = Str::upper(Str::random(2))
-                    . rand(10, 99)
-                    . Str::random(4)
-                    . str_shuffle('!@#$')[0];
+                    .rand(10, 99)
+                    .Str::random(4)
+                    .str_shuffle('!@#$')[0];
 
                 // 4. Create User account
                 $user = User::create([

@@ -11,14 +11,14 @@ trait BelongsToClub
     public static function bootBelongsToClub(): void
     {
         static::creating(function ($model) {
-            if (auth()->check() && auth()->user()->club_id && !$model->club_id) {
+            if (auth()->check() && auth()->user()->club_id && ! $model->club_id) {
                 $model->club_id = auth()->user()->club_id;
             }
         });
 
         static::addGlobalScope('club', function (Builder $builder) {
             if (auth()->check() && auth()->user()->club_id) {
-                $builder->where($builder->getModel()->getTable() . '.club_id', auth()->user()->club_id);
+                $builder->where($builder->getModel()->getTable().'.club_id', auth()->user()->club_id);
             }
         });
     }

@@ -45,7 +45,7 @@ class SubscriptionPlanController extends Controller
 
                 // Auto-assign display_order if not provided
                 $data = $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order']);
-                if (!$request->has('display_order')) {
+                if (! $request->has('display_order')) {
                     $data['display_order'] = SubscriptionPlan::where('club_id', $clubId)->max('display_order') + 1;
                 }
 
@@ -132,7 +132,7 @@ class SubscriptionPlanController extends Controller
             abort(404);
         }
 
-        $subscriptionPlan->update(['is_active' => !$subscriptionPlan->is_active]);
+        $subscriptionPlan->update(['is_active' => ! $subscriptionPlan->is_active]);
 
         return response()->json($subscriptionPlan->loadCount('registrations'));
     }

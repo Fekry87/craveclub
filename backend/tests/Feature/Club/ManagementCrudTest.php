@@ -3,7 +3,6 @@
 namespace Tests\Feature\Club;
 
 use App\Enums\UserRole;
-use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
@@ -20,12 +19,19 @@ class ManagementCrudTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private CoachProfile $coachProfile;
+
     private User $coachUser;
+
     private SwimmerProfile $swimmerProfile;
+
     private Group $group;
+
     private TrainingSession $session;
+
     private ClubFeature $features;
 
     protected function setUp(): void

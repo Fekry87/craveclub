@@ -48,9 +48,9 @@ class ClubFeature extends Model
      */
     public function isEnabled(string $feature): bool
     {
-        $column = $feature . '_enabled';
+        $column = $feature.'_enabled';
 
-        if (!array_key_exists($column, $this->casts)) {
+        if (! array_key_exists($column, $this->casts)) {
             return false;
         }
 

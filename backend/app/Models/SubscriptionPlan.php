@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class SubscriptionPlan extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'club_id', 'name', 'duration_months', 'price',
         'discount_percent', 'is_popular', 'is_active', 'display_order',

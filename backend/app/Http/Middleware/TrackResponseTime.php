@@ -21,7 +21,7 @@ class TrackResponseTime
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
 
-        $response->headers->set('X-Response-Time', $duration . 'ms');
+        $response->headers->set('X-Response-Time', $duration.'ms');
 
         // Log slow requests (> 500ms)
         if ($duration > 500) {

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Club extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'name', 'display_name', 'slug', 'logo_url', 'cover_url', 'favicon_url',
         'theme_color', 'primary_color', 'secondary_color', 'accent_color', 'font_preference',
@@ -34,18 +35,65 @@ class Club extends Model
         return $this->branches()->count() < $this->max_branches;
     }
 
-    public function users(): HasMany { return $this->hasMany(User::class); }
-    public function coachProfiles(): HasMany { return $this->hasMany(CoachProfile::class); }
-    public function swimmerProfiles(): HasMany { return $this->hasMany(SwimmerProfile::class); }
-    public function groups(): HasMany { return $this->hasMany(Group::class); }
-    public function trainingPlans(): HasMany { return $this->hasMany(TrainingPlan::class); }
-    public function skills(): HasMany { return $this->hasMany(Skill::class); }
-    public function trainingSessions(): HasMany { return $this->hasMany(TrainingSession::class); }
-    public function features(): HasOne { return $this->hasOne(ClubFeature::class); }
-    public function branches(): HasMany { return $this->hasMany(Branch::class); }
-    public function sports(): HasMany { return $this->hasMany(Sport::class); }
-    public function subscriptionPlans(): HasMany { return $this->hasMany(SubscriptionPlan::class); }
-    public function registrations(): HasMany { return $this->hasMany(Registration::class); }
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function coachProfiles(): HasMany
+    {
+        return $this->hasMany(CoachProfile::class);
+    }
+
+    public function swimmerProfiles(): HasMany
+    {
+        return $this->hasMany(SwimmerProfile::class);
+    }
+
+    public function groups(): HasMany
+    {
+        return $this->hasMany(Group::class);
+    }
+
+    public function trainingPlans(): HasMany
+    {
+        return $this->hasMany(TrainingPlan::class);
+    }
+
+    public function skills(): HasMany
+    {
+        return $this->hasMany(Skill::class);
+    }
+
+    public function trainingSessions(): HasMany
+    {
+        return $this->hasMany(TrainingSession::class);
+    }
+
+    public function features(): HasOne
+    {
+        return $this->hasOne(ClubFeature::class);
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class);
+    }
+
+    public function sports(): HasMany
+    {
+        return $this->hasMany(Sport::class);
+    }
+
+    public function subscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(Registration::class);
+    }
 
     public function sportModules()
     {

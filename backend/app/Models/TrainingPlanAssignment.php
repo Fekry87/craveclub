@@ -50,7 +50,7 @@ class TrainingPlanAssignment extends Model
         }
 
         if ($this->swimmer) {
-            return $this->swimmer->first_name . ' ' . $this->swimmer->last_name;
+            return $this->swimmer->first_name.' '.$this->swimmer->last_name;
         }
 
         return 'Unknown';

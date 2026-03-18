@@ -28,8 +28,18 @@ class CoachProfile extends Model
         ];
     }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function branch() { return $this->belongsTo(Branch::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    public function schedules() { return $this->hasMany(CoachSchedule::class, 'coach_id'); }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(CoachSchedule::class, 'coach_id');
+    }
 }

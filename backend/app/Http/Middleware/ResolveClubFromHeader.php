@@ -13,7 +13,7 @@ class ResolveClubFromHeader
     {
         $slug = $request->header('X-Club-Slug');
 
-        if (!$slug) {
+        if (! $slug) {
             return response()->json([
                 'message' => 'X-Club-Slug header is required.',
             ], 422);
@@ -23,7 +23,7 @@ class ResolveClubFromHeader
             ->where('is_active', true)
             ->first();
 
-        if (!$club) {
+        if (! $club) {
             return response()->json([
                 'message' => 'Club not found or inactive.',
             ], 404);

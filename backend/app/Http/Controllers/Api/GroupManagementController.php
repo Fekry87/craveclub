@@ -31,6 +31,7 @@ class GroupManagementController extends Controller
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");
         }
+
         return response()->json($query->latest()->paginate($request->input('per_page', 15)));
     }
 
@@ -45,13 +46,14 @@ class GroupManagementController extends Controller
                 ->where('sport_module_id', $request->sport_module_id)
                 ->where('is_active', true)
                 ->exists();
-            if (!$assigned) {
+            if (! $assigned) {
                 abort(422, 'Sport module not assigned to this club.');
             }
             $data['sport_module_id'] = $request->sport_module_id;
         }
 
         $group = Group::create($data);
+
         return response()->json($group->load(['coach', 'swimmers']), 201);
     }
 
@@ -72,12 +74,14 @@ class GroupManagementController extends Controller
         $data['sport_module_id'] = app('current_sport_module_id');
 
         $group = Group::create($data);
+
         return response()->json($group->load(['coach', 'swimmers', 'sportModule']), 201);
     }
 
     public function groupShow(Group $group): JsonResponse
     {
         $this->assertOwnership($group);
+
         return response()->json($group->load(['coach', 'swimmers', 'plans']));
     }
 
@@ -86,6 +90,7 @@ class GroupManagementController extends Controller
         $this->assertOwnership($group);
 
         $group->update($request->only(['name', 'description', 'coach_user_id']));
+
         return response()->json($group->load(['coach', 'swimmers']));
     }
 
@@ -93,6 +98,7 @@ class GroupManagementController extends Controller
     {
         $this->assertOwnership($group);
         $group->delete();
+
         return response()->json(['message' => 'Group deleted']);
     }
 

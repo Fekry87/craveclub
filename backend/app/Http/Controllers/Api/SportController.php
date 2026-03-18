@@ -22,7 +22,7 @@ class SportController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:sports,slug,NULL,id,club_id,' . $clubId,
+            'slug' => 'required|string|max:255|unique:sports,slug,NULL,id,club_id,'.$clubId,
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
             'is_active' => 'boolean',
@@ -59,7 +59,7 @@ class SportController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|max:255|unique:sports,slug,' . $sport->id . ',id,club_id,' . $clubId,
+            'slug' => 'sometimes|string|max:255|unique:sports,slug,'.$sport->id.',id,club_id,'.$clubId,
             'description' => 'nullable|string',
             'icon' => 'nullable|string|max:255',
             'is_active' => 'boolean',

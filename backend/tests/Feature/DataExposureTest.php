@@ -9,7 +9,6 @@ use App\Models\CoachProfile;
 use App\Models\Group;
 use App\Models\GroupMembership;
 use App\Models\SwimmerProfile;
-use App\Models\TrainingSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,9 +18,13 @@ class DataExposureTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $coachUser;
+
     private User $swimmerUser;
+
     private SwimmerProfile $swimmerProfile;
 
     protected function setUp(): void

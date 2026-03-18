@@ -6,10 +6,10 @@ use App\Enums\UserRole;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
-use App\Models\LeaderboardSetting;
-use App\Models\LevelTier;
 use App\Models\Group;
 use App\Models\GroupMembership;
+use App\Models\LeaderboardSetting;
+use App\Models\LevelTier;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
@@ -22,8 +22,11 @@ class PerformanceTest extends TestCase
     use RefreshDatabase;
 
     private Club $club;
+
     private User $manager;
+
     private User $coachUser;
+
     private array $queries = [];
 
     protected function setUp(): void
@@ -141,7 +144,7 @@ class PerformanceTest extends TestCase
             $templates[$template] = ($templates[$template] ?? 0) + 1;
         }
 
-        $duplicates = array_filter($templates, fn($count) => $count > 2);
+        $duplicates = array_filter($templates, fn ($count) => $count > 2);
 
         return [count($queries), $queries, $duplicates];
     }
@@ -157,11 +160,11 @@ class PerformanceTest extends TestCase
         });
 
         $this->assertLessThanOrEqual(15, $count,
-            "Dashboard fired {$count} queries (max 15). Queries:\n" .
-            implode("\n", array_map(fn($q) => "  [{$q['time']}ms] {$q['sql']}", $queries))
+            "Dashboard fired {$count} queries (max 15). Queries:\n".
+            implode("\n", array_map(fn ($q) => "  [{$q['time']}ms] {$q['sql']}", $queries))
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in dashboard: " . json_encode($duplicates)
+            'N+1 detected in dashboard: '.json_encode($duplicates)
         );
     }
 
@@ -179,7 +182,7 @@ class PerformanceTest extends TestCase
             "Sessions fired {$count} queries (max 8)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in sessions: " . json_encode($duplicates)
+            'N+1 detected in sessions: '.json_encode($duplicates)
         );
     }
 
@@ -197,7 +200,7 @@ class PerformanceTest extends TestCase
             "Analytics fired {$count} queries (max 20)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in analytics: " . json_encode($duplicates)
+            'N+1 detected in analytics: '.json_encode($duplicates)
         );
     }
 
@@ -215,7 +218,7 @@ class PerformanceTest extends TestCase
             "Swimmers fired {$count} queries (max 8)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in swimmers: " . json_encode($duplicates)
+            'N+1 detected in swimmers: '.json_encode($duplicates)
         );
     }
 
@@ -233,7 +236,7 @@ class PerformanceTest extends TestCase
             "Coaches fired {$count} queries (max 8)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in coaches: " . json_encode($duplicates)
+            'N+1 detected in coaches: '.json_encode($duplicates)
         );
     }
 
@@ -251,7 +254,7 @@ class PerformanceTest extends TestCase
             "Coach dashboard fired {$count} queries (max 15)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in coach dashboard: " . json_encode($duplicates)
+            'N+1 detected in coach dashboard: '.json_encode($duplicates)
         );
     }
 
@@ -269,7 +272,7 @@ class PerformanceTest extends TestCase
             "Coach sessions fired {$count} queries (max 10)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in coach sessions: " . json_encode($duplicates)
+            'N+1 detected in coach sessions: '.json_encode($duplicates)
         );
     }
 
@@ -287,7 +290,7 @@ class PerformanceTest extends TestCase
             "Notifications fired {$count} queries (max 6)"
         );
         $this->assertEmpty($duplicates,
-            "N+1 detected in notifications: " . json_encode($duplicates)
+            'N+1 detected in notifications: '.json_encode($duplicates)
         );
     }
 }

@@ -21,7 +21,7 @@ class GenerateBusinessReport extends Command
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();
 
-        $this->info('Generating business report for week of ' . $weekStart->toDateString());
+        $this->info('Generating business report for week of '.$weekStart->toDateString());
 
         $metrics = [];
 
@@ -50,7 +50,7 @@ class GenerateBusinessReport extends Command
             ->first();
 
         $metrics['average_attendance_rate'] = $attendanceStats && $attendanceStats->total > 0
-            ? round(($attendanceStats->present / $attendanceStats->total) * 100, 1) . '%'
+            ? round(($attendanceStats->present / $attendanceStats->total) * 100, 1).'%'
             : 'N/A';
 
         // Push notifications sent this week

@@ -15,7 +15,9 @@ class CorporateApiTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $manager;
+
     private Club $club;
 
     protected function setUp(): void
@@ -50,7 +52,7 @@ class CorporateApiTest extends TestCase
     {
         $token = $user->createToken('test')->plainTextToken;
 
-        return ['Authorization' => 'Bearer ' . $token];
+        return ['Authorization' => 'Bearer '.$token];
     }
 
     private function seedCorporateSettings(): void
@@ -150,7 +152,7 @@ class CorporateApiTest extends TestCase
         ClubFeature::create(['club_id' => $this->club->id]);
 
         $response = $this->withHeaders($this->authHeader($this->admin))
-            ->getJson('/api/v1/corporate/clubs/' . $this->club->id);
+            ->getJson('/api/v1/corporate/clubs/'.$this->club->id);
 
         $response->assertOk()
             ->assertJsonPath('name', 'Existing Club')
@@ -164,7 +166,7 @@ class CorporateApiTest extends TestCase
         ClubFeature::create(['club_id' => $this->club->id]);
 
         $response = $this->withHeaders($this->authHeader($this->admin))
-            ->putJson('/api/v1/corporate/clubs/' . $this->club->id . '/features', [
+            ->putJson('/api/v1/corporate/clubs/'.$this->club->id.'/features', [
                 'skills_enabled' => false,
                 'evaluations_enabled' => false,
             ]);

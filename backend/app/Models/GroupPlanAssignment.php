@@ -11,6 +11,13 @@ class GroupPlanAssignment extends Model
 
     protected $fillable = ['club_id', 'group_id', 'plan_id'];
 
-    public function group() { return $this->belongsTo(Group::class); }
-    public function plan() { return $this->belongsTo(TrainingPlan::class, 'plan_id'); }
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(TrainingPlan::class, 'plan_id');
+    }
 }

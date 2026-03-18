@@ -7,7 +7,6 @@ use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
-use App\Models\Sport;
 use App\Models\SportModule;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -141,7 +140,7 @@ class PublicApiTest extends TestCase
 
     public function test_public_club_by_slug_returns_club_data(): void
     {
-        $response = $this->getJson('/api/v1/clubs/' . $this->club->slug);
+        $response = $this->getJson('/api/v1/clubs/'.$this->club->slug);
 
         $response->assertOk()
             ->assertJsonFragment(['name' => 'Test Club'])
