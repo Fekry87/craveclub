@@ -19,4 +19,4 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
 
 RUN composer install --no-dev --optimize-autoloader
 
-CMD sleep 5 && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD ["/bin/sh", "-c", "PORT=${PORT:-8000} && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT}"]
