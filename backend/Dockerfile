@@ -24,6 +24,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     gd \
     xml
 
+# Install Redis extension
+RUN apk add --no-cache autoconf gcc g++ make \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del autoconf gcc g++ make
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

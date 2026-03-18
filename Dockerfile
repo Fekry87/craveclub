@@ -1,8 +1,10 @@
 FROM php:8.2-fpm-alpine
 
 RUN apk add --no-cache nginx \
-    oniguruma-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip bcmath pcntl
+    oniguruma-dev libzip-dev autoconf gcc g++ make \
+    && docker-php-ext-install pdo pdo_mysql mbstring zip bcmath pcntl \
+    && pecl install redis && docker-php-ext-enable redis \
+    && apk del autoconf gcc g++ make
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
