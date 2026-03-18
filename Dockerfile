@@ -1,22 +1,38 @@
 FROM php:8.2-fpm-alpine
 
-WORKDIR /var/www/html
-
-RUN apk add --no-cache \
-    curl \
-    libpng-dev \
-    oniguruma-dev \
-    libzip-dev \
+RUN apk add --no-cache nginx \
+    oniguruma-dev libzip-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring zip bcmath pcntl
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+WORKDIR /var/www/html
+
 COPY backend/ .
 
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
-    storage/framework/views bootstrap/cache \
+RUN mkdir -p storage/logs storage/framework/cache \
+    storage/framework/sessions storage/framework/views \
+    bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 RUN composer install --no-dev --optimize-autoloader
 
-CMD ["/bin/sh", "-c", "PORT=${PORT:-8000} && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT}"]
+RUN printf 'worker_processes 1;\n\
+events { worker_connections 1024; }\n\
+http {\n\
+    include mime.types;\n\
+    server {\n\
+        listen PORT_PLACEHOLDER;\n\
+        root /var/www/html/public;\n\
+        index index.php;\n\
+        location / { try_files $uri $uri/ /index.php?$query_string; }\n\
+        location ~ \\.php$ {\n\
+            fastcgi_pass 127.0.0.1:9000;\n\
+            fastcgi_index index.php;\n\
+            include fastcgi_params;\n\
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        }\n\
+    }\n\
+}\n' > /etc/nginx/nginx.conf
+
+CMD ["/bin/sh", "-c", "sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php artisan config:cache && php-fpm -D && nginx -g 'daemon off;'"]
