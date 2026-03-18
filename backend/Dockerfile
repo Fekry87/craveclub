@@ -41,14 +41,9 @@ COPY . .
 # Run post-install scripts
 RUN composer run-script post-autoload-dump 2>/dev/null || true
 
-# Cache configuration for production
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-EXPOSE 9000
+EXPOSE ${PORT:-8000}
 
-CMD ["php-fpm"]
+CMD php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
