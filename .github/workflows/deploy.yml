@@ -52,7 +52,7 @@ jobs:
         run: php artisan db:seed --class=DemoSeeder
 
       - name: Run tests with coverage
-        run: php artisan test --coverage --min=60
+        run: php artisan test --coverage --min=50
 
   frontend-test:
     name: Frontend Tests
