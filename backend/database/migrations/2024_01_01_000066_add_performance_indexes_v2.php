@@ -22,7 +22,9 @@ return new class extends Migration
         // training_sessions — composite indexes for common query patterns
         Schema::table('training_sessions', function (Blueprint $table) {
             $table->index(['club_id', 'status'], 'ts_club_status_idx');
-            $table->index(['club_id', 'sport_module_id'], 'ts_club_sport_idx');
+            if (Schema::hasColumn('training_sessions', 'sport_module_id')) {
+                $table->index(['club_id', 'sport_module_id'], 'ts_club_sport_idx');
+            }
             $table->index(['coach_user_id', 'date'], 'ts_coach_date_idx');
             $table->index(['club_id', 'date', 'status'], 'ts_club_date_status_idx');
         });
@@ -35,13 +37,17 @@ return new class extends Migration
         // groups — composite indexes
         Schema::table('groups', function (Blueprint $table) {
             $table->index(['club_id', 'coach_user_id'], 'grp_club_coach_idx');
-            $table->index(['club_id', 'sport_module_id'], 'grp_club_sport_idx');
+            if (Schema::hasColumn('groups', 'sport_module_id')) {
+                $table->index(['club_id', 'sport_module_id'], 'grp_club_sport_idx');
+            }
         });
 
         // swimmer_profiles — composite for club+created_at analytics
         Schema::table('swimmer_profiles', function (Blueprint $table) {
             $table->index(['club_id', 'created_at'], 'sp_club_created_idx');
-            $table->index('group_id', 'sp_group_idx');
+            if (Schema::hasColumn('swimmer_profiles', 'group_id')) {
+                $table->index('group_id', 'sp_group_idx');
+            }
         });
 
         // notifications — composite for user inbox + club feed
@@ -52,7 +58,9 @@ return new class extends Migration
 
         // registrations — sport module scoped queries
         Schema::table('registrations', function (Blueprint $table) {
-            $table->index(['club_id', 'sport_module_id', 'status'], 'reg_club_sport_status_idx');
+            if (Schema::hasColumn('registrations', 'sport_module_id')) {
+                $table->index(['club_id', 'sport_module_id', 'status'], 'reg_club_sport_status_idx');
+            }
         });
 
         // training_plan_assignments — swimmer/group status lookups
@@ -80,7 +88,9 @@ return new class extends Migration
 
         Schema::table('training_sessions', function (Blueprint $table) {
             $table->dropIndex('ts_club_status_idx');
-            $table->dropIndex('ts_club_sport_idx');
+            if (Schema::hasColumn('training_sessions', 'sport_module_id')) {
+                $table->dropIndex('ts_club_sport_idx');
+            }
             $table->dropIndex('ts_coach_date_idx');
             $table->dropIndex('ts_club_date_status_idx');
         });
@@ -91,12 +101,16 @@ return new class extends Migration
 
         Schema::table('groups', function (Blueprint $table) {
             $table->dropIndex('grp_club_coach_idx');
-            $table->dropIndex('grp_club_sport_idx');
+            if (Schema::hasColumn('groups', 'sport_module_id')) {
+                $table->dropIndex('grp_club_sport_idx');
+            }
         });
 
         Schema::table('swimmer_profiles', function (Blueprint $table) {
             $table->dropIndex('sp_club_created_idx');
-            $table->dropIndex('sp_group_idx');
+            if (Schema::hasColumn('swimmer_profiles', 'group_id')) {
+                $table->dropIndex('sp_group_idx');
+            }
         });
 
         Schema::table('notifications', function (Blueprint $table) {
@@ -105,7 +119,9 @@ return new class extends Migration
         });
 
         Schema::table('registrations', function (Blueprint $table) {
-            $table->dropIndex('reg_club_sport_status_idx');
+            if (Schema::hasColumn('registrations', 'sport_module_id')) {
+                $table->dropIndex('reg_club_sport_status_idx');
+            }
         });
 
         Schema::table('training_plan_assignments', function (Blueprint $table) {
