@@ -13,4 +13,4 @@ WORKDIR /app
 RUN npm install -g serve
 COPY --from=build /app/dist ./dist
 
-CMD ["sh", "-c", "serve dist -p ${PORT:-3000}"]
+CMD ["sh", "-c", "serve dist -l ${PORT:-3000}"]
