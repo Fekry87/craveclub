@@ -1,30 +1,53 @@
 <?php
-// Temporary debug file — remove after fixing 500 error
 header('Content-Type: application/json');
-
-$checks = [];
 
 try {
     require __DIR__ . '/../vendor/autoload.php';
     $app = require_once __DIR__ . '/../bootstrap/app.php';
-    $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+    $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-    // Actually handle a request to trigger the full middleware stack
-    $request = \Illuminate\Http\Request::create('/api/v1/health', 'GET');
-    $response = $kernel->handle($request);
+    $checks = [];
+    $checks['app_debug'] = config('app.debug');
+    $checks['app_env'] = config('app.env');
+    $checks['app_key_set'] = !empty(config('app.key'));
+    $checks['db_connection'] = config('database.default');
+    $checks['db_host'] = config('database.connections.mysql.host');
+    $checks['cache_driver'] = config('cache.default');
+    $checks['log_channel'] = config('logging.default');
 
-    $checks['status_code'] = $response->getStatusCode();
-    $checks['response_body'] = json_decode($response->getContent(), true) ?: $response->getContent();
+    // Check if there's a cached config
+    $checks['config_cached'] = file_exists($app->getCachedConfigPath());
 
-    $kernel->terminate($request, $response);
+    // Try DB connection
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        $checks['db_connected'] = true;
+    } catch (\Throwable $e) {
+        $checks['db_connected'] = false;
+        $checks['db_error'] = $e->getMessage();
+    }
+
+    // Read last 30 lines of Laravel log
+    $logFile = storage_path('logs/laravel.log');
+    if (file_exists($logFile)) {
+        $lines = file($logFile);
+        $checks['log_last_lines'] = array_slice($lines, -30);
+    } else {
+        // Try daily log
+        $dailyLog = storage_path('logs/laravel-' . date('Y-m-d') . '.log');
+        if (file_exists($dailyLog)) {
+            $lines = file($dailyLog);
+            $checks['log_last_lines'] = array_slice($lines, -30);
+        } else {
+            $checks['log_files'] = glob(storage_path('logs/*.log'));
+        }
+    }
+
+    echo json_encode($checks, JSON_PRETTY_PRINT);
 } catch (\Throwable $e) {
-    $checks['error'] = $e->getMessage();
-    $checks['error_class'] = get_class($e);
-    $checks['error_file'] = $e->getFile() . ':' . $e->getLine();
-    $checks['error_trace'] = array_slice(
-        array_map(fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?') . ' ' . ($t['class'] ?? '') . ($t['type'] ?? '') . ($t['function'] ?? ''),
-        $e->getTrace()
-    ), 0, 15);
+    echo json_encode([
+        'error' => $e->getMessage(),
+        'file' => $e->getFile() . ':' . $e->getLine(),
+        'trace' => array_slice(array_map(fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?'), $e->getTrace()), 0, 10),
+    ], JSON_PRETTY_PRINT);
 }
-
-echo json_encode($checks, JSON_PRETTY_PRINT);
