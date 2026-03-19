@@ -35,9 +35,14 @@ class ClubAnalyticsService
         return $this->cacheWithFallback("analytics_growth_{$clubId}", 3600, $clubId, 'getMembershipGrowth', function () use ($clubId) {
             $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
 
+            $driver = DB::getDriverName();
+            $dateExpr = $driver === 'sqlite'
+                ? "strftime('%Y-%m', created_at)"
+                : "DATE_FORMAT(created_at, '%Y-%m')";
+
             $monthlyCounts = SwimmerProfile::where('club_id', $clubId)
                 ->where('created_at', '>=', $sixMonthsAgo)
-                ->selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as new_count")
+                ->selectRaw("{$dateExpr} as month, COUNT(*) as new_count")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('new_count', 'month');
