@@ -57,8 +57,10 @@ RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
     && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini \
     && echo "display_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini
 
-# Enable php-fpm to capture worker output in logs
-RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
+# Configure php-fpm: run as root to avoid permission issues, capture output
+RUN sed -i 's/user = www-data/user = root/' /usr/local/etc/php-fpm.d/www.conf \
+    && sed -i 's/group = www-data/group = root/' /usr/local/etc/php-fpm.d/www.conf \
+    && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Set permissions — everything must be writable by www-data (php-fpm user)
