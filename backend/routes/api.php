@@ -41,6 +41,24 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('v1')->group(function () {
 
+    // Temporary debug route — REMOVE after fixing production errors
+    Route::get('/debug-error', function () {
+        try {
+            $club = \App\Models\Club::where('slug', 'future-academy')->first();
+            return response()->json([
+                'club_found' => $club ? true : false,
+                'club_name' => $club?->name,
+                'users_count' => \App\Models\User::count(),
+                'clubs_count' => \App\Models\Club::count(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile() . ':' . $e->getLine(),
+            ], 500);
+        }
+    });
+
     // Health Check — 4 checks: database, redis, queue, disk
     // Exempt from maintenance mode (see bootstrap/app.php)
     Route::get('/health', function () {
