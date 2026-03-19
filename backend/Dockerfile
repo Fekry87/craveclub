@@ -45,34 +45,31 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 # Copy application code
 COPY . .
 
-# Create empty .env so Laravel can bootstrap (Railway injects env vars at runtime)
+# Create empty .env so Laravel can bootstrap
 RUN touch /var/www/.env
 
 # Run post-install scripts and pre-generate package manifest
 RUN composer run-script post-autoload-dump 2>/dev/null || true \
     && php artisan package:discover --ansi || true
 
-# Enable PHP error logging to stderr (visible in Railway logs)
+# PHP error logging to stderr
 RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
-    && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini \
-    && echo "display_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini
+    && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini
 
-# Configure php-fpm: run as root to avoid permission issues, capture output
-RUN sed -i 's/user = www-data/user = root/' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's/group = www-data/group = root/' /usr/local/etc/php-fpm.d/www.conf \
-    && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
+# php-fpm: capture worker output
+RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
-# Set permissions — everything must be writable by www-data (php-fpm user)
+# Create all required directories and set permissions
+# Key: chmod 777 on bootstrap/cache and storage so ANY user can write
 RUN mkdir -p /var/www/storage/logs \
     /var/www/storage/framework/cache \
     /var/www/storage/framework/sessions \
     /var/www/storage/framework/views \
     /var/www/bootstrap/cache \
-    && chmod -R 777 /var/www/storage /var/www/bootstrap/cache \
-    && chown -R www-data:www-data /var/www
+    && chmod -R 777 /var/www/storage /var/www/bootstrap/cache
 
-# Nginx config template (PORT_PLACEHOLDER replaced at runtime)
+# Nginx config
 RUN printf 'worker_processes 1;\n\
 events { worker_connections 1024; }\n\
 http {\n\
@@ -91,4 +88,17 @@ http {\n\
     }\n\
 }\n' > /etc/nginx/nginx.conf
 
-CMD ["/bin/sh", "-c", "chmod -R 777 /var/www/bootstrap/cache /var/www/storage && sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php-fpm -D && nginx -g 'daemon off;'"]
+# Startup script
+RUN printf '#!/bin/sh\n\
+set -e\n\
+# Fix permissions at runtime (files may have been created by root during build)\n\
+chmod -R 777 /var/www/bootstrap/cache /var/www/storage\n\
+# Inject Railway PORT into nginx config\n\
+sed -i "s/PORT_PLACEHOLDER/${PORT:-8000}/" /etc/nginx/nginx.conf\n\
+# Start php-fpm in background\n\
+php-fpm -D\n\
+# Start nginx in foreground\n\
+exec nginx -g "daemon off;"\n\
+' > /var/www/start.sh && chmod +x /var/www/start.sh
+
+CMD ["/var/www/start.sh"]
