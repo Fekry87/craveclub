@@ -3,42 +3,59 @@ header('Content-Type: application/json');
 
 $checks = [];
 
+// Check permissions BEFORE Laravel boots
+$cacheDir = __DIR__ . '/../bootstrap/cache';
+$checks['cache_dir_writable'] = is_writable($cacheDir);
+$checks['cache_dir_perms'] = substr(sprintf('%o', fileperms($cacheDir)), -4);
+
+// Check each file
+foreach (glob($cacheDir . '/*') as $f) {
+    $checks['files'][basename($f)] = [
+        'writable' => is_writable($f),
+        'perms' => substr(sprintf('%o', fileperms($f)), -4),
+        'owner_uid' => fileowner($f),
+    ];
+}
+
+// Check current process user
+$checks['process_uid'] = posix_geteuid();
+$checks['process_user'] = posix_getpwuid(posix_geteuid())['name'] ?? 'unknown';
+
+// Try to actually write a test file to bootstrap/cache
+$testFile = $cacheDir . '/_test_write_' . time();
+$writeResult = @file_put_contents($testFile, 'test');
+$checks['can_write_new_file'] = $writeResult !== false;
+if ($writeResult !== false) @unlink($testFile);
+
+// Try to overwrite packages.php
+$pkgFile = $cacheDir . '/packages.php';
+if (file_exists($pkgFile)) {
+    $content = file_get_contents($pkgFile);
+    $checks['can_overwrite_packages'] = @file_put_contents($pkgFile, $content) !== false;
+}
+
+// Now try to bootstrap Laravel
 try {
     require __DIR__ . '/../vendor/autoload.php';
     $app = require_once __DIR__ . '/../bootstrap/app.php';
+
+    // Bootstrap manually
+    $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    $checks['laravel_bootstrapped'] = true;
+
+    // Now try HTTP kernel
     $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
     $request = \Illuminate\Http\Request::create('/api/v1/health', 'GET');
-
-    // Enable exception display
-    config(['app.debug' => true]);
-
     $response = $kernel->handle($request);
-    $checks['http_status'] = $response->getStatusCode();
-
-    if ($response->getStatusCode() !== 200) {
-        $checks['response_content_type'] = $response->headers->get('Content-Type');
-        $body = $response->getContent();
-        $json = json_decode($body, true);
-        $checks['response_body'] = $json ?: substr($body, 0, 500);
+    $checks['health_status'] = $response->getStatusCode();
+    if ($response->getStatusCode() === 200) {
+        $checks['health_body'] = json_decode($response->getContent(), true);
     } else {
-        $checks['response_body'] = json_decode($response->getContent(), true);
+        $checks['health_body'] = substr($response->getContent(), 0, 300);
     }
-
-    $kernel->terminate($request, $response);
 } catch (\Throwable $e) {
     $checks['error'] = $e->getMessage();
-    $checks['error_class'] = get_class($e);
     $checks['error_file'] = $e->getFile() . ':' . $e->getLine();
-    $checks['trace'] = array_slice(array_map(fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?') . ' ' . ($t['class'] ?? '') . ($t['type'] ?? '') . ($t['function'] ?? ''), $e->getTrace()), 0, 15);
-}
-
-// Read latest log entries
-$logFiles = glob('/var/www/storage/logs/*.log');
-rsort($logFiles);
-if (!empty($logFiles)) {
-    $lines = file($logFiles[0]);
-    $checks['latest_log_file'] = basename($logFiles[0]);
-    $checks['log_tail'] = array_map('trim', array_slice($lines, -20));
 }
 
 echo json_encode($checks, JSON_PRETTY_PRINT);
