@@ -10,7 +10,12 @@ RUN npm run build
 
 FROM node:22-alpine
 WORKDIR /app
-RUN npm install -g serve
+
+# Simple static file server
+RUN npm install -g serve@14
+
 COPY --from=build /app/dist ./dist
 
-CMD ["sh", "-c", "serve dist -l ${PORT:-3000}"]
+EXPOSE 3000
+
+CMD ["serve", "dist", "-s", "-p", "3000"]
