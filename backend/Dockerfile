@@ -45,11 +45,12 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 # Copy application code
 COPY . .
 
-# Run post-install scripts
-RUN composer run-script post-autoload-dump 2>/dev/null || true
-
 # Create empty .env so Laravel can bootstrap (Railway injects env vars at runtime)
 RUN touch /var/www/.env
+
+# Run post-install scripts and pre-generate package manifest
+RUN composer run-script post-autoload-dump 2>/dev/null || true \
+    && php artisan package:discover --ansi || true
 
 # Enable PHP error logging to stderr (visible in Railway logs)
 RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
@@ -60,14 +61,14 @@ RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
 RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
-# Set permissions — chown entire /var/www so www-data can write everywhere needed
+# Set permissions — everything must be writable by www-data (php-fpm user)
 RUN mkdir -p /var/www/storage/logs \
     /var/www/storage/framework/cache \
     /var/www/storage/framework/sessions \
     /var/www/storage/framework/views \
     /var/www/bootstrap/cache \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+    && chmod -R 777 /var/www/storage /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www
 
 # Nginx config template (PORT_PLACEHOLDER replaced at runtime)
 RUN printf 'worker_processes 1;\n\
@@ -88,4 +89,4 @@ http {\n\
     }\n\
 }\n' > /etc/nginx/nginx.conf
 
-CMD ["/bin/sh", "-c", "sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php artisan package:discover --ansi && chmod -R 777 /var/www/bootstrap/cache /var/www/storage && php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "chmod -R 777 /var/www/bootstrap/cache /var/www/storage && sed -i \"s/PORT_PLACEHOLDER/${PORT:-8000}/\" /etc/nginx/nginx.conf && php-fpm -D && nginx -g 'daemon off;'"]
