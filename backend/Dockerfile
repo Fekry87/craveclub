@@ -60,13 +60,13 @@ RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
 RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
 
-# Set permissions
+# Set permissions — chown entire /var/www so www-data can write everywhere needed
 RUN mkdir -p /var/www/storage/logs \
     /var/www/storage/framework/cache \
     /var/www/storage/framework/sessions \
     /var/www/storage/framework/views \
     /var/www/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Nginx config template (PORT_PLACEHOLDER replaced at runtime)
