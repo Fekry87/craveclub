@@ -3,58 +3,42 @@ header('Content-Type: application/json');
 
 $checks = [];
 
-// Check actual permissions on bootstrap/cache
-$dir = '/var/www/bootstrap/cache';
-$checks['bootstrap_cache'] = [
-    'exists' => is_dir($dir),
-    'writable' => is_writable($dir),
-    'owner' => posix_getpwuid(fileowner($dir))['name'] ?? fileowner($dir),
-    'group' => posix_getgrgid(filegroup($dir))['name'] ?? filegroup($dir),
-    'perms' => substr(sprintf('%o', fileperms($dir)), -4),
-];
-
-// Check files inside bootstrap/cache
-if (is_dir($dir)) {
-    $files = glob($dir . '/*');
-    $checks['bootstrap_cache_files'] = [];
-    foreach ($files as $f) {
-        $checks['bootstrap_cache_files'][basename($f)] = [
-            'owner' => posix_getpwuid(fileowner($f))['name'] ?? fileowner($f),
-            'perms' => substr(sprintf('%o', fileperms($f)), -4),
-            'writable' => is_writable($f),
-        ];
-    }
-}
-
-// Check who PHP-FPM is running as
-$checks['current_user'] = posix_getpwuid(posix_geteuid())['name'] ?? posix_geteuid();
-$checks['current_uid'] = posix_geteuid();
-
-// Check storage
-$checks['storage_writable'] = is_writable('/var/www/storage');
-$checks['storage_logs_writable'] = is_writable('/var/www/storage/logs');
-
-// Try the actual HTTP request simulation
 try {
     require __DIR__ . '/../vendor/autoload.php';
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
     $request = \Illuminate\Http\Request::create('/api/v1/health', 'GET');
 
-    // Catch the error during handle
-    try {
-        $response = $kernel->handle($request);
-        $checks['http_status'] = $response->getStatusCode();
-        if ($response->getStatusCode() === 200) {
-            $checks['http_body'] = json_decode($response->getContent(), true);
-        }
-    } catch (\Throwable $e) {
-        $checks['http_error'] = $e->getMessage();
-        $checks['http_error_file'] = $e->getFile() . ':' . $e->getLine();
+    // Enable exception display
+    config(['app.debug' => true]);
+
+    $response = $kernel->handle($request);
+    $checks['http_status'] = $response->getStatusCode();
+
+    if ($response->getStatusCode() !== 200) {
+        $checks['response_content_type'] = $response->headers->get('Content-Type');
+        $body = $response->getContent();
+        $json = json_decode($body, true);
+        $checks['response_body'] = $json ?: substr($body, 0, 500);
+    } else {
+        $checks['response_body'] = json_decode($response->getContent(), true);
     }
+
+    $kernel->terminate($request, $response);
 } catch (\Throwable $e) {
-    $checks['bootstrap_error'] = $e->getMessage();
-    $checks['bootstrap_error_file'] = $e->getFile() . ':' . $e->getLine();
+    $checks['error'] = $e->getMessage();
+    $checks['error_class'] = get_class($e);
+    $checks['error_file'] = $e->getFile() . ':' . $e->getLine();
+    $checks['trace'] = array_slice(array_map(fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?') . ' ' . ($t['class'] ?? '') . ($t['type'] ?? '') . ($t['function'] ?? ''), $e->getTrace()), 0, 15);
+}
+
+// Read latest log entries
+$logFiles = glob('/var/www/storage/logs/*.log');
+rsort($logFiles);
+if (!empty($logFiles)) {
+    $lines = file($logFiles[0]);
+    $checks['latest_log_file'] = basename($logFiles[0]);
+    $checks['log_tail'] = array_map('trim', array_slice($lines, -20));
 }
 
 echo json_encode($checks, JSON_PRETTY_PRINT);
