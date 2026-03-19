@@ -37,13 +37,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # Copy composer files first for better caching
-COPY composer.json composer.lock ./
+COPY backend/composer.json backend/composer.lock ./
 
 # Install dependencies (no dev for production)
 RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader
 
 # Copy application code
-COPY . .
+COPY backend/ .
 
 # Create empty .env so Laravel can bootstrap
 RUN touch /var/www/.env
