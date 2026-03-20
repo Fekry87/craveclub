@@ -17,10 +17,12 @@
 - Maintenance mode: `php artisan down` returns JSON 503 on all endpoints except health; `php artisan up` resumes normal operation
 - Graceful degradation: all cache calls wrapped in try/catch — app works without Redis (slower, no crash); logs warning "Cache unavailable, using direct query"
 - MySQL read/write split: `config/database.php` has `read`/`write` hosts with `sticky: true`; set `DB_READ_HOST` for replica, empty = use primary for both (zero code changes)
-- Global RequestId middleware: generates UUID per request, stores in `app('request_id')`, adds `X-Request-ID` response header on ALL routes
-- Sentry error tracking: captures unhandled exceptions in Throwable handler, sets user context (id, email, club_id) in ClubContext middleware
-- Structured JSON logging: `json` channel uses Monolog RotatingFileHandler + AddRequestContext tap (request_id, club_id, environment); production default `LOG_CHANNEL=json`
-- Slow query logger: DB::listen in AppServiceProvider logs queries >100ms with SQL, bindings, time_ms, request_id, club_id, URL
+- Global RequestId middleware: accepts incoming `X-Request-ID` header or generates UUID, stores in `app('request_id')`, adds `X-Request-ID` response header on ALL routes — enables end-to-end request tracing from mobile/frontend through backend
+- Sentry error tracking: captures unhandled exceptions in Throwable handler, sets user context (id, email, club_id) in ClubContext middleware; `release` tag from `RAILWAY_GIT_COMMIT_SHA`; `ignore_exceptions` filters out AuthenticationException, AuthorizationException, ValidationException, NotFoundHttpException, TokenMismatchException, ThrottleRequestsException
+- Sentry club context: `\Sentry\configureScope()` in AppServiceProvider tags every event with `club_id` and `request_id` for multi-tenant filtering
+- Structured JSON logging: `json` channel uses Monolog RotatingFileHandler + AddRequestContext tap (request_id, club_id, url, method, ip, user_id, user_agent, environment); production default `LOG_CHANNEL=json`
+- Slow query logger: DB::listen in AppServiceProvider logs queries >100ms with SQL, bindings, time_ms, request_id, club_id, URL; also increments Redis counter `slow_queries:YYYY-MM-DD-HH` (graceful if Redis unavailable)
+- Metrics endpoint exposes `performance.slow_queries_last_hour` from Redis counter
 - Performance indexes: 3 migration passes (000045, 000066, 000067) covering attendance, sessions, evaluations, memberships, notifications, assignments
 - Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
 - Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
@@ -29,6 +31,7 @@
 - Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
 - Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
 - Deployment: Procfile with 4 processes (web, worker, scheduler, reverb) for Railway.app; see `backend/docs/DEPLOYMENT.md`
+- Railway Docker build: `backend/railway.json` sets `dockerfilePath: "backend/Dockerfile"` + `dockerContext: "backend"` — build context is `backend/`, so Dockerfile COPY paths are relative to `backend/` (NOT repo root); `.dockerignore` in `backend/` is used
 - Stateless architecture: no user data on local disk; S3 for uploads, Redis for cache/queue, Sanctum tokens for auth — ready for horizontal scaling with zero code changes
 - CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)
 - CI env: `backend/.env.ci` — MySQL 8.0 + Redis 7, `QUEUE_CONNECTION=sync`, safe to commit (no secrets)
@@ -152,6 +155,7 @@
 - `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
 - `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
 - `Procfile` — Railway process definitions: web, worker, scheduler, reverb
+- `backend/railway.json` — Railway build config: DOCKERFILE builder, dockerContext=backend
 - `backend/config/cors.php` — CORS settings (explicit methods/headers whitelist)
 - `backend/app/Http/Middleware/SecurityHeaders.php` — security headers including CSP
 - `backend/Dockerfile` — production Docker image (PHP 8.2 FPM Alpine, composer --no-dev, config/route/view cache)
@@ -332,6 +336,8 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Club Manager sidebar uses grouped navigation: `CLUB_MANAGER_NAV` array with 4 sections (Heroes, Training, Business, Club Management), each with section header + feature-gated items; other roles use flat nav list
 - Sport module card stats: `branches_count` (club-level), `new_registrations_count` (pending, sport-scoped), `active_swimmers_count` (sport-scoped) — computed in `ClubDashboardController.sportModules()`
 - Mobile app `.env` has `EXPO_PUBLIC_API_URL` — must match computer's current local IP (not localhost); use `--host=0.0.0.0` when running `php artisan serve` for mobile access
+- Railway Dockerfile COPY paths must be relative to `backend/` (the `dockerContext`) — do NOT prefix with `backend/`; if you change `dockerContext` in `railway.json`, all COPY paths and `.dockerignore` location must match
+- Raw SQL date functions differ: SQLite uses `strftime('%Y-%m', col)`, MySQL uses `DATE_FORMAT(col, '%Y-%m')` — always use `DB::getDriverName()` to pick the right one (dev=SQLite, prod=MySQL)
 - Monolog 3 uses immutable `LogRecord` objects (not arrays) — processors must implement `ProcessorInterface`, use `$record->with(extra: ...)` not `$record['extra'] = ...`
 - PHP `Error` extends `\Throwable` but NOT `\Exception` — health check and try/catch blocks for class-not-found must catch `\Throwable`
 - `daily` logging driver's `formatter` config key doesn't work for custom formatters — use `monolog` driver with explicit handler class + `tap` for full control

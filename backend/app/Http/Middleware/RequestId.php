@@ -11,7 +11,7 @@ class RequestId
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $requestId = Str::uuid()->toString();
+        $requestId = $request->header('X-Request-ID') ?: Str::uuid()->toString();
         app()->instance('request_id', $requestId);
 
         $response = $next($request);

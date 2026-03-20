@@ -26,6 +26,11 @@ class AddRequestContext
                 return $record->with(extra: array_merge($record->extra, [
                     'request_id' => app()->has('request_id') ? app('request_id') : null,
                     'club_id' => app()->has('current_club_id') ? app('current_club_id') : null,
+                    'url' => request()?->fullUrl(),
+                    'method' => request()?->method(),
+                    'ip' => request()?->ip(),
+                    'user_id' => request()?->user()?->id,
+                    'user_agent' => request()?->userAgent(),
                     'environment' => app()->environment(),
                 ]));
             }

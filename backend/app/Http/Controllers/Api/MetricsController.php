@@ -9,6 +9,7 @@ use App\Models\TrainingSession;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MetricsController extends Controller
@@ -70,6 +71,18 @@ class MetricsController extends Controller
                 'pending' => $pendingJobs,
                 'failed_24h' => $failedJobs24h,
             ],
+            'performance' => [
+                'slow_queries_last_hour' => (int) $this->getSlowQueryCount(),
+            ],
         ]);
+    }
+
+    private function getSlowQueryCount(): int
+    {
+        try {
+            return (int) Cache::store('redis')->get('slow_queries:' . now()->format('Y-m-d-H'), 0);
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 }
