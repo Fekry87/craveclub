@@ -100,12 +100,12 @@ jobs:
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --detach
+        run: railway up --detach --service web
 
       - name: Run safe migrations
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway run -- php artisan migrate:safe
+        run: railway run --service web -- php artisan migrate:safe
 
       - name: Verify deployment
         run: |
