@@ -19,7 +19,7 @@ export function StatCard({ title, label, value, icon }) {
         background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
         borderRadius: 18, padding: '1.5rem 1.625rem',
         border: '1px solid rgba(34,211,238,0.06)',
-        minWidth: 180,
+        minWidth: 0,
         boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
         transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         position: 'relative',

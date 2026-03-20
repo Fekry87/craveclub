@@ -1,4 +1,4 @@
-export { useIsMobile } from './hooks';
+export { useIsMobile, useBreakpoint } from './hooks';
 export { Modal, ModalActions } from './Modal';
 export { FormPage, FormPageActions } from './FormPage';
 export { FormField, Input, Select, TextArea, Button } from './FormControls';

@@ -100,7 +100,7 @@ export function NotificationBell({ navigate }) {
 
       {open && (
         <div style={{
-          position: 'absolute', top: 44, right: 0, width: 320, maxHeight: 400,
+          position: 'absolute', top: 44, right: 0, width: 'min(320px, calc(100vw - 32px))', maxHeight: 400,
           background: 'linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%)',
           border: '1px solid rgba(34,211,238,0.12)', borderRadius: 14,
           boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden',
@@ -449,7 +449,7 @@ export default function Layout() {
         {/* Content header bar (fixed, does not scroll) */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 32px', height: 64, minHeight: 64,
+          padding: '0 clamp(16px, 4vw, 32px)', height: 64, minHeight: 64,
           background: 'linear-gradient(180deg, rgba(10,22,40,0.97) 0%, rgba(10,22,40,0.92) 100%)',
           borderBottom: '1px solid rgba(34,211,238,0.08)',
           flexShrink: 0, zIndex: 20,
@@ -523,7 +523,7 @@ export default function Layout() {
         </div>
 
         {/* Page content (scrollable) */}
-        <div style={{ flex: 1, padding: '24px 32px', overflowY: 'auto' }}>
+        <div className="page-scroll-area" style={{ flex: 1, padding: '24px clamp(16px, 4vw, 32px)', overflowY: 'auto' }}>
           <RouteErrorBoundary key={location.pathname}>
             <Outlet />
           </RouteErrorBoundary>

@@ -74,7 +74,7 @@ export function FormPage({ title, icon, onBack, maxWidth = 720, children }) {
 
 export function FormPageActions({ children }) {
   return (
-    <div style={{
+    <div className="form-page-actions" style={{
       display: 'flex', gap: 10, marginTop: 28, justifyContent: 'flex-end',
       paddingTop: 24,
       borderTop: '1px solid rgba(51,65,85,0.3)',

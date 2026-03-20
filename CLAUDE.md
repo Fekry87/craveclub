@@ -168,7 +168,8 @@
 - `frontend/src/components/Layout.jsx` — main layout with sidebar + fixed content header bar (breadcrumb + NotificationBell) + scrollable content area; exports `NotificationBell` component
 - `frontend/src/components/ErrorBoundary.jsx` — error boundaries
 - `frontend/src/components/ui/FormControls.jsx` — shared FormField, Button, Input, Select, TextArea components
-- `frontend/src/components/ui/Modal.jsx` — Modal and ModalActions components
+- `frontend/src/components/ui/Modal.jsx` — Modal (bottom-sheet on mobile) and ModalActions components
+- `frontend/src/components/ui/hooks.js` — useIsMobile + useBreakpoint responsive hooks
 - `frontend/src/pages/registration/components/WizardLayout.jsx` — registration wizard wrapper (dark theme, progress bar, back button)
 - `frontend/src/pages/registration/components/WizardProgressBar.jsx` — animated progress bar (step N/8, gradient fill)
 - `frontend/src/pages/registration/steps/Step1_BasicProfile.jsx` — first wizard step (avatar, name, phone, gender, DOB)
@@ -270,6 +271,28 @@
 ```
 Steps 1–8 wrapped in `ProtectedRoute roles={['CLUB_MANAGER']}` + `RegistrationProvider` (renders `<Outlet />`).
 Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — context already reset).
+
+## Mobile Responsiveness
+- Breakpoints: mobile <768px, tablet 768-1023px, desktop 1024px+ (small mobile <375px)
+- `useIsMobile(breakpoint?)` hook in `hooks.js` — returns boolean, default 768px breakpoint
+- `useBreakpoint()` hook in `hooks.js` — returns `{ isMobile, isTablet, isDesktop, isSmallMobile, width }`
+- Layout uses `clamp(16px, 4vw, 32px)` for responsive padding — no hardcoded 32px on mobile
+- Layout content area has `page-scroll-area` CSS class — 12px padding on small mobile (≤480px), overflow-x hidden
+- CSS media queries in `index.css`: sidebar overlay (≤768px), mobile top bar, form-page sticky header, modal/form actions vertical stack, schedule builder single column, stat card compact padding
+- Modal becomes bottom-sheet on mobile: slides up from bottom, rounded top corners, drag handle, safe-area-inset padding
+- `slideUp` CSS animation added for mobile bottom-sheet modals
+- ModalActions and FormPageActions have `modal-actions`/`form-page-actions` CSS classes — stack buttons vertically (column-reverse) on mobile via media query
+- NotificationBell dropdown uses `width: min(320px, calc(100vw - 32px))` — never overflows on small screens
+- StatCard has `minWidth: 0` (not 180) — prevents overflow in 2-column mobile grids at 320px
+- DataTable renders as card list on mobile (built-in `useIsMobile` switch)
+- PageHeader stacks title + actions vertically on mobile, full-width action buttons
+- ScheduleBuilderPage 2-column grid has `schedule-builder-grid` CSS class — goes single column on mobile
+- Grid card layouts use `repeat(auto-fill, minmax(280-340px, 1fr))` — naturally responsive, but may overflow at <340px; `page-scroll-area` overflow-x:hidden prevents horizontal scroll
+- AnalyticsDashboard uses `isMobile` for KPI grid (2-col mobile / 4-col desktop) and chart sections (1-col mobile / 2-col desktop)
+- CoachTable has built-in mobile card layout (3-stat grid per coach)
+- Touch targets: action buttons are 38-44px height, icon buttons 34-40px — meets 44px minimum guideline
+- Mobile top bar (60px): hamburger + user avatar + brand icon; sidebar slides out as overlay with backdrop blur
+- `env(safe-area-inset-bottom)` used in modal padding for iPhone notch/home indicator
 
 ## Gotchas
 - Never stack `throttle` middleware on nested route groups — parent already has `throttle:by_user`, causes premature 429 errors

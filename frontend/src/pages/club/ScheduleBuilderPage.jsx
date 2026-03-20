@@ -534,7 +534,7 @@ export default function ScheduleBuilderPage() {
       )}
 
       {/* Two-Column Builder */}
-      <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 16, marginBottom: 22 }}>
+      <div className="schedule-builder-grid" style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 16, marginBottom: 22 }}>
         {/* Left Panel - Form */}
         <div style={{
           background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',

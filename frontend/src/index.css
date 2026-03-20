@@ -181,6 +181,10 @@ input[type="checkbox"] {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
 @keyframes countUp {
   from { opacity: 0; transform: scale(0.5); }
   to { opacity: 1; transform: scale(1); }
@@ -399,6 +403,29 @@ input[type="checkbox"] {
   .plan-item-grid {
     grid-template-columns: 1fr 1fr !important;
   }
+
+  /* Modal + FormPage actions: stack buttons vertically on mobile */
+  .modal-actions,
+  .form-page-actions {
+    flex-direction: column-reverse !important;
+  }
+  .modal-actions > button,
+  .modal-actions > a,
+  .form-page-actions > button,
+  .form-page-actions > a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Schedule builder: stack columns */
+  .schedule-builder-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stat card: tighter padding on mobile */
+  .stat-card-wrapper {
+    padding: 1.125rem 1.25rem !important;
+  }
 }
 
 /* Small mobile */
@@ -406,6 +433,11 @@ input[type="checkbox"] {
   .main-content {
     padding: 0.75rem !important;
     padding-top: 4.5rem !important;
+  }
+
+  .page-scroll-area {
+    overflow-x: hidden !important;
+    padding: 16px 12px !important;
   }
 
   .page-header-wrapper {
