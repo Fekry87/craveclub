@@ -4,10 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -50,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
             if ($query->time > 100) {
                 // Increment a Redis counter for observability dashboard
                 try {
-                    Cache::store('redis')->increment('slow_queries:' . now()->format('Y-m-d-H'));
+                    Cache::store('redis')->increment('slow_queries:'.now()->format('Y-m-d-H'));
                 } catch (\Throwable) {
                     // Redis unavailable — skip counter, still log
                 }

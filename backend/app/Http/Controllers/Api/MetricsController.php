@@ -80,7 +80,7 @@ class MetricsController extends Controller
     private function getSlowQueryCount(): int
     {
         try {
-            return (int) Cache::store('redis')->get('slow_queries:' . now()->format('Y-m-d-H'), 0);
+            return (int) Cache::store('redis')->get('slow_queries:'.now()->format('Y-m-d-H'), 0);
         } catch (\Throwable) {
             return 0;
         }
