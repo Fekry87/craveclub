@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axios';
 import { PageHeader } from '../../components/CrudTable';
@@ -203,7 +204,7 @@ function Legend({ color, label }) {
 }
 
 // ── Holiday Dialog ─────────────────────────────────────────
-function HolidayDialog({ date, onConfirm, onCancel, hasSession }) {
+function HolidayDialog({ date, onConfirm, onCancel, hasSession, t }) {
   const [reason, setReason] = useState('');
   return (
     <div style={overlayStyle}>
@@ -222,8 +223,8 @@ function HolidayDialog({ date, onConfirm, onCancel, hasSession }) {
           style={inputStyle}
         />
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-          <button type="button" onClick={onCancel} style={cancelBtnStyle}>Cancel</button>
-          <button type="button" onClick={() => onConfirm(reason)} style={confirmBtnStyle}>Confirm</button>
+          <button type="button" onClick={onCancel} style={cancelBtnStyle}>{t('actions.cancel')}</button>
+          <button type="button" onClick={() => onConfirm(reason)} style={confirmBtnStyle}>{t('actions.confirm')}</button>
         </div>
       </div>
     </div>
@@ -232,6 +233,7 @@ function HolidayDialog({ date, onConfirm, onCancel, hasSession }) {
 
 // ── Main Page ──────────────────────────────────────────────
 export default function ScheduleBuilderPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -513,6 +515,7 @@ export default function ScheduleBuilderPage() {
           hasSession={holidayDialog.hasSession}
           onConfirm={handleAddHoliday}
           onCancel={() => setHolidayDialog(null)}
+          t={t}
         />
       )}
 
@@ -686,7 +689,7 @@ export default function ScheduleBuilderPage() {
                     color: '#34d399',
                   }}
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? t('loading.saving') : t('actions.saveChanges')}
                 </button>
                 <button
                   type="button"
@@ -810,7 +813,7 @@ export default function ScheduleBuilderPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8' }}>
             <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.08)', borderTopColor: '#22d3ee', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
-            <div style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Loading...</div>
+            <div style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{t('loading.default')}</div>
           </div>
         ) : schedules.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>

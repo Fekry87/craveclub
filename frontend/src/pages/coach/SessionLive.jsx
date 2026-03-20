@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 
@@ -40,6 +41,7 @@ function ElapsedTimer({ startedAt }) {
 }
 
 export default function SessionLive() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -430,14 +432,14 @@ export default function SessionLive() {
                 background: saving ? '#64748b' : 'linear-gradient(135deg, #ef4444, #dc2626)',
                 border: 'none', color: '#fff', cursor: saving ? 'wait' : 'pointer',
               }}
-            >{saving ? 'Saving...' : 'Yes, End'}</button>
+            >{saving ? t('loading.saving') : 'Yes, End'}</button>
             <button onClick={() => setShowEndConfirm(false)}
               style={{
                 padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
                 background: 'rgba(51,65,85,0.3)', border: '1px solid rgba(51,65,85,0.3)',
                 color: '#94a3b8', cursor: 'pointer',
               }}
-            >Cancel</button>
+            >{t('actions.cancel')}</button>
           </div>
         )}
       </div>

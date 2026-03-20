@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getOwnBranding, updateOwnBranding, uploadOwnBrandingFile } from '../../api/branding';
 import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
 
@@ -210,6 +211,7 @@ function SectionHeader({ color, icon, title, subtitle }) {
 }
 
 export default function ClubBrandingPage() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -323,7 +325,7 @@ export default function ClubBrandingPage() {
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
             <path d="M17 21v-8H7v8M7 3v5h8" />
           </svg>
-          {saving ? 'Saving...' : 'Save Branding'}
+          {saving ? t('loading.saving') : t('actions.save')}
         </Button>
       </PageHeader>
 

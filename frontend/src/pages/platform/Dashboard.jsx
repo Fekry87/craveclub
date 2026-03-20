@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarColor } from '../../components/CrudTable';
@@ -67,6 +68,7 @@ function ClubCard({ club, index }) {
 }
 
 export default function PlatformDashboard() {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState(null);
   const { user } = useAuth();
   useEffect(() => { api.get('/platform/metrics').then(r => setMetrics(r.data)).catch(() => {}); }, []);
@@ -75,7 +77,7 @@ export default function PlatformDashboard() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
       <div style={{ textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
       </div>
     </div>
   );

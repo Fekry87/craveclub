@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_CONFIG = {
   Scheduled: { bg: 'rgba(56,189,248,0.08)', border: 'rgba(56,189,248,0.15)', color: '#38bdf8', gradient: 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.03) 100%)' },
@@ -723,6 +724,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
 
 /* ─── Main Component ─────────────────────────────────────────── */
 export default function CoachSessions() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sessions, setSessions] = useState([]);
@@ -819,12 +821,12 @@ export default function CoachSessions() {
   if (showModal) {
     return (
       <FormPage
-        title={editId ? 'Edit Session' : 'New Session'}
+        title={editId ? t('sessions.editSession') : t('sessions.newSession')}
         onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
       >
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-          <FormField label="Group"><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={(Array.isArray(groups) ? groups : []).map(g => ({ value: g.id, label: g.name }))} /></FormField>
+          <FormField label={t('sessions.group')}><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={(Array.isArray(groups) ? groups : []).map(g => ({ value: g.id, label: g.name }))} /></FormField>
           <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={SESSION_TYPES.map(t => ({ value: t, label: t }))} /></FormField>
         </div>
         <FormField label="Title (optional)"><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Speed Day, Butterfly Focus" /></FormField>
@@ -912,10 +914,10 @@ export default function CoachSessions() {
   return (
     <div>
       {/* Page header */}
-      <PageHeader title="Sessions">
+      <PageHeader title={t('sessions.title')}>
         <Button onClick={() => { setEditId(null); resetForm(); setSaveError(''); setShowModal(true); }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          New Session
+          {t('sessions.newSession')}
         </Button>
       </PageHeader>
 

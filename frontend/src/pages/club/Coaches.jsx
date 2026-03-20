@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
 
@@ -29,7 +30,7 @@ function getInitials(name) {
   return name.charAt(0).toUpperCase();
 }
 
-function CoachCard({ coach, onEdit, onDelete, index }) {
+function CoachCard({ coach, onEdit, onDelete, index, t }) {
   const name = coach.user?.name || 'Unknown';
   const email = coach.user?.email || '';
   const color = getAvatarColor(name);
@@ -179,7 +180,7 @@ function CoachCard({ coach, onEdit, onDelete, index }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit
+            {t('actions.edit')}
           </button>
           <button
             onClick={() => onDelete(coach)}
@@ -199,7 +200,7 @@ function CoachCard({ coach, onEdit, onDelete, index }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
-            Delete
+            {t('actions.delete')}
           </button>
         </div>
       </div>
@@ -208,6 +209,7 @@ function CoachCard({ coach, onEdit, onDelete, index }) {
 }
 
 export default function Coaches() {
+  const { t } = useTranslation();
   const [coaches, setCoaches] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -236,19 +238,19 @@ export default function Coaches() {
 
   if (showModal) {
     return (
-      <FormPage title={editId ? 'Edit Coach' : 'New Coach'} onBack={closeForm}
+      <FormPage title={editId ? t('coaches.editCoach') : t('coaches.newCoach')} onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
-        <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
+        <FormField label={t('coaches.name')}><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
         {!editId && <>
-          <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
-          <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
+          <FormField label={t('coaches.email')}><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
+          <FormField label={t('coaches.password')}><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
         </>}
-        <FormField label="Specialization"><Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} /></FormField>
-        <FormField label="Phone"><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FormField>
-        <FormField label="Bio"><TextArea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></FormField>
+        <FormField label={t('coaches.specialization')}><Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} /></FormField>
+        <FormField label={t('coaches.phone')}><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FormField>
+        <FormField label={t('coaches.bio')}><TextArea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></FormField>
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
-          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
         </FormPageActions>
       </FormPage>
     );
@@ -256,7 +258,7 @@ export default function Coaches() {
 
   return (
     <div>
-      <PageHeader title="Coaches" search={search} onSearch={setSearch} searchPlaceholder="Search coaches...">
+      <PageHeader title={t('coaches.title')} search={search} onSearch={setSearch} searchPlaceholder={t('coaches.searchPlaceholder')}>
         <Button onClick={() => {
           setEditId(null);
           setForm({ name: '', email: '', password: '', bio: '', specialization: '', phone: '' });
@@ -265,7 +267,7 @@ export default function Coaches() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          New Coach
+          {t('coaches.newCoach')}
         </Button>
       </PageHeader>
 
@@ -300,6 +302,7 @@ export default function Coaches() {
               index={i}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              t={t}
             />
           ))}
         </div>
@@ -322,8 +325,8 @@ export default function Coaches() {
               <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No coaches found</div>
-          <div style={{ color: '#475569', fontSize: 13 }}>Add your first coach to get started</div>
+          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('coaches.noCoaches')}</div>
+          <div style={{ color: '#475569', fontSize: 13 }}>{t('coaches.noCoachesHint')}</div>
         </div>
       )}
     </div>

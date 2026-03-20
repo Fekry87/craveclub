@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import WizardLayout from '../components/WizardLayout';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 import { FormField, TextArea } from '../../../components/ui/FormControls';
@@ -8,6 +9,7 @@ const FITNESS_OPTIONS = ['excellent', 'good', 'average', 'beginner'];
 
 export default function Step2_PhysicalInfo() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { state, dispatch } = useRegistration();
 
   // ── Local form state (pre-fill from context if navigating back) ──
@@ -262,7 +264,7 @@ export default function Step2_PhysicalInfo() {
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          Continue
+          {t('actions.next')}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7" />

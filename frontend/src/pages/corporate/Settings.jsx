@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 const colorPresets = ['#8b5cf6','#a78bfa','#6366f1','#22d3ee','#06b6d4','#2dd4bf','#10b981','#f472b6','#f43f5e','#fb923c','#fbbf24','#38bdf8'];
 
@@ -29,6 +30,7 @@ function ColorPicker({ value, onChange }) {
 }
 
 export default function CorporateSettings() {
+  const { t } = useTranslation();
   const { corporate, checkAuth } = useAuth();
   const [form, setForm] = useState({
     platform_name: '',
@@ -63,7 +65,7 @@ export default function CorporateSettings() {
 
   return (
     <div>
-      <PageHeader title="Platform Settings" />
+      <PageHeader title={t('settings.platformSettings')} />
 
       <div style={{ maxWidth: 640 }}>
         {/* Platform Identity */}
@@ -114,12 +116,12 @@ export default function CorporateSettings() {
         {/* Save */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Settings'}
+            {saving ? t('loading.saving') : t('actions.save')}
           </Button>
           {saved && (
             <span style={{ color: '#34d399', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, animation: 'fadeInUp 0.3s ease-out' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
-              Settings saved
+              {t('settings.saved')}
             </span>
           )}
         </div>

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSportModule } from '../../contexts/SportModuleContext';
 import { getClubSportModules } from '../../api/clubSportModules';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 export default function SportModuleDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { setSport } = useSportModule();
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ export default function SportModuleDashboard() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-primary-dim)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
         </div>
       </div>
     );

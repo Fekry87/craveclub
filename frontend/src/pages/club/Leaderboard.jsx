@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { FormField, Input, Button, PageHeader, Modal, useIsMobile } from '../../components/CrudTable';
 
@@ -93,6 +94,7 @@ function SaveToast({ show, message }) {
 const starLabels = ['Needs Work', 'Fair', 'Good', 'Great', 'Excellent'];
 
 export default function Leaderboard() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState(null);
   const [tiers, setTiers] = useState([]);
   const [overview, setOverview] = useState(null);
@@ -878,9 +880,9 @@ export default function Leaderboard() {
                   color: '#94a3b8',
                   transition: 'all 0.2s ease',
                 }}
-              >Cancel</button>
+              >{t('actions.cancel')}</button>
               <Button onClick={handleSaveTier}>
-                {tierModal.mode === 'add' ? 'Add Tier' : 'Save Changes'}
+                {tierModal.mode === 'add' ? 'Add Tier' : t('actions.saveChanges')}
               </Button>
             </div>
           </div>

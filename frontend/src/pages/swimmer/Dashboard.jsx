@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 /* ───── Welcome Hero ───── */
 function WelcomeHero({ user, data }) {
@@ -356,6 +357,7 @@ function EvaluationCard({ evaluation, index }) {
    Main Dashboard (merged with Stats)
    ═══════════════════════════════════════════ */
 export default function SwimmerDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -368,7 +370,7 @@ export default function SwimmerDashboard() {
           <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(56,189,248,0.2)" strokeWidth="3" />
           <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
       </div>
     </div>
   );
@@ -411,14 +413,14 @@ export default function SwimmerDashboard() {
           <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
-          <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Upcoming Sessions</h2>
+          <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>{t('dashboard.upcomingSessions')}</h2>
           <div style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 8, background: 'rgba(56,189,248,0.06)', color: '#64748b', fontSize: 12, fontWeight: 500 }}>{data.upcoming_sessions?.length || 0} scheduled</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {data.upcoming_sessions?.length > 0 ? data.upcoming_sessions.map((s, i) => <SessionCard key={s.id} session={s} index={i} />) : (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#475569' }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 10 }}><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>No upcoming sessions</div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.noUpcomingSessions')}</div>
             </div>
           )}
         </div>
@@ -503,7 +505,7 @@ export default function SwimmerDashboard() {
             {data.recent_evaluations?.length > 0 ? data.recent_evaluations.map((e, i) => <EvaluationCard key={e.id} evaluation={e} index={i} />) : (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#475569' }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 10 }}><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>No evaluations yet</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>{t('empty.noData')}</div>
               </div>
             )}
           </div>

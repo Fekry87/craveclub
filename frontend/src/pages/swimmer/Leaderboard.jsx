@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../api/axios';
 import { PageHeader, useIsMobile } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 /* ═══ Animated counter ═══ */
 function AnimatedNumber({ value, duration = 1200 }) {
@@ -270,6 +271,7 @@ function RankRow({ entry, index = 0, isMobile }) {
    MAIN PAGE
    ═══════════════════════════════════════════════════════════ */
 export default function SwimmerLeaderboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const isMobile = useIsMobile();
 
@@ -282,7 +284,7 @@ export default function SwimmerLeaderboard() {
           <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(56,189,248,0.2)" strokeWidth="3" />
           <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading leaderboard...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
       </div>
     </div>
   );
@@ -308,7 +310,7 @@ export default function SwimmerLeaderboard() {
   return (
     <div>
       {/* ══════════ PAGE HEADER ══════════ */}
-      <PageHeader title="Leaderboard" />
+      <PageHeader title={t('leaderboard.title')} />
 
       {/* ══════════ ROW 1: TOP 3 PODIUM (left) + MY PROFILE (right) ══════════ */}
       {top5.length > 0 && (

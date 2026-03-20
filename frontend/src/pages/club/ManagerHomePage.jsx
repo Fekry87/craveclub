@@ -8,6 +8,8 @@ import { useIsMobile } from '../../components/ui/hooks';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SportCard } from './SportModuleDashboard';
 import { NotificationBell } from '../../components/Layout';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 /* ─────── Card Shell (same as Dashboard.jsx) ─────── */
 function DashCard({ children, delay = 0, style: extraStyle }) {
@@ -42,6 +44,7 @@ function DashCard({ children, delay = 0, style: extraStyle }) {
 /*   Manager Home Page — Full Screen (No Sidebar)   */
 /* ═════════════════════════════════════════════════ */
 export default function ManagerHomePage() {
+  const { t } = useTranslation();
   const [modules, setModules] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export default function ManagerHomePage() {
       .then(data => setModules(Array.isArray(data) ? data : []))
       .catch(err => {
         console.error('[ManagerHome] Load failed:', err.message);
-        setError('Failed to load sport modules');
+        setError(t('errors.generic'));
       })
       .finally(() => setLoading(false));
   };
@@ -77,7 +80,7 @@ export default function ManagerHomePage() {
 
   /* ── Greeting ── */
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const greeting = hour < 12 ? t('dashboard.goodMorning') : hour < 17 ? t('dashboard.goodAfternoon') : t('dashboard.goodEvening');
   const firstName = user?.name?.split(' ')[0] || 'Manager';
   const clubName = user?.club?.name || '';
   const clubLogo = user?.club?.logo_url;
@@ -96,7 +99,7 @@ export default function ManagerHomePage() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
         </div>
       </div>
     );
@@ -129,7 +132,7 @@ export default function ManagerHomePage() {
               fontFamily: "'DM Sans', sans-serif",
             }}
           >
-            Retry
+            {t('actions.back')}
           </button>
         </div>
       </div>
@@ -184,12 +187,13 @@ export default function ManagerHomePage() {
             <div style={{
               color: '#475569', fontSize: 10, fontWeight: 500,
               textTransform: 'uppercase', letterSpacing: '0.05em',
-            }}>Club Portal</div>
+            }}>{t('club.clubPortal')}</div>
           </div>
         </div>
 
         {/* Right: Notification bell + Sign out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LanguageSwitcher />
           <NotificationBell navigate={navigate} />
           <button
             type="button"
@@ -215,7 +219,7 @@ export default function ManagerHomePage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
-            {!isMobile && 'Sign Out'}
+            {!isMobile && t('nav.signOut')}
           </button>
         </div>
       </header>
@@ -249,7 +253,7 @@ export default function ManagerHomePage() {
                 {greeting}, <span style={{ color: '#22d3ee' }}>{firstName}</span>
               </h1>
               <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
-                Here's your club overview
+                {t('dashboard.subtitle')}
               </p>
             </div>
           </div>
@@ -265,8 +269,8 @@ export default function ManagerHomePage() {
                     <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
                   </svg>
                 }
-                title="No sport modules activated"
-                description="Contact management to activate sport modules"
+                title={t('empty.noData')}
+                description={t('empty.itemsWillAppear')}
               />
             </DashCard>
           ) : sportModules.length === 1 ? (

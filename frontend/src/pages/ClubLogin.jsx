@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import api, { getStoredToken } from '../api/axios';
 
@@ -102,6 +103,7 @@ export default function ClubLogin() {
   const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const rawPrimary = club?.primary_color || club?.theme_color || '';
   const primary = rawPrimary ? (rawPrimary.startsWith('#') ? rawPrimary : `#${rawPrimary}`) : '#22d3ee';
@@ -133,7 +135,7 @@ export default function ClubLogin() {
       setAlreadyLoggedIn(false);
       navigate(roleRedirects[user.role] || '/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -151,9 +153,9 @@ export default function ClubLogin() {
           <circle cx="12" cy="12" r="10" />
           <path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01" />
         </svg>
-        <h2 style={{ fontFamily: "'Outfit', sans-serif", color: '#f1f5f9', margin: 0, fontSize: 24 }}>Club not found</h2>
+        <h2 style={{ fontFamily: "'Outfit', sans-serif", color: '#f1f5f9', margin: 0, fontSize: 24 }}>{t('club.notFound')}</h2>
         <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
-          The club <strong style={{ color: '#94a3b8' }}>"{slug}"</strong> doesn't exist
+          {t('club.notFoundDesc', { slug })}
         </p>
         <Link to="/login" style={{
           marginTop: 8, padding: '10px 24px', background: 'rgba(139,92,246,0.15)',
@@ -161,7 +163,7 @@ export default function ClubLogin() {
           color: '#a78bfa', textDecoration: 'none', fontSize: 14, fontWeight: 600,
           transition: 'all 0.2s',
         }}>
-          Go to Corporate Login
+          {t('actions.goCorporateLogin')}
         </Link>
       </div>
     );
@@ -178,7 +180,7 @@ export default function ClubLogin() {
           <circle cx="9" cy="9" r="7" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" fill="none" />
           <path d="M9 2a7 7 0 0 1 7 7" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         </svg>
-        <span style={{ color: '#64748b', fontSize: 13 }}>Loading club...</span>
+        <span style={{ color: '#64748b', fontSize: 13 }}>{t('club.loadingClub')}</span>
       </div>
     );
   }
@@ -211,9 +213,9 @@ export default function ClubLogin() {
           </div>
 
           <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2 }}>
-            Welcome back
+            {t('auth.welcomeBack')}
           </h1>
-          <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>Sign in to your club portal</p>
+          <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>{t('auth.signInClubPortal')}</p>
 
           {renderForm()}
           {renderDemoAccounts()}
@@ -278,14 +280,14 @@ export default function ClubLogin() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="2" strokeLinecap="round">
               <path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18C23 14 25.5 20 28 17" />
             </svg>
-            <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>Club Portal</span>
+            <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>{t('club.clubPortal')}</span>
           </div>
 
           <h1 style={{
             fontFamily: "'Outfit', sans-serif", fontSize: 44, fontWeight: 800,
             color: '#f1f5f9', margin: 0, lineHeight: 1.15, letterSpacing: '-0.03em',
           }}>
-            Welcome to{' '}
+            {t('club.welcomeTo')}{' '}
             <span style={{
               background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
@@ -321,7 +323,7 @@ export default function ClubLogin() {
                   </svg>
                 </div>
                 <div>
-                  <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>Email</div>
+                  <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>{t('auth.emailAddress')}</div>
                   <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.contact_email}</div>
                 </div>
               </div>
@@ -338,7 +340,7 @@ export default function ClubLogin() {
                   </svg>
                 </div>
                 <div>
-                  <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>Phone</div>
+                  <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>{t('coaches.phone')}</div>
                   <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.contact_phone}</div>
                 </div>
               </div>
@@ -371,12 +373,12 @@ export default function ClubLogin() {
           <h2 style={{
             fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 700,
             color: '#f1f5f9', margin: 0, letterSpacing: '-0.01em',
-          }}>Welcome back</h2>
+          }}>{t('auth.welcomeBack')}</h2>
           <p style={{
             color: '#64748b', fontSize: 13, marginTop: 4, marginBottom: 28,
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            Sign in to your {club.name} portal
+            {t('auth.signInToPortal', { name: club.name })}
           </p>
 
           {renderForm()}
@@ -397,7 +399,7 @@ export default function ClubLogin() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
             animation: 'fadeInUp 0.3s ease-out',
           }}>
-            <span style={{ color: '#94dbea', fontSize: 12, fontWeight: 500 }}>You have an active session</span>
+            <span style={{ color: '#94dbea', fontSize: 12, fontWeight: 500 }}>{t('auth.activeSession')}</span>
             <button type="button" onClick={() => navigate('/club')}
               style={{
                 background: `${primary}20`, border: `1px solid ${primary}33`,
@@ -405,7 +407,7 @@ export default function ClubLogin() {
                 fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                 fontFamily: "'DM Sans', sans-serif",
               }}>
-              Go to Dashboard
+              {t('actions.goToDashboard')}
             </button>
           </div>
         )}
@@ -426,8 +428,8 @@ export default function ClubLogin() {
         )}
 
         {[
-          { key: 'email', label: 'Email address', placeholder: 'you@example.com', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'email' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg> },
-          { key: 'password', label: 'Password', placeholder: 'Enter your password', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'password' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> },
+          { key: 'email', label: t('auth.emailAddress'), placeholder: 'you@example.com', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'email' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg> },
+          { key: 'password', label: t('auth.password'), placeholder: t('auth.enterPassword'), icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={focusedField === 'password' ? primary : '#475569'} strokeWidth="1.8" strokeLinecap="round" style={{ transition: 'stroke 0.2s', flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> },
         ].map(field => (
           <div key={field.key} style={{ marginBottom: field.key === 'email' ? 16 : 24 }}>
             <label style={{
@@ -480,11 +482,11 @@ export default function ClubLogin() {
                 <circle cx="9" cy="9" r="7" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" fill="none" />
                 <path d="M9 2a7 7 0 0 1 7 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
               </svg>
-              Signing in...
+              {t('auth.signingIn')}
             </>
           ) : (
             <>
-              Sign in
+              {t('auth.signIn')}
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -500,16 +502,16 @@ export default function ClubLogin() {
   function renderDemoAccounts() {
     const demoSlug = slug?.replace(/-/g, '');
     const accounts = [
-      { label: 'Manager', email: `manager@${demoSlug}.com` },
-      { label: 'Coach', email: `coach1@${demoSlug}.com` },
-      { label: 'Swimmer', email: `swimmer1@${demoSlug}.com` },
+      { label: t('auth.manager'), email: `manager@${demoSlug}.com` },
+      { label: t('auth.coach'), email: `coach1@${demoSlug}.com` },
+      { label: t('auth.swimmer'), email: `swimmer1@${demoSlug}.com` },
     ];
 
     return (
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
-          <span style={{ color: '#475569', fontSize: 11, fontWeight: 500, flexShrink: 0 }}>demo accounts</span>
+          <span style={{ color: '#475569', fontSize: 11, fontWeight: 500, flexShrink: 0 }}>{t('auth.demoAccounts')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
         </div>
 

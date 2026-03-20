@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import WizardLayout from '../components/WizardLayout';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 import { getCoaches, getCoachSchedule } from '../../../api/registration';
@@ -7,6 +8,7 @@ import { Modal } from '../../../components/ui/Modal';
 
 export default function Step7_CoachSelection() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { state, dispatch } = useRegistration();
 
   // ── Coach list ────────────────────────────────────────────────
@@ -524,7 +526,7 @@ export default function Step7_CoachSelection() {
             }
           }}
         >
-          Continue
+          {t('actions.next')}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
@@ -696,7 +698,7 @@ export default function Step7_CoachSelection() {
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            Select This Coach
+            {t('actions.confirm')}
           </button>
         </Modal>
       )}

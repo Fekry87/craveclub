@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_COLORS = {
   Scheduled: { bg: 'rgba(56,189,248,0.08)', border: 'rgba(56,189,248,0.15)', text: '#38bdf8' },
@@ -227,6 +228,7 @@ function LiveSessionBanner({ sessions, navigate }) {
 }
 
 export default function CoachDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -237,7 +239,7 @@ export default function CoachDashboard() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
       <div style={{ textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(45,212,191,0.2)" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#2dd4bf" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
       </div>
     </div>
   );
@@ -271,14 +273,14 @@ export default function CoachDashboard() {
           <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
           </div>
-          <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Upcoming Sessions</h2>
+          <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>{t('dashboard.upcomingSessions')}</h2>
           <div style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 8, background: 'rgba(45,212,191,0.06)', color: '#64748b', fontSize: 12, fontWeight: 500 }}>{data.upcoming_sessions?.length || 0} scheduled</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {data.upcoming_sessions?.length > 0 ? data.upcoming_sessions.map((s, i) => <SessionCard key={s.id} session={s} index={i} navigate={navigate} />) : (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#475569' }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 10 }}><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>No upcoming sessions</div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.noUpcomingSessions')}</div>
             </div>
           )}
         </div>
@@ -296,7 +298,7 @@ export default function CoachDashboard() {
               display: 'inline-flex', alignItems: 'center', gap: 6,
               transition: 'all 0.2s ease', padding: '8px 16px',
             }}>
-            View All Sessions
+            {t('actions.view')} {t('nav.sessions')}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
           </button>
         </div>

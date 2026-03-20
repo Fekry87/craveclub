@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { getBranches, createBranch, updateBranch, deleteBranch, updateBranchFeatures } from '../../api/branches';
 import { PageHeader, Button, FormField, Input, TextArea } from '../../components/CrudTable';
@@ -21,6 +22,7 @@ const emptyForm = {
 };
 
 export default function BranchesPage() {
+  const { t } = useTranslation();
   const { user, features } = useAuth();
   const [branches, setBranches] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -169,7 +171,7 @@ export default function BranchesPage() {
   if (modal === 'create' || modal === 'edit') {
     return (
       <FormPage
-        title={modal === 'create' ? 'New Branch' : `Edit \u2014 ${editBranch?.name}`}
+        title={modal === 'create' ? t('branches.newBranch') : `${t('actions.edit')} \u2014 ${editBranch?.name}`}
         onBack={closeModal}
         icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
@@ -223,9 +225,9 @@ export default function BranchesPage() {
         {error && <ErrorBanner message={error} />}
 
         <FormPageActions>
-          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
           <Button type="button" disabled={saving || !form.name || !form.city || !form.address} onClick={handleSave}>
-            {saving ? 'Saving...' : modal === 'create' ? 'Create Branch' : 'Save Changes'}
+            {saving ? t('loading.saving') : modal === 'create' ? t('actions.create') : t('actions.saveChanges')}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -298,9 +300,9 @@ export default function BranchesPage() {
         {error && <ErrorBanner message={error} />}
 
         <FormPageActions>
-          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
           <Button type="button" disabled={saving} onClick={handleSaveFeatures}>
-            {saving ? 'Saving...' : 'Save Features'}
+            {saving ? t('loading.saving') : t('actions.save')}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -311,7 +313,7 @@ export default function BranchesPage() {
   if (branches === null && !loadError) {
     return (
       <>
-        <PageHeader title="Branches" />
+        <PageHeader title={t('branches.title')} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340, 1fr))', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
@@ -330,7 +332,7 @@ export default function BranchesPage() {
   if (loadError) {
     return (
       <>
-        <PageHeader title="Branches" />
+        <PageHeader title={t('branches.title')} />
         <div style={{
           textAlign: 'center', padding: '60px 20px',
           background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
@@ -349,7 +351,7 @@ export default function BranchesPage() {
   // ── Success ────────────────────────────────────────────
   return (
     <>
-      <PageHeader title="Branches">
+      <PageHeader title={t('branches.title')}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           padding: '6px 14px', borderRadius: 8,
@@ -431,9 +433,9 @@ export default function BranchesPage() {
           {error && <ErrorBanner message={error} />}
 
           <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
             <Button type="button" variant="danger" disabled={saving} onClick={handleDelete}>
-              {saving ? 'Deleting...' : 'Delete Branch'}
+              {saving ? t('loading.deleting') : t('actions.delete')}
             </Button>
           </ModalActions>
         </Modal>

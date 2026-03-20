@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getCoachPerformance, compareCoaches } from '../../api/coachPerformance';
 import { useIsMobile } from '../../components/CrudTable';
 import { PageHeader, Button } from '../../components/CrudTable';
@@ -146,6 +147,7 @@ function CoachCard({ coach, index, selected, onToggle, onClick }) {
 
 /* ─── Compare Modal ─── */
 function CompareModal({ coaches, onClose }) {
+  const { t } = useTranslation();
   const rows = [
     { label: 'Attendance %', key: 'avg_attendance', format: v => `${v}%`, best: 'max' },
     { label: 'Avg Rating', key: 'avg_rating', format: v => v ? `${v}/5` : '—', best: 'max' },
@@ -194,7 +196,7 @@ function CompareModal({ coaches, onClose }) {
         </table>
       </div>
       <ModalActions>
-        <Button variant="secondary" onClick={onClose}>Close</Button>
+        <Button variant="secondary" onClick={onClose}>{t('actions.close')}</Button>
       </ModalActions>
     </Modal>
   );
@@ -213,6 +215,7 @@ const tdStyle = {
 
 /* ─── Main Page ─── */
 export default function CoachPerformancePage() {
+  const { t } = useTranslation();
   const [coaches, setCoaches] = useState(null);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -268,7 +271,7 @@ export default function CoachPerformancePage() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(34,211,238,0.2)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
         </div>
       </div>
     );

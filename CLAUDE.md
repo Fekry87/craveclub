@@ -31,6 +31,7 @@
 - Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
 - Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
 - Deployment: Procfile with 4 processes (web, worker, scheduler, reverb) for Railway.app; see `backend/docs/DEPLOYMENT.md`
+- Procfile web startup order: sed (nginx port) → `config:cache` → `route:cache` → `view:cache` → php-fpm → nginx — config must be cached first since routes/views depend on it
 - Railway Docker build: `backend/railway.json` sets `dockerfilePath: "backend/Dockerfile"` + `dockerContext: "backend"` — build context is `backend/`, so Dockerfile COPY paths are relative to `backend/` (NOT repo root); `.dockerignore` in `backend/` is used
 - Stateless architecture: no user data on local disk; S3 for uploads, Redis for cache/queue, Sanctum tokens for auth — ready for horizontal scaling with zero code changes
 - CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)

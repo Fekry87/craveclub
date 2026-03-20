@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getAnalytics } from '../../api/analytics';
 import { PageHeader, useIsMobile } from '../../components/CrudTable';
 import { StatCard } from '../../components/ui/Cards';
@@ -184,6 +185,7 @@ function CoachTable({ data, isMobile }) {
 
 /* ─────── Main Page ─────── */
 export default function AnalyticsDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const isMobile = useIsMobile();

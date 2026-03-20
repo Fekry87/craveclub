@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getClubSportModules, assignToClub, removeFromClub } from '../../api/sportModules';
 
 export default function ClubSportModulesPanel({ clubId }) {
+  const { t } = useTranslation();
   const [modules, setModules] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(null);
@@ -74,11 +76,11 @@ export default function ClubSportModulesPanel({ clubId }) {
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button type="button" onClick={() => handleRemove(mod.id)} disabled={isLoading}
                       style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1px solid rgba(229,62,62,0.3)', background: 'rgba(229,62,62,0.1)', color: '#fc8181', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      {isLoading ? '...' : 'Confirm'}
+                      {isLoading ? '...' : t('actions.confirm')}
                     </button>
                     <button type="button" onClick={() => setConfirmRemove(null)}
                       style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1px solid rgba(51,65,85,0.3)', background: 'rgba(51,65,85,0.15)', color: '#94a3b8', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Cancel
+                      {t('actions.cancel')}
                     </button>
                   </div>
                 </div>

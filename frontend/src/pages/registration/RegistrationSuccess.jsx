@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function RegistrationSuccess() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // ── Local state ─────────────────────────────────────────────────
   const [swimmerName, setSwimmerName] = useState('');
@@ -216,7 +218,7 @@ export default function RegistrationSuccess() {
               e.currentTarget.style.color = '#94a3b8';
             }}
           >
-            Go to Dashboard
+            {t('actions.goToDashboard')}
           </button>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { PageHeader, Button, getAvatarColor } from '../../components/CrudTable';
 
 export default function SessionDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
@@ -24,7 +26,7 @@ export default function SessionDetailPage() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading session...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
         </div>
       </div>
     );

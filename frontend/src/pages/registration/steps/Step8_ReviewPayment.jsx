@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import WizardLayout from '../components/WizardLayout';
 import { useRegistration, clearRegistrationDraft } from '../../../contexts/RegistrationContext';
 import { submitRegistration } from '../../../api/registration';
@@ -64,6 +65,7 @@ const SummarySection = ({ title, emoji, rows }) => (
 
 export default function Step8_ReviewPayment() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { state, dispatch } = useRegistration();
   const {
     basicProfile, physicalInfo, sportIds,
@@ -341,7 +343,7 @@ export default function Step8_ReviewPayment() {
             }
           }}
         >
-          {saving ? 'Submitting...' : 'Confirm Registration'}
+          {saving ? t('loading.saving') : t('actions.confirm')}
           {!saving && (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

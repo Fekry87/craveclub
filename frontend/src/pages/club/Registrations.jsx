@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { createEcho } from '../../lib/echo';
 import api from '../../api/axios';
@@ -70,6 +71,7 @@ const STATUS_VARIANT = {
 
 /* ─────── Main Page ─────── */
 export default function Registrations() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [registrations, setRegistrations] = useState(null);
   const [error, setError] = useState(null);
@@ -573,7 +575,7 @@ export default function Registrations() {
               )}
 
               <ModalActions>
-                <Button variant="secondary" onClick={closeApproveModal} disabled={actionSaving}>Cancel</Button>
+                <Button variant="secondary" onClick={closeApproveModal} disabled={actionSaving}>{t('actions.cancel')}</Button>
                 <Button
                   variant="primary"
                   onClick={handleApprove}
@@ -646,7 +648,7 @@ export default function Registrations() {
           )}
 
           <ModalActions>
-            <Button variant="secondary" onClick={closeRejectModal} disabled={actionSaving}>Cancel</Button>
+            <Button variant="secondary" onClick={closeRejectModal} disabled={actionSaving}>{t('actions.cancel')}</Button>
             <Button
               variant="danger"
               onClick={handleReject}

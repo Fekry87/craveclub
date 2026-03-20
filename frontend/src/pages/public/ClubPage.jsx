@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 
 export default function ClubPage() {
+  const { t } = useTranslation();
   const { slug } = useParams();
   const [club, setClub] = useState(null);
   const [error, setError] = useState(false);
@@ -20,7 +22,7 @@ export default function ClubPage() {
     </div>
   );
 
-  if (!club) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#94a3b8' }}>Loading...</div>;
+  if (!club) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#94a3b8' }}>{t('loading.default')}</div>;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a' }}>

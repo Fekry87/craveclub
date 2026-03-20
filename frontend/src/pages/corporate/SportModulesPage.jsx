@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { getSportModules, createSportModule, updateSportModule, deleteSportModule } from '../../api/sportModules';
 import { DataTable, FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
+import { useTranslation } from 'react-i18next';
 
 const emptyForm = { name: '', slug: '', description: '', icon: '', color: '#2B6CB0', sort_order: 0, is_active: true };
 
 export default function SportModulesPage() {
+  const { t } = useTranslation();
   const [modules, setModules] = useState([]);
   const [showModal, setShowModal] = useState(null); // 'create' | 'edit' | 'delete'
   const [form, setForm] = useState({ ...emptyForm });
@@ -105,9 +107,9 @@ export default function SportModulesPage() {
         )}
         {error && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.2)', color: '#fc8181', fontSize: 13, marginBottom: 12 }}>{error}</div>}
         <ModalActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button variant="danger" onClick={confirmDelete} disabled={saving || deleteTarget.clubs_count > 0}>
-            {saving ? 'Deleting...' : 'Delete'}
+            {saving ? t('loading.deleting') : t('actions.delete')}
           </Button>
         </ModalActions>
       </Modal>
@@ -118,7 +120,7 @@ export default function SportModulesPage() {
   if (showModal === 'create' || showModal === 'edit') {
     return (
       <FormPage
-        title={editId ? 'Edit Sport Module' : 'New Sport Module'}
+        title={editId ? t('actions.edit') + ' ' + t('corporate.sportModules') : t('actions.create') + ' ' + t('corporate.sportModules')}
         onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" /></svg>}
       >
@@ -165,8 +167,8 @@ export default function SportModulesPage() {
         {error && <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.2)', color: '#fc8181', fontSize: 13 }}>{error}</div>}
 
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : (editId ? 'Update' : 'Create Module')}</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? t('loading.saving') : (editId ? t('actions.update') : t('actions.create'))}</Button>
         </FormPageActions>
       </FormPage>
     );
@@ -174,10 +176,10 @@ export default function SportModulesPage() {
 
   return (
     <div>
-      <PageHeader title="Sport Modules" searchPlaceholder="Search modules...">
+      <PageHeader title={t('corporate.sportModules')} searchPlaceholder={t('actions.search') + '...'}>
         <Button onClick={() => { setEditId(null); setError(null); setForm({ ...emptyForm }); setShowModal('create'); }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          New Module
+          {t('actions.create')}
         </Button>
       </PageHeader>
 

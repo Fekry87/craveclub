@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   getBranch, getAvailableCoaches, getAvailableSwimmers,
   assignCoaches, unassignCoaches, assignSwimmers, unassignSwimmers,
@@ -21,6 +22,7 @@ const TABS = ['Coaches', 'Swimmers', 'Sessions'];
 export default function BranchDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [branch, setBranch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -144,7 +146,7 @@ export default function BranchDetail() {
           display: 'flex', flexDirection: 'column', gap: 4,
         }}>
           {availableLoading ? (
-            <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>Loading...</div>
+            <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>{t('loading.default')}</div>
           ) : filteredAvailable(availableList, search, assignModal).length === 0 ? (
             <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13 }}>
               {availableList.length === 0 ? `No ${assignModal} available to assign` : 'No matches found'}
@@ -228,9 +230,9 @@ export default function BranchDetail() {
         )}
 
         <FormPageActions>
-          <Button type="button" variant="secondary" onClick={closeAssignForm}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={closeAssignForm}>{t('actions.cancel')}</Button>
           <Button type="button" disabled={saving || selected.length === 0} onClick={handleAssign}>
-            {saving ? 'Assigning...' : `Assign ${selected.length} Selected`}
+            {saving ? t('loading.saving') : `Assign ${selected.length} Selected`}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -246,7 +248,7 @@ export default function BranchDetail() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(34,211,238,0.2)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading branch...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
         </div>
       </div>
     );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 
@@ -84,6 +85,7 @@ function StatCard({ label, value, icon, color, delay = 0 }) {
 
 /* ───── Evaluate Modal ───── */
 function EvaluateModal({ swimmer, open, onClose, onSaved }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -131,9 +133,9 @@ function EvaluateModal({ swimmer, open, onClose, onSaved }) {
         <TextArea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any feedback for this swimmer..." rows={3} />
       </FormField>
       <ModalActions>
-        <Button variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button variant="secondary" onClick={onClose}>{t('actions.cancel')}</Button>
         <Button variant="primary" onClick={handleSave} disabled={rating < 1 || saving}>
-          {saving ? 'Saving...' : 'Save Evaluation'}
+          {saving ? t('loading.saving') : 'Save Evaluation'}
         </Button>
       </ModalActions>
     </Modal>
@@ -142,6 +144,7 @@ function EvaluateModal({ swimmer, open, onClose, onSaved }) {
 
 /* ───── Main Page ───── */
 export default function SwimmerDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { PageHeader, useIsMobile } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 /* ───── Star Rating ───── */
 function StarRating({ value, size = 18 }) {
@@ -250,13 +251,14 @@ function EvaluationSummary({ evaluations, isMobile }) {
 
 /* ───── Main Page ───── */
 export default function SwimmerEvaluations() {
+  const { t } = useTranslation();
   const [evaluations, setEvaluations] = useState([]);
   const isMobile = useIsMobile();
   useEffect(() => { api.get('/swimmer/evaluations').then(r => setEvaluations(r.data.data || [])).catch(() => {}); }, []);
 
   return (
     <div>
-      <PageHeader title="My Evaluations" />
+      <PageHeader title={t('nav.myEvaluations')} />
 
       {/* Summary */}
       <EvaluationSummary evaluations={evaluations} isMobile={isMobile} />
@@ -316,8 +318,8 @@ export default function SwimmerEvaluations() {
                   <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
               </div>
-              <div style={{ color: '#64748b', fontSize: 16, fontWeight: 600, fontFamily: "'Outfit', sans-serif", marginBottom: 6 }}>No evaluations yet</div>
-              <div style={{ color: '#475569', fontSize: 13, maxWidth: 280, margin: '0 auto' }}>Your performance evaluations from coaches will appear here after sessions</div>
+              <div style={{ color: '#64748b', fontSize: 16, fontWeight: 600, fontFamily: "'Outfit', sans-serif", marginBottom: 6 }}>{t('empty.noData')}</div>
+              <div style={{ color: '#475569', fontSize: 13, maxWidth: 280, margin: '0 auto' }}>{t('empty.itemsWillAppear')}</div>
             </div>
           )}
         </div>

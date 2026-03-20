@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PageHeader, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 const levelConfig = {
   'Beginner':     { color: '#fbbf24', bg: 'rgba(251,191,36,0.10)', border: 'rgba(251,191,36,0.20)', headerGrad: 'rgba(251,191,36,0.06)' },
@@ -206,6 +207,7 @@ function FilterPill({ label, active, color, count, onClick }) {
 
 /* ───── Main Page ───── */
 export default function CoachSwimmers() {
+  const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
@@ -259,7 +261,7 @@ export default function CoachSwimmers() {
 
   return (
     <div>
-      <PageHeader title="Swimmers" search={search} onSearch={setSearch} searchPlaceholder="Search swimmers..." />
+      <PageHeader title={t('swimmers.title')} search={search} onSearch={setSearch} searchPlaceholder={t('swimmers.searchPlaceholder')} />
 
       {/* Filter bar */}
       {allSwimmers.length > 0 && (
@@ -275,7 +277,7 @@ export default function CoachSwimmers() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#526280" strokeWidth="2" strokeLinecap="round">
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
             </svg>
-            Filter
+            {t('actions.filter')}
           </div>
 
           {/* Group filters */}
@@ -381,12 +383,12 @@ export default function CoachSwimmers() {
           <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.12)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No swimmers match filters</div>
-          <div style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>Try adjusting your filter criteria</div>
+          <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('swimmers.noMatch')}</div>
+          <div style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>{t('swimmers.noMatchHint')}</div>
           <button
             onClick={() => { setFilterGroup('all'); setLevelFilter('All'); }}
             style={{ padding: '8px 20px', borderRadius: 10, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.2)', color: '#2dd4bf', fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}
-          >Clear All Filters</button>
+          >{t('actions.clearAllFilters')}</button>
         </div>
       ) : (
         <div style={{
@@ -398,8 +400,8 @@ export default function CoachSwimmers() {
           <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
-          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No swimmers found</div>
-          <div style={{ color: '#475569', fontSize: 13 }}>No swimmers assigned to your groups yet</div>
+          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('swimmers.noSwimmers')}</div>
+          <div style={{ color: '#475569', fontSize: 13 }}>{t('swimmers.noSwimmersHint')}</div>
         </div>
       )}
     </div>

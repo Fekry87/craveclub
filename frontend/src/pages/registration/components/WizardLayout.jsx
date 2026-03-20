@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import WizardProgressBar from './WizardProgressBar';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 
 export default function WizardLayout({ currentStep, title, subtitle, onBack, children }) {
+  const { t } = useTranslation();
   const { TOTAL_STEPS } = useRegistration();
 
   return (
@@ -32,7 +34,7 @@ export default function WizardLayout({ currentStep, title, subtitle, onBack, chi
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            Back
+            {t('actions.back')}
           </button>
         )}
 

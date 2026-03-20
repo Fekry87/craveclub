@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { DataTable, Modal, ModalActions, FormField, Input, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
 
 export default function Clubs() {
+  const { t } = useTranslation();
   const [clubs, setClubs] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -222,8 +224,8 @@ export default function Clubs() {
             </div>
           )}
           <ModalActions>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>{t('actions.cancel')}</Button>
+            <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
           </ModalActions>
         </Modal>
       )}

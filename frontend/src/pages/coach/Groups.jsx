@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PageHeader, Button, FormPage, FormPageActions, FormField, Input, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 /* ───── Swimmer Chip (for member display & picker) ───── */
 function SwimmerChip({ swimmer, removable, onRemove, small }) {
@@ -146,7 +147,7 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit
+            {t('actions.edit')}
           </button>
           <button
             onClick={() => onDelete(group)}
@@ -164,7 +165,7 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
-            Delete
+            {t('actions.delete')}
           </button>
         </div>
       </div>
@@ -174,6 +175,7 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
 
 /* ───── Main Page ───── */
 export default function CoachGroups() {
+  const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
   const [clubSwimmers, setClubSwimmers] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -265,7 +267,7 @@ export default function CoachGroups() {
 
     return (
       <FormPage
-        title={editGroup ? 'Edit Group' : 'New Group'}
+        title={editGroup ? t('groups.editGroup') : t('groups.newGroup')}
         onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
       >
@@ -373,9 +375,9 @@ export default function CoachGroups() {
         </div>
 
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button variant="primary" onClick={handleSaveGroup} disabled={!form.name.trim() || saving}>
-            {saving ? 'Saving...' : editGroup ? 'Update Group' : 'Create Group'}
+            {saving ? t('loading.saving') : editGroup ? t('actions.update') : t('actions.create')}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -397,10 +399,10 @@ export default function CoachGroups() {
         }}>{toast}</div>
       )}
 
-      <PageHeader title="My Groups">
+      <PageHeader title={t('nav.myGroups')}>
         <Button onClick={openNewForm}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          New Group
+          {t('groups.newGroup')}
         </Button>
       </PageHeader>
 
@@ -436,8 +438,8 @@ export default function CoachGroups() {
               <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No groups yet</div>
-          <div style={{ color: '#475569', fontSize: 13, marginBottom: 20 }}>Create your first training group to organize swimmers</div>
+          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('groups.noGroups')}</div>
+          <div style={{ color: '#475569', fontSize: 13, marginBottom: 20 }}>{t('groups.noGroupsHint')}</div>
           <button
             onClick={openNewForm}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}

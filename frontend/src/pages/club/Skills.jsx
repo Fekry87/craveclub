@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getSkills, createSkill, updateSkill, deleteSkill } from '../../api/skills';
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 
 export default function Skills() {
+  const { t } = useTranslation();
   const [skills, setSkills] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -48,8 +50,8 @@ export default function Skills() {
         <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }]} /></FormField>
         <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
-          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
         </FormPageActions>
       </FormPage>
     );

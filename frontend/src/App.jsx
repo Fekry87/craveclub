@@ -76,11 +76,15 @@ const Step7_CoachSelection = lazy(() => import('./pages/registration/steps/Step7
 const Step8_ReviewPayment = lazy(() => import('./pages/registration/steps/Step8_ReviewPayment'));
 const RegistrationSuccess = lazy(() => import('./pages/registration/RegistrationSuccess'));
 
-const PageLoader = () => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-    <div>Loading...</div>
-  </div>
-);
+const PageLoader = () => {
+  const stored = localStorage.getItem('craveclubs_lang');
+  const text = stored === 'ar' ? 'جارٍ التحميل...' : 'Loading...';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div>{text}</div>
+    </div>
+  );
+};
 
 function RedirectByRole() {
   const { user, loading } = useAuth();

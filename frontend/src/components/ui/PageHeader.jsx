@@ -1,5 +1,6 @@
 import { useIsMobile } from './hooks';
 import { inputStyle, inputFocusProps } from './styles';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_ICONS = {
   'Dashboard': 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4',
@@ -66,9 +67,10 @@ function getPortalAccent() {
 }
 
 export function PageHeader({ title, search, onSearch, searchPlaceholder, children }) {
+  const { t } = useTranslation();
   const accent = getPortalAccent();
   const iconPath = PAGE_ICONS[title];
-  const description = PAGE_DESCRIPTIONS[title];
+  const description = t(`pageDescriptions.${title}`, PAGE_DESCRIPTIONS[title] || '');
   const isSettings = title === 'Club Settings' || title === 'Settings' || title === 'Platform Settings';
   const mobile = useIsMobile();
 

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import WizardLayout from '../components/WizardLayout';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 import api from '../../../api/axios';
 
 export default function Step5_BranchSelection() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { state, dispatch } = useRegistration();
 
   // ── Local state ─────────────────────────────────────────────────
@@ -305,7 +307,7 @@ export default function Step5_BranchSelection() {
             }
           }}
         >
-          Continue
+          {t('actions.next')}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7" />

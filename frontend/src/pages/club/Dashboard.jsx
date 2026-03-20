@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../components/CrudTable';
@@ -7,7 +8,7 @@ import { StatCard } from '../../components/ui/Cards';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 /* ─────── Session Row ─────── */
-function SessionRow({ session, index }) {
+function SessionRow({ session, index, t }) {
   const date = session.date?.split('T')[0];
   const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }) : '';
   const dayNum  = date ? new Date(date + 'T00:00:00').getDate() : '';
@@ -44,7 +45,7 @@ function SessionRow({ session, index }) {
           color: '#f1f5f9', fontSize: 14, fontWeight: 600,
           fontFamily: "'DM Sans', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>{session.group?.name || 'Training Session'}</div>
+        }}>{session.group?.name || t('sessions.trainingSession')}</div>
         {session.location && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 12, marginTop: 2 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -126,6 +127,7 @@ function SectionHeader({ icon, title, badge }) {
 
 /* ─────── Main Dashboard ─────── */
 export default function ClubDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -145,7 +147,7 @@ export default function ClubDashboard() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
         </div>
       </div>
     );
@@ -161,7 +163,7 @@ export default function ClubDashboard() {
 
   /* ── Greeting ── */
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const greeting = hour < 12 ? t('dashboard.goodMorning') : hour < 17 ? t('dashboard.goodAfternoon') : t('dashboard.goodEvening');
   const firstName = user?.name?.split(' ')[0] || 'Manager';
 
   return (
@@ -189,7 +191,7 @@ export default function ClubDashboard() {
               {greeting}, <span style={{ color: '#22d3ee' }}>{firstName}</span>
             </h1>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
-              Here's what's happening in your swim club today
+              {t('dashboard.subtitle')}
             </p>
           </div>
           <button
@@ -209,7 +211,7 @@ export default function ClubDashboard() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            View Full Analytics
+            {t('actions.viewFullAnalytics')}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -224,7 +226,7 @@ export default function ClubDashboard() {
         gap: 14, marginBottom: 22,
       }}>
         <StatCard
-          label="Swimmers"
+          label={t('dashboard.swimmers')}
           value={data.swimmers_count}
           accentColor="#10B981"
           icon={
@@ -234,7 +236,7 @@ export default function ClubDashboard() {
           }
         />
         <StatCard
-          label="Coaches"
+          label={t('dashboard.coaches')}
           value={data.coaches_count}
           accentColor="#3B82F6"
           icon={
@@ -244,7 +246,7 @@ export default function ClubDashboard() {
           }
         />
         <StatCard
-          label="Groups"
+          label={t('dashboard.groups')}
           value={data.groups_count}
           accentColor="#14B8A6"
           icon={
@@ -254,7 +256,7 @@ export default function ClubDashboard() {
           }
         />
         <StatCard
-          label="Sessions"
+          label={t('dashboard.sessions')}
           value={data.sessions_count || 0}
           accentColor="#F59E0B"
           icon={
@@ -280,8 +282,8 @@ export default function ClubDashboard() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
-            title="Attendance"
-            badge="7 days"
+            title={t('dashboard.attendance')}
+            badge={t('dashboard.days7')}
           />
 
           {/* Attendance ring */}
@@ -305,7 +307,7 @@ export default function ClubDashboard() {
                   fontSize: 26, fontWeight: 700, fontFamily: "'DM Sans', sans-serif",
                   color: '#f1f5f9', lineHeight: 1,
                 }}>{attendanceRate}%</div>
-                <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>Rate</div>
+                <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{t('dashboard.rate')}</div>
               </div>
             </div>
 
@@ -324,7 +326,7 @@ export default function ClubDashboard() {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 {attendanceRate >= 60 ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
               </svg>
-              {attendanceRate >= 80 ? 'Excellent' : attendanceRate >= 60 ? 'Good' : 'Needs Work'}
+              {attendanceRate >= 80 ? t('status.excellent') : attendanceRate >= 60 ? t('status.good') : t('status.needsWork')}
             </div>
           </div>
 
@@ -337,9 +339,9 @@ export default function ClubDashboard() {
             border: '1px solid rgba(34,211,238,0.06)',
           }}>
             {[
-              { val: data.groups_count,   lbl: 'Groups',   color: '#14B8A6' },
-              { val: data.swimmers_count, lbl: 'Swimmers',  color: '#10B981' },
-              { val: data.coaches_count,  lbl: 'Coaches',   color: '#3B82F6' },
+              { val: data.groups_count,   lbl: t('dashboard.groups'),   color: '#14B8A6' },
+              { val: data.swimmers_count, lbl: t('dashboard.swimmers'),  color: '#10B981' },
+              { val: data.coaches_count,  lbl: t('dashboard.coaches'),   color: '#3B82F6' },
             ].map((item, i) => (
               <div key={i} style={{
                 textAlign: 'center', padding: '12px 8px',
@@ -366,14 +368,14 @@ export default function ClubDashboard() {
                 <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             }
-            title="Upcoming Sessions"
-            badge={`${data.upcoming_sessions?.length || 0} scheduled`}
+            title={t('dashboard.upcomingSessions')}
+            badge={t('dashboard.scheduled', { count: data.upcoming_sessions?.length || 0 })}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.upcoming_sessions?.length > 0 ? (
               data.upcoming_sessions.map((s, i) => (
-                <SessionRow key={s.id} session={s} index={i} />
+                <SessionRow key={s.id} session={s} index={i} t={t} />
               ))
             ) : (
               <EmptyState
@@ -382,8 +384,8 @@ export default function ClubDashboard() {
                     <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 }
-                title="No upcoming sessions"
-                description="Schedule sessions to see them here"
+                title={t('dashboard.noUpcomingSessions')}
+                description={t('dashboard.scheduleSessionsHint')}
               />
             )}
           </div>
@@ -397,8 +399,8 @@ export default function ClubDashboard() {
                 <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             }
-            title="Top Swimmers"
-            badge="XP Leaderboard"
+            title={t('dashboard.topSwimmers')}
+            badge={t('dashboard.xpLeaderboard')}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -458,8 +460,8 @@ export default function ClubDashboard() {
                     <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
                 }
-                title="No XP data yet"
-                description="Swimmers earn XP from evaluations"
+                title={t('dashboard.noXpData')}
+                description={t('dashboard.xpFromEvals')}
               />
             )}
           </div>

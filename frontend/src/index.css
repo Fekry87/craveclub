@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 *, *::before, *::after {
   margin: 0;
@@ -470,4 +471,55 @@ input[type="checkbox"] {
   .sidebar-overlay {
     display: none !important;
   }
+}
+
+/* ─── RTL Support ─── */
+html[dir="rtl"] body {
+  font-family: 'IBM Plex Sans Arabic', 'DM Sans', sans-serif;
+}
+
+html[dir="rtl"] .outfit-font,
+html[dir="rtl"] [style*="Outfit"] {
+  font-family: 'IBM Plex Sans Arabic', 'Outfit', sans-serif;
+}
+
+html[dir="rtl"] .sidebar {
+  border-right: none;
+  border-left: 1px solid rgba(34,211,238,0.08);
+}
+
+html[dir="rtl"] .nav-link {
+  direction: rtl;
+}
+
+html[dir="rtl"] .nav-link:hover {
+  transform: translateX(-4px);
+}
+
+html[dir="rtl"] .nav-link.active-nav::before {
+  left: auto;
+  right: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+/* Flip chevron/arrow icons in RTL */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Text alignment adjustments */
+html[dir="rtl"] th {
+  text-align: right;
+}
+
+/* Notification dropdown position flip */
+html[dir="rtl"] .notification-dropdown {
+  right: auto;
+  left: 0;
+}
+
+/* Table row hover border flips to right in RTL */
+html[dir="rtl"] .data-table-row:hover td:first-child {
+  border-left: none;
+  border-right: 2px solid rgba(34,211,238,0.4);
 }

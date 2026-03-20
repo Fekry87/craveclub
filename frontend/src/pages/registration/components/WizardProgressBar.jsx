@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 export default function WizardProgressBar({ currentStep, totalSteps }) {
+  const { t } = useTranslation();
   const pct = Math.round((currentStep / totalSteps) * 100);
 
   return (
@@ -12,7 +15,7 @@ export default function WizardProgressBar({ currentStep, totalSteps }) {
           fontSize: 12, fontWeight: 600, color: '#94a3b8',
           letterSpacing: '0.04em', fontFamily: "'DM Sans', sans-serif",
         }}>
-          Step {currentStep} of {totalSteps}
+          {`Step ${currentStep} of ${totalSteps}`}
         </span>
         <span style={{
           fontSize: 12, fontWeight: 600, color: '#22d3ee',

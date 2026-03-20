@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { PageHeader } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 function SessionCard({ session, index }) {
   const date = session.date?.split('T')[0];
@@ -82,12 +83,13 @@ function SessionCard({ session, index }) {
 }
 
 export default function SwimmerSessions() {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
   useEffect(() => { api.get('/swimmer/sessions').then(r => setSessions(r.data.data || [])).catch(() => {}); }, []);
 
   return (
     <div>
-      <PageHeader title="My Sessions" />
+      <PageHeader title={t('nav.mySessions')} />
 
       {sessions.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, animation: 'fadeIn 0.3s ease-out' }}>
@@ -114,8 +116,8 @@ export default function SwimmerSessions() {
               <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
-              <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No sessions yet</div>
-              <div style={{ color: '#475569', fontSize: 13 }}>Your sessions will appear here once scheduled</div>
+              <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('sessions.noSessions')}</div>
+              <div style={{ color: '#475569', fontSize: 13 }}>{t('sessions.noSessionsHint')}</div>
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
 
@@ -12,7 +13,7 @@ function getInitials(firstName, lastName) {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
 }
 
-function SwimmerCard({ swimmer, onEdit, onDelete, index }) {
+function SwimmerCard({ swimmer, onEdit, onDelete, index, t }) {
   const name = `${swimmer.first_name} ${swimmer.last_name}`;
   const color = getAvatarColor(name);
   const initials = getInitials(swimmer.first_name, swimmer.last_name);
@@ -150,7 +151,7 @@ function SwimmerCard({ swimmer, onEdit, onDelete, index }) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round">
                   <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                DOB
+                {t('swimmers.dob')}
               </span>
               <span style={{ color: '#cbd5e1', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{dob}</span>
             </div>
@@ -168,14 +169,14 @@ function SwimmerCard({ swimmer, onEdit, onDelete, index }) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round">
                   <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                Guardian
+                {t('swimmers.guardian')}
               </span>
               <span style={{ color: '#cbd5e1', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{swimmer.guardian_name}</span>
             </div>
           )}
           {!dob && !swimmer.guardian_name && (
             <div style={{ padding: '12px 14px', color: '#475569', fontSize: 12, textAlign: 'center' }}>
-              No additional info
+              {t('swimmers.noAdditionalInfo')}
             </div>
           )}
         </div>
@@ -204,7 +205,7 @@ function SwimmerCard({ swimmer, onEdit, onDelete, index }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit
+            {t('actions.edit')}
           </button>
           <button
             onClick={() => onDelete(swimmer)}
@@ -224,7 +225,7 @@ function SwimmerCard({ swimmer, onEdit, onDelete, index }) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
-            Delete
+            {t('actions.delete')}
           </button>
         </div>
       </div>
@@ -279,6 +280,7 @@ function FilterPill({ label, active, color, count, onClick }) {
 }
 
 export default function Swimmers() {
+  const { t } = useTranslation();
   const [swimmers, setSwimmers] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -335,20 +337,20 @@ export default function Swimmers() {
 
   if (showModal) {
     return (
-      <FormPage title={editId ? 'Edit Swimmer' : 'New Swimmer'} onBack={closeForm}
+      <FormPage title={editId ? t('swimmers.editSwimmer') : t('swimmers.newSwimmer')} onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <FormField label="First Name"><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></FormField>
-          <FormField label="Last Name"><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></FormField>
+          <FormField label={t('swimmers.firstName')}><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></FormField>
+          <FormField label={t('swimmers.lastName')}><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></FormField>
         </div>
-        <FormField label="Level"><Input value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} placeholder="Beginner, Intermediate, Advanced" /></FormField>
-        <FormField label="Date of Birth"><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></FormField>
-        <FormField label="Guardian Name"><Input value={form.guardian_name} onChange={e => setForm({ ...form, guardian_name: e.target.value })} /></FormField>
+        <FormField label={t('swimmers.level')}><Input value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} placeholder={t('swimmers.levelPlaceholder')} /></FormField>
+        <FormField label={t('swimmers.dateOfBirth')}><Input type="date" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} /></FormField>
+        <FormField label={t('swimmers.guardianName')}><Input value={form.guardian_name} onChange={e => setForm({ ...form, guardian_name: e.target.value })} /></FormField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <FormField label="Guardian Phone"><Input value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })} /></FormField>
-          <FormField label="Guardian Email"><Input type="email" value={form.guardian_email} onChange={e => setForm({ ...form, guardian_email: e.target.value })} /></FormField>
+          <FormField label={t('swimmers.guardianPhone')}><Input value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })} /></FormField>
+          <FormField label={t('swimmers.guardianEmail')}><Input type="email" value={form.guardian_email} onChange={e => setForm({ ...form, guardian_email: e.target.value })} /></FormField>
         </div>
-        <FormField label="Medical Notes"><TextArea value={form.medical_notes} onChange={e => setForm({ ...form, medical_notes: e.target.value })} /></FormField>
+        <FormField label={t('swimmers.medicalNotes')}><TextArea value={form.medical_notes} onChange={e => setForm({ ...form, medical_notes: e.target.value })} /></FormField>
         {!editId && (
           <div style={{
             marginTop: 8, padding: '14px 16px', borderRadius: 12,
@@ -356,19 +358,19 @@ export default function Swimmers() {
           }}>
             <label style={{ color: '#94a3b8', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input type="checkbox" checked={form.create_login} onChange={e => setForm({ ...form, create_login: e.target.checked })} />
-              Create login account for swimmer
+              {t('swimmers.createLogin')}
             </label>
             {form.create_login && (
               <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <FormField label="Email"><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
-                <FormField label="Password"><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
+                <FormField label={t('swimmers.email')}><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></FormField>
+                <FormField label={t('swimmers.password')}><Input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></FormField>
               </div>
             )}
           </div>
         )}
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
-          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
         </FormPageActions>
       </FormPage>
     );
@@ -376,10 +378,10 @@ export default function Swimmers() {
 
   return (
     <div>
-      <PageHeader title="Swimmers" search={search} onSearch={setSearch} searchPlaceholder="Search swimmers...">
+      <PageHeader title={t('swimmers.title')} search={search} onSearch={setSearch} searchPlaceholder={t('swimmers.searchPlaceholder')}>
         <Button onClick={() => { setEditId(null); setForm({ first_name: '', last_name: '', level: '', date_of_birth: '', guardian_name: '', guardian_phone: '', guardian_email: '', medical_notes: '', create_login: false, email: '', password: '' }); setShowModal(true); }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          New Swimmer
+          {t('swimmers.newSwimmer')}
         </Button>
       </PageHeader>
 
@@ -400,12 +402,12 @@ export default function Swimmers() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#526280" strokeWidth="2" strokeLinecap="round">
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
             </svg>
-            Filter
+            {t('actions.filter')}
           </div>
 
           {/* Level filters */}
           <FilterPill
-            label="All"
+            label={t('swimmers.all')}
             active={levelFilter === 'All'}
             color="#22d3ee"
             count={swimmers.length}
@@ -434,14 +436,14 @@ export default function Swimmers() {
 
           {/* Login status filters */}
           <FilterPill
-            label="Has Login"
+            label={t('swimmers.hasLogin')}
             active={loginFilter === 'Active'}
             color="#2dd4bf"
             count={loginCount}
             onClick={() => setLoginFilter(loginFilter === 'Active' ? 'All' : 'Active')}
           />
           <FilterPill
-            label="No Login"
+            label={t('swimmers.noLogin')}
             active={loginFilter === 'None'}
             color="#f59e0b"
             count={noLoginCount}
@@ -468,7 +470,7 @@ export default function Swimmers() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
-              Clear
+              {t('actions.clear')}
             </button>
           )}
         </div>
@@ -507,6 +509,7 @@ export default function Swimmers() {
               index={i}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              t={t}
             />
           ))}
         </div>
@@ -529,8 +532,8 @@ export default function Swimmers() {
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
             </svg>
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No swimmers match filters</div>
-          <div style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>Try adjusting your filter criteria</div>
+          <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('swimmers.noMatch')}</div>
+          <div style={{ color: '#475569', fontSize: 13, marginBottom: 16 }}>{t('swimmers.noMatchHint')}</div>
           <button
             onClick={() => { setLevelFilter('All'); setLoginFilter('All'); }}
             style={{
@@ -542,7 +545,7 @@ export default function Swimmers() {
               cursor: 'pointer', transition: 'all 0.2s ease',
             }}
           >
-            Clear All Filters
+            {t('actions.clearAllFilters')}
           </button>
         </div>
       ) : (
@@ -564,8 +567,8 @@ export default function Swimmers() {
               <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>No swimmers found</div>
-          <div style={{ color: '#475569', fontSize: 13 }}>Add your first swimmer to get started</div>
+          <div style={{ color: '#64748b', fontSize: 15, fontWeight: 500, marginBottom: 4 }}>{t('swimmers.noSwimmers')}</div>
+          <div style={{ color: '#475569', fontSize: 13 }}>{t('swimmers.noSwimmersHint')}</div>
         </div>
       )}
 

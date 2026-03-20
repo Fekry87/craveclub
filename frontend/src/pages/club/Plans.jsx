@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
 
 const emptyItem = { sort_order: 0, stroke: '', drill: '', distance: '', reps: '', interval: '', notes: '' };
 
 export default function Plans() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -90,8 +92,8 @@ export default function Plans() {
           ))}
         </div>
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>Cancel</Button>
-          <Button onClick={handleSave}>{editId ? 'Update' : 'Create'}</Button>
+          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
         </FormPageActions>
       </FormPage>
     );

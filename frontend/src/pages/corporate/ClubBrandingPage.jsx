@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getClubBranding, updateClubBranding, uploadBrandingFile } from '../../api/branding';
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 import { FormField, Input, Button } from '../../components/ui/FormControls';
@@ -235,6 +236,7 @@ function SectionHeader({ color, icon, title, subtitle }) {
 }
 
 export default function ClubBrandingPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [club, setClub] = useState(null);
@@ -485,8 +487,8 @@ export default function ClubBrandingPage() {
 
           {/* Save Button */}
           <FormPageActions>
-            <Button variant="secondary" onClick={() => navigate(`/corporate/clubs/${id}`)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Branding'}</Button>
+            <Button variant="secondary" onClick={() => navigate(`/corporate/clubs/${id}`)}>{t('actions.cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? t('loading.saving') : t('actions.save')}</Button>
           </FormPageActions>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getTrainingPlans, createPlan, updatePlan, deletePlan, assignPlanToCoach,
@@ -43,6 +44,7 @@ const emptyForm = {
 };
 
 export default function TrainingPlansPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isManager = user?.role === 'CLUB_MANAGER';
   const isCoach = user?.role === 'COACH';
@@ -478,9 +480,9 @@ export default function TrainingPlansPage() {
         {error && <ErrorBanner message={error} />}
 
         <FormPageActions>
-          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
           <Button type="button" disabled={saving || !form.title} onClick={handleSave}>
-            {saving ? 'Saving...' : modal === 'create' ? 'Create Plan' : 'Save Changes'}
+            {saving ? t('loading.saving') : modal === 'create' ? t('actions.create') : t('actions.saveChanges')}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -647,9 +649,9 @@ export default function TrainingPlansPage() {
           </div>
           {error && <ErrorBanner message={error} />}
           <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
             <Button type="button" variant="danger" disabled={saving} onClick={handleDelete}>
-              {saving ? 'Deleting...' : 'Delete Plan'}
+              {saving ? t('loading.deleting') : t('actions.delete')}
             </Button>
           </ModalActions>
         </Modal>
@@ -678,9 +680,9 @@ export default function TrainingPlansPage() {
           </FormField>
           {error && <ErrorBanner message={error} />}
           <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
             <Button type="button" disabled={saving || !selectedCoach} onClick={handleAssignCoach}>
-              {saving ? 'Assigning...' : 'Assign Coach'}
+              {saving ? t('loading.saving') : 'Assign Coach'}
             </Button>
           </ModalActions>
         </Modal>
@@ -746,9 +748,9 @@ export default function TrainingPlansPage() {
 
           {error && <ErrorBanner message={error} />}
           <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
             <Button type="button" disabled={saving || !assigneeId || !assignStartDate} onClick={handleAssignPlan}>
-              {saving ? 'Assigning...' : 'Assign Plan'}
+              {saving ? t('loading.saving') : 'Assign Plan'}
             </Button>
           </ModalActions>
         </Modal>

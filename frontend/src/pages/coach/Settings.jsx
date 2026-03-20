@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { PageHeader, Button, FormField, Input, TextArea, useIsMobile } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 export default function CoachSettings() {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState({ name: '', bio: '', specialization: '', phone: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,16 +45,16 @@ export default function CoachSettings() {
           <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(45,212,191,0.2)" strokeWidth="3" />
           <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#2dd4bf" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading settings...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
       </div>
     </div>
   );
 
   return (
     <div>
-      <PageHeader title="Settings">
+      <PageHeader title={t('settings.title')}>
         <Button variant="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('loading.saving') : t('actions.saveChanges')}
         </Button>
       </PageHeader>
 

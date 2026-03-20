@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarColor } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 function WelcomeHero({ user, corporate }) {
   const hour = new Date().getHours();
@@ -102,6 +103,7 @@ function ClubCard({ club, index, onClick }) {
 }
 
 export default function CorporateDashboard() {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState(null);
   const { user, corporate } = useAuth();
 
@@ -113,7 +115,7 @@ export default function CorporateDashboard() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
       <div style={{ textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading dashboard...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
       </div>
     </div>
   );
@@ -165,7 +167,7 @@ export default function CorporateDashboard() {
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>
             </div>
-            <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Recent Clubs</h2>
+            <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>{t('corporate.clubs')}</h2>
             <div style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 8, background: 'rgba(34,211,238,0.06)', color: '#64748b', fontSize: 12, fontWeight: 500 }}>{metrics.total_clubs} total</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -173,8 +175,8 @@ export default function CorporateDashboard() {
               <ClubCard key={club.id} club={club} index={i} onClick={() => window.location.href = `/corporate/clubs`} />
             )) : (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>No clubs yet</div>
-                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Create your first club to get started</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>{t('empty.noData')}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{t('empty.itemsWillAppear')}</div>
               </div>
             )}
           </div>

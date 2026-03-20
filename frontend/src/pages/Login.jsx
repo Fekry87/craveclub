@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axios';
 import { getStoredToken } from '../api/axios';
@@ -88,6 +89,7 @@ export default function Login() {
   const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const platformName = branding?.platform_name || 'CraveClubs';
   const primary = branding?.primary_color || '#8b5cf6';
@@ -117,16 +119,16 @@ export default function Login() {
       setAlreadyLoggedIn(false);
       navigate(roleRedirects[user.role] || '/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const stats = [
-    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>, value: 'Multi', label: 'Clubs' },
-    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, value: 'Full', label: 'Control' },
-    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>, value: 'Smart', label: 'Features' },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>, value: t('corporate.multi'), label: t('nav.clubs') },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, value: t('corporate.full'), label: t('corporate.control') },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={primary} strokeWidth="1.8" strokeLinecap="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>, value: t('corporate.smart'), label: t('corporate.features') },
   ];
 
   /* ─── MOBILE ─── */
@@ -163,9 +165,9 @@ export default function Login() {
           </div>
 
           <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2 }}>
-            Corporate Admin
+            {t('auth.corporateAdmin')}
           </h1>
-          <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>Sign in to manage your platform</p>
+          <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>{t('auth.signInManagePlatform')}</p>
 
           {renderForm()}
           {renderDemoAccounts()}
@@ -249,12 +251,12 @@ export default function Login() {
             fontFamily: "'Outfit', sans-serif", fontSize: 44, fontWeight: 800,
             color: '#f1f5f9', margin: 0, lineHeight: 1.15, letterSpacing: '-0.03em',
           }}>
-            Your clubs,{' '}
+            {t('corporate.yourClubs')}{' '}
             <span style={{
               backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-              one platform
+              {t('corporate.onePlatform')}
             </span>
           </h1>
 
@@ -262,7 +264,7 @@ export default function Login() {
             color: '#94a3b8', fontSize: 15, lineHeight: 1.65, marginTop: 16, maxWidth: 420,
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            Create clubs, manage features, control branding, and scale your swimming program — all from a single corporate dashboard.
+            {t('corporate.heroDescription')}
           </p>
 
           {/* Stats */}
@@ -300,7 +302,7 @@ export default function Login() {
           opacity: mounted ? 1 : 0,
           transition: 'opacity 0.5s ease 0.8s',
         }}>
-          Powered by {platformName}
+          {t('corporate.poweredBy', { name: platformName })}
         </div>
       </div>
 
@@ -325,12 +327,12 @@ export default function Login() {
           <h2 style={{
             fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 700,
             color: '#f1f5f9', margin: 0, letterSpacing: '-0.01em',
-          }}>Corporate Admin</h2>
+          }}>{t('auth.corporateAdmin')}</h2>
           <p style={{
             color: '#64748b', fontSize: 13, marginTop: 4, marginBottom: 28,
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            Sign in to manage your platform
+            {t('auth.signInManagePlatform')}
           </p>
 
           {renderForm()}
@@ -351,7 +353,7 @@ export default function Login() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
             animation: 'fadeInUp 0.3s ease-out',
           }}>
-            <span style={{ color: primary, fontSize: 12, fontWeight: 500 }}>You have an active session</span>
+            <span style={{ color: primary, fontSize: 12, fontWeight: 500 }}>{t('auth.activeSession')}</span>
             <button type="button" onClick={() => navigate('/corporate')}
               style={{
                 background: `${primary}1f`, border: `1px solid rgba(51,65,85,0.4)`,
@@ -359,7 +361,7 @@ export default function Login() {
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                 fontFamily: "'DM Sans', sans-serif",
               }}>
-              Go to Dashboard
+              {t('actions.goToDashboard')}
             </button>
           </div>
         )}
@@ -383,7 +385,7 @@ export default function Login() {
         {[
           {
             key: 'email',
-            label: 'Email address',
+            label: t('auth.emailAddress'),
             placeholder: 'admin@craveclubs.com',
             icon: (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -397,7 +399,7 @@ export default function Login() {
           },
           {
             key: 'password',
-            label: 'Password',
+            label: t('auth.password'),
             placeholder: 'Enter your password',
             icon: (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -465,11 +467,11 @@ export default function Login() {
                 <circle cx="9" cy="9" r="7" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" fill="none" />
                 <path d="M9 2a7 7 0 0 1 7 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
               </svg>
-              Signing in...
+              {t('auth.signingIn')}
             </>
           ) : (
             <>
-              Sign in
+              {t('auth.signIn')}
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -487,13 +489,13 @@ export default function Login() {
       <>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0' }}>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
-          <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>demo account</span>
+          <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{t('auth.demoAccount')}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {[
-            { label: 'Platform Admin', email: 'admin@craveclubs.com' },
+            { label: t('auth.platformAdmin'), email: 'admin@craveclubs.com' },
           ].map(acc => (
             <div key={acc.email}
               onClick={() => { setEmail(acc.email); setPassword('Password123!'); setError(''); }}

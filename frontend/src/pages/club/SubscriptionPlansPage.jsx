@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getPlans, createPlan, updatePlan, deletePlan, togglePlan, reorderPlans } from '../../api/subscriptionPlans';
 import { PageHeader, Button, FormField, Input } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
@@ -14,6 +15,7 @@ const emptyForm = {
 };
 
 export default function SubscriptionPlansPage() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [modal, setModal] = useState(null); // 'create' | 'edit' | 'delete'
@@ -164,7 +166,7 @@ export default function SubscriptionPlansPage() {
   if (modal === 'create' || modal === 'edit') {
     return (
       <FormPage
-        title={modal === 'create' ? 'New Plan' : `Edit \u2014 ${editPlan?.name}`}
+        title={modal === 'create' ? t('subscriptions.newPlan') : `${t('actions.edit')} \u2014 ${editPlan?.name}`}
         onBack={closeModal}
         icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
@@ -268,9 +270,9 @@ export default function SubscriptionPlansPage() {
         {error && <ErrorBanner message={error} />}
 
         <FormPageActions>
-          <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
           <Button type="button" disabled={saving || !form.name || !form.price} onClick={handleSave}>
-            {saving ? 'Saving...' : modal === 'create' ? 'Create Plan' : 'Save Changes'}
+            {saving ? t('loading.saving') : modal === 'create' ? t('actions.create') : t('actions.saveChanges')}
           </Button>
         </FormPageActions>
       </FormPage>
@@ -281,7 +283,7 @@ export default function SubscriptionPlansPage() {
   if (loadError === 'feature_disabled') {
     return (
       <>
-        <PageHeader title="Subscription Plans" />
+        <PageHeader title={t('subscriptions.title')} />
         <div style={{
           textAlign: 'center', padding: '60px 20px',
           background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
@@ -301,7 +303,7 @@ export default function SubscriptionPlansPage() {
   if (plans === null && !loadError) {
     return (
       <>
-        <PageHeader title="Subscription Plans" />
+        <PageHeader title={t('subscriptions.title')} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
@@ -320,7 +322,7 @@ export default function SubscriptionPlansPage() {
   if (loadError) {
     return (
       <>
-        <PageHeader title="Subscription Plans" />
+        <PageHeader title={t('subscriptions.title')} />
         <div style={{
           textAlign: 'center', padding: '60px 20px',
           background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
@@ -339,7 +341,7 @@ export default function SubscriptionPlansPage() {
   // ── Main content ─────────────────────────────────────
   return (
     <>
-      <PageHeader title="Subscription Plans">
+      <PageHeader title={t('subscriptions.title')}>
         <Button type="button" onClick={openCreate}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />
@@ -422,9 +424,9 @@ export default function SubscriptionPlansPage() {
           {error && <ErrorBanner message={error} />}
 
           <ModalActions>
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={closeModal}>{t('actions.cancel')}</Button>
             <Button type="button" variant="danger" disabled={saving} onClick={handleDelete}>
-              {saving ? 'Deleting...' : 'Delete Plan'}
+              {saving ? t('loading.deleting') : t('actions.delete')}
             </Button>
           </ModalActions>
         </Modal>

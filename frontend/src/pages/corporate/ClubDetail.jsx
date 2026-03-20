@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { getAvatarColor } from '../../components/CrudTable';
 import ClubSportModulesPanel from './ClubSportModulesPanel';
@@ -45,6 +46,7 @@ function StatBox({ label, value, color }) {
 }
 
 export default function CorporateClubDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [club, setClub] = useState(null);
@@ -66,7 +68,7 @@ export default function CorporateClubDetail() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
       <div style={{ textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>Loading club...</div>
+        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
       </div>
     </div>
   );
@@ -128,7 +130,7 @@ export default function CorporateClubDetail() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           </div>
           <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Feature Controls</h2>
-          {saving && <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 500, marginLeft: 'auto' }}>Saving...</span>}
+          {saving && <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 500, marginLeft: 'auto' }}>{t('loading.saving')}</span>}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {Object.keys(featureLabels).map(key => (

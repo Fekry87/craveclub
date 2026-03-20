@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { FormField, Input, Button, PageHeader, useIsMobile } from '../../components/CrudTable';
+import { useTranslation } from 'react-i18next';
 
 function SettingsSection({ title, icon, children, accentColor, description }) {
   const accent = accentColor || '#22d3ee';
@@ -96,12 +97,13 @@ function SaveToast({ show }) {
       <span style={{
         color: '#2dd4bf', fontSize: '0.875rem', fontWeight: 600,
         fontFamily: "'DM Sans', sans-serif",
-      }}>Settings saved successfully</span>
+      }}>{t('settings.saved')}</span>
     </div>
   );
 }
 
 export default function Settings() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', logo_url: '', theme_color: '', about: '', contact_email: '', contact_phone: '' });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ export default function Settings() {
             <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(34,211,238,0.2)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>Loading settings...</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
         </div>
       </div>
     );
@@ -147,13 +149,13 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="Club Settings">
+      <PageHeader title={t('settings.clubSettings')}>
         <Button onClick={handleSave}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
             <path d="M17 21v-8H7v8M7 3v5h8" />
           </svg>
-          Save Settings
+          {t('actions.save')}
         </Button>
       </PageHeader>
 
