@@ -25,7 +25,7 @@
 - Metrics endpoint exposes `performance.slow_queries_last_hour` from Redis counter
 - Performance indexes: 3 migration passes (000045, 000066, 000067) covering attendance, sessions, evaluations, memberships, notifications, assignments
 - Database backups: `php artisan backup:database` — mysqldump → gzip → upload to Backblaze B2 (`b2` disk); scheduled daily at 02:00 UTC; 30-day retention with auto-prune; Sentry alert on failure; `--dry-run` flag for testing
-- Backup storage: `b2` disk in `filesystems.php` — S3-compatible driver pointing to Backblaze B2; env vars `B2_ACCESS_KEY_ID`, `B2_SECRET_ACCESS_KEY`, `B2_REGION`, `B2_BUCKET`, `B2_ENDPOINT` (falls back to `AWS_*` if not set)
+- Backup storage: `b2` disk in `filesystems.php` — S3-compatible driver pointing to Backblaze B2; reuses same `AWS_*` env vars (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_ENDPOINT, AWS_DEFAULT_REGION)
 - Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
 - Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
 - Job retry config: SendPushNotification (3 tries, 30/60/120s backoff, 30s timeout), SendGuardianSMSJob (3 tries, 60/120/240s backoff, 15s timeout)

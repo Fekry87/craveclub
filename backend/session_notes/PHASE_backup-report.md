@@ -12,10 +12,9 @@ Implemented automated daily MySQL database backups with Backblaze B2 storage, 30
 | File | Change |
 |------|--------|
 | `app/Console/Commands/BackupDatabase.php` | **NEW** — backup command (mysqldump → gzip → B2 upload → prune → alert) |
-| `config/filesystems.php` | Added `b2` disk (S3-compatible, falls back to AWS_* env vars) |
+| `config/filesystems.php` | Added `b2` disk (S3-compatible, reuses existing AWS_* env vars) |
 | `routes/console.php` | Added `backup:database` to scheduler — daily at 02:00 UTC |
 | `Dockerfile` | Added `mysql-client` to Alpine apk install |
-| `.env.example` | Added B2_* env vars (B2_ACCESS_KEY_ID, B2_SECRET_ACCESS_KEY, B2_REGION, B2_BUCKET, B2_ENDPOINT) |
 | `CLAUDE.md` | Documented backup system in Architecture, Common Commands, Key Files, Gotchas |
 
 ## Implementation Details
@@ -37,8 +36,8 @@ Implemented automated daily MySQL database backups with Backblaze B2 storage, 30
 ### B2 Disk Configuration
 
 - S3-compatible driver with `use_path_style_endpoint: true`
-- Dedicated `B2_*` env vars with fallback to `AWS_*` — allows separate B2 credentials without affecting existing S3 config
-- `throw: true` — upload failures propagate to command error handling
+- Reuses existing `AWS_*` env vars (already configured in Railway for B2)
+- No additional env vars needed — AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_ENDPOINT, AWS_DEFAULT_REGION
 
 ### Dockerfile
 
@@ -63,7 +62,7 @@ mysql -h $DB_HOST -u $DB_USER -p $DB_NAME < craveclubs_2026-03-22_02-00-00.sql
 
 ## Production Deployment Checklist
 
-- [ ] Set B2 env vars on Railway: `B2_ACCESS_KEY_ID`, `B2_SECRET_ACCESS_KEY`, `B2_REGION`, `B2_BUCKET`, `B2_ENDPOINT`
+- [x] B2 env vars already set on Railway (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_ENDPOINT, AWS_DEFAULT_REGION)
 - [ ] Deploy (Dockerfile rebuild adds `mysql-client`)
 - [ ] Verify with: `railway run --service web -- php artisan backup:database --dry-run`
 - [ ] Run first real backup: `railway run --service web -- php artisan backup:database`
