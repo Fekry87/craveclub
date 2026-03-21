@@ -11,7 +11,8 @@ RUN apk add --no-cache \
     git \
     curl \
     oniguruma-dev \
-    libxml2-dev
+    libxml2-dev \
+    mysql-client
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \

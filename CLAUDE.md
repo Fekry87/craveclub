@@ -24,6 +24,8 @@
 - Slow query logger: DB::listen in AppServiceProvider logs queries >100ms with SQL, bindings, time_ms, request_id, club_id, URL; also increments Redis counter `slow_queries:YYYY-MM-DD-HH` (graceful if Redis unavailable)
 - Metrics endpoint exposes `performance.slow_queries_last_hour` from Redis counter
 - Performance indexes: 3 migration passes (000045, 000066, 000067) covering attendance, sessions, evaluations, memberships, notifications, assignments
+- Database backups: `php artisan backup:database` — mysqldump → gzip → upload to Backblaze B2 (`b2` disk); scheduled daily at 02:00 UTC; 30-day retention with auto-prune; Sentry alert on failure; `--dry-run` flag for testing
+- Backup storage: `b2` disk in `filesystems.php` — S3-compatible driver pointing to Backblaze B2; env vars `B2_ACCESS_KEY_ID`, `B2_SECRET_ACCESS_KEY`, `B2_REGION`, `B2_BUCKET`, `B2_ENDPOINT` (falls back to `AWS_*` if not set)
 - Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
 - Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
 - Job retry config: SendPushNotification (3 tries, 30/60/120s backoff, 30s timeout), SendGuardianSMSJob (3 tries, 60/120/240s backoff, 15s timeout)
@@ -90,7 +92,14 @@
 - Public coach schedule endpoint transforms raw CoachSchedule records into mobile-expected shape: `{ coach_id, slots: [{ day, start_time, end_time }] }`
 - Registration accepts guardian fields: `guardian_name`, `guardian_phone`, `guardian_email` — nullable, stored on Registration model
 - Session attendance endpoint (`GET /coach/sessions/{id}/attendance`) returns `end_time` and nested `group` object in session data — required by mobile
-- UI Language: English only — all frontend text, backend notification titles/bodies, risk reasons, SMS messages, and seeder data are in English (no Arabic)
+- i18n: Frontend is bilingual (Arabic RTL + English LTR) via i18next + react-i18next; backend notification titles/bodies, risk reasons, SMS messages, and seeder data remain English-only
+- i18n config: `frontend/src/i18n/index.js` — fallbackLng: 'en', localStorage key `craveclubs_lang`, supported: ['ar', 'en']
+- Translation files: `frontend/src/locales/{en,ar}/common.json` — ~200 keys (nav, actions, status, auth, dashboard, forms, empty states, etc.)
+- DirectionProvider: `frontend/src/providers/DirectionProvider.jsx` — sets `document.documentElement.dir` + `lang` + body font; provides `useDirection()` hook returning `{ direction, isRtl }`
+- LanguageSwitcher: `frontend/src/components/LanguageSwitcher.jsx` — globe toggle, compact (icon) and full (icon+text) variants; toggles `i18n.changeLanguage()`
+- RTL font: IBM Plex Sans Arabic (Google Fonts) — applied via CSS `html[dir="rtl"]` rules in index.css
+- Nav labels use translation keys: `allNavItems` and `CLUB_MANAGER_NAV` store key strings (e.g., `'nav.dashboard'`), resolved via `t()` at render time
+- PageLoader (Suspense fallback) reads `localStorage.getItem('craveclubs_lang')` directly since i18n may not be initialized yet
 
 ## Common Commands
 - `cd backend && php artisan test` — run all tests (229 tests)
@@ -104,6 +113,8 @@
 - `RATE_LIMIT_AUTH=10000 php artisan serve` — start server with high rate limit for k6 load testing
 - `k6 run tests/load/scenarios/dashboard.js` — run dashboard load test (50 VUs)
 - `k6 run tests/load/stress.js` — run stress test ramping to 200 VUs
+- `cd backend && php artisan backup:database` — run database backup manually
+- `cd backend && php artisan backup:database --dry-run` — preview backup without executing
 - Demo club slug is `future-academy` — use `/portal/future-academy` to login (manager@futureacademy.com / Password123!)
 
 ## Key Patterns
@@ -153,6 +164,7 @@
 - `backend/config/sentry.php` — Sentry configuration (published via vendor:publish)
 - `backend/database/migrations/2024_01_01_000067_add_performance_indexes_v3.php` — v3 indexes (session+present, session+rating, group+date+status, assignment composites)
 - `backend/docs/EXPLAIN_QUERIES.sql` — EXPLAIN QUERY PLAN reference for verifying index usage on critical queries
+- `backend/app/Console/Commands/BackupDatabase.php` — daily MySQL backup: mysqldump → gzip → B2 upload → 30-day prune → Sentry alert on failure
 - `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
 - `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
 - `Procfile` — Railway process definitions: web, worker, scheduler, reverb
@@ -167,6 +179,11 @@
 - `frontend/src/contexts/RegistrationContext.jsx` — registration wizard state (useReducer + sessionStorage + Outlet)
 - `frontend/src/lib/echo.js` — Laravel Echo instance factory (Reverb broadcaster, uses `crave_club_token`)
 - `frontend/src/components/Layout.jsx` — main layout with sidebar + fixed content header bar (breadcrumb + NotificationBell) + scrollable content area; exports `NotificationBell` component
+- `frontend/src/i18n/index.js` — i18next configuration (LanguageDetector, localStorage, fallback)
+- `frontend/src/locales/en/common.json` — English translation dictionary (~200 keys)
+- `frontend/src/locales/ar/common.json` — Arabic translation dictionary (mirrors English)
+- `frontend/src/providers/DirectionProvider.jsx` — RTL/LTR direction context provider
+- `frontend/src/components/LanguageSwitcher.jsx` — language toggle component (compact/full)
 - `frontend/src/components/ErrorBoundary.jsx` — error boundaries
 - `frontend/src/components/ui/FormControls.jsx` — shared FormField, Button, Input, Select, TextArea components
 - `frontend/src/components/ui/Modal.jsx` — Modal (bottom-sheet on mobile) and ModalActions components
@@ -353,7 +370,9 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `group_memberships` table uses `swimmer_id` column (NOT `swimmer_profile_id`) — FK to `swimmer_profiles.id`
 - SQLite migration rollbacks: must drop unique indexes in a separate `Schema::table()` call before dropping columns — cannot combine in one call
 - CoachSchedule internal slot format is `{ time, is_available, max_capacity }` — public API transforms to `{ coach_id, slots: [{ day, start_time, end_time }] }` for mobile compat; Step7_CoachSelection.jsx transforms this back to `[{ day_of_week, slots: [{ time, is_available }] }]` for display
-- All UI text, notification messages, SMS messages, and risk reason strings must be in English — do NOT use Arabic text anywhere in frontend or backend
+- Backend text (notification titles/bodies, SMS messages, risk reasons, seeder data) must remain in English — i18n is frontend-only
+- When adding new frontend pages/components, use `t('key')` from `useTranslation()` for all user-visible strings — add keys to both `en/common.json` and `ar/common.json`
+- i18n test setup: `frontend/src/test/setup.js` imports `'../i18n'` — without this, `t()` returns raw keys and tests fail on translated text matching
 - Analytics backend→frontend field mapping: `membership_growth[].total` (NOT `.count`), `retention.retention_rate_30d` (NOT `.retention_rate`), `registration_funnel.submitted_30d`/`.approved_30d`/`.rejected_30d`/`.pending_now` (NOT `.submitted`/`.approved`/`.rejected`/`.pending`), `coach_performance[].sessions_30d` (NOT `.sessions_count`)
 - `StatCard` component accepts both `title` and `label` props (`displayTitle = title || label`) — all callers use `label`; extra props like `delta`, `deltaType`, `accentColor` are silently ignored (not rendered)
 - `MiniChart` line chart: SVG uses `preserveAspectRatio="none"` for stretch — data point dots are HTML `<div>` elements (absolutely positioned) NOT SVG circles, to prevent oval distortion
@@ -368,7 +387,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - TrainingSession `effectiveSwimmers` attribute fires a DB query on every access — in loops, compute IDs from pre-loaded relations instead
 - ClubAnalyticsService methods are cached (1hr TTL) — N+1 fixes reduce cold-cache query count from 50+ to 5-8 per endpoint
 - `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
-- Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min) — registered via `Schedule::command()`
+- Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min), backup:database (02:00 UTC) — registered via `Schedule::command()`
 - Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
 - `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
 - Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
