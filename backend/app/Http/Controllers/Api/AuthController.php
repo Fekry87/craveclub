@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CorporateSetting;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,20 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Too many login attempts. Try again in 15 minutes.',
             ], 429);
+        }
+
+        // Check if account is pending deletion (soft-deleted users won't pass Auth::attempt)
+        $pendingUser = User::withTrashed()
+            ->where('email', $request->email)
+            ->whereNotNull('deletion_requested_at')
+            ->first();
+
+        if ($pendingUser && $pendingUser->isPendingDeletion()) {
+            return response()->json([
+                'status' => 'pending_deletion',
+                'days_remaining' => $pendingUser->daysUntilPurge(),
+                'message' => 'Your account is scheduled for deletion. Use the reactivation endpoint to restore it.',
+            ], 403);
         }
 
         if (! Auth::attempt($request->only('email', 'password'))) {

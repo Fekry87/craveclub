@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountDeletionController;
 use App\Http\Controllers\Api\ApiDocController;
 use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\AuthController;
@@ -200,6 +201,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/login', [AuthController::class, 'login']);
     });
 
+    // Account reactivation + deletion status (unauthenticated — user has no token after deletion)
+    Route::post('/account/reactivate', [AccountDeletionController::class, 'reactivate']);
+    Route::get('/account/deletion-status', [AccountDeletionController::class, 'status']);
+
     // Authenticated routes
     Route::middleware(['auth:sanctum', 'throttle:by_user', 'request.log'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -209,6 +214,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/broadcasting/auth', function (Request $request) {
             return Broadcast::auth($request);
         });
+
+        // ── Account deletion (authenticated) ──────────────────
+        Route::post('/account/delete', [AccountDeletionController::class, 'requestDeletion']);
 
         // ── Notifications (all authenticated users) ──────────
         Route::get('/notifications', [NotificationController::class, 'index']);

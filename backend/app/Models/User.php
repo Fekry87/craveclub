@@ -15,6 +15,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'avatar', 'email', 'password', 'role', 'club_id',
+        'deletion_requested_at', 'scheduled_purge_at',
     ];
 
     protected $hidden = [
@@ -27,7 +28,33 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'deletion_requested_at' => 'datetime',
+            'scheduled_purge_at' => 'datetime',
         ];
+    }
+
+    public function scopePendingDeletion($query)
+    {
+        return $query->withTrashed()
+            ->whereNotNull('deletion_requested_at')
+            ->whereNotNull('scheduled_purge_at')
+            ->where('scheduled_purge_at', '>', now());
+    }
+
+    public function isPendingDeletion(): bool
+    {
+        return ! is_null($this->deletion_requested_at)
+            && ! is_null($this->scheduled_purge_at)
+            && $this->scheduled_purge_at->isFuture();
+    }
+
+    public function daysUntilPurge(): int
+    {
+        if (! $this->isPendingDeletion()) {
+            return 0;
+        }
+
+        return (int) now()->diffInDays($this->scheduled_purge_at, false);
     }
 
     public function club()
