@@ -30,12 +30,23 @@ class SwimmerManagementController extends Controller
     public function pendingDeletion(): JsonResponse
     {
         $members = User::withTrashed()
+            ->with(['swimmerProfile:id,user_id,first_name,last_name', 'coachProfile:id,user_id'])
             ->where('club_id', app('current_club_id'))
             ->whereNotNull('deletion_requested_at')
             ->whereNotNull('scheduled_purge_at')
             ->where('scheduled_purge_at', '>', now())
             ->orderBy('scheduled_purge_at', 'asc')
             ->get(['id', 'name', 'email', 'role', 'deletion_requested_at', 'scheduled_purge_at']);
+
+        // Use SwimmerProfile name (authoritative) when available
+        $members->transform(function ($user) {
+            if ($user->swimmerProfile) {
+                $user->name = trim($user->swimmerProfile->first_name.' '.$user->swimmerProfile->last_name);
+            }
+            unset($user->swimmerProfile, $user->coachProfile);
+
+            return $user;
+        });
 
         return response()->json([
             'data' => $members,
