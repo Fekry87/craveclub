@@ -151,7 +151,9 @@
     "swimmerCount_plural": "{{count}} سباحين",
     "filteredCount": "{{filtered}} من {{total}} سباح",
     "filteredCount_plural": "{{filtered}} من {{total}} سباحين",
-    "levelPlaceholder": "مبتدئ، متوسط، متقدم"
+    "levelPlaceholder": "مبتدئ، متوسط، متقدم",
+    "pendingDeletionTitle": "{{count}} عضو مجدول للحذف",
+    "daysLeft": "{{count}} يوم متبقي"
   },
   "coaches": {
     "title": "المدربون",

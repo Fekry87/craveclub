@@ -27,6 +27,22 @@ class SwimmerManagementController extends Controller
         );
     }
 
+    public function pendingDeletion(): JsonResponse
+    {
+        $members = User::withTrashed()
+            ->where('club_id', app('current_club_id'))
+            ->whereNotNull('deletion_requested_at')
+            ->whereNotNull('scheduled_purge_at')
+            ->where('scheduled_purge_at', '>', now())
+            ->orderBy('scheduled_purge_at', 'asc')
+            ->get(['id', 'name', 'email', 'role', 'deletion_requested_at', 'scheduled_purge_at']);
+
+        return response()->json([
+            'data' => $members,
+            'total' => $members->count(),
+        ]);
+    }
+
     public function swimmerIndex(Request $request): JsonResponse
     {
         $query = SwimmerProfile::with('user');

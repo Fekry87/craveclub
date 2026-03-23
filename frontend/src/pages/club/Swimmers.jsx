@@ -287,12 +287,19 @@ export default function Swimmers() {
   const [editId, setEditId] = useState(null);
   const [levelFilter, setLevelFilter] = useState('All');
   const [loginFilter, setLoginFilter] = useState('All');
+  const [pendingDeletion, setPendingDeletion] = useState([]);
   const [form, setForm] = useState({ first_name: '', last_name: '', level: '', date_of_birth: '', guardian_name: '', guardian_phone: '', guardian_email: '', medical_notes: '', create_login: false, email: '', password: '' });
 
   const load = () => api.get('/club/swimmers', { params: { search } })
     .then(r => setSwimmers(r.data.data || []))
     .catch(() => {});
   useEffect(() => { load(); }, [search]);
+
+  useEffect(() => {
+    api.get('/club/members/pending-deletion')
+      .then(r => setPendingDeletion(r.data.data || []))
+      .catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     if (editId) await api.put(`/club/swimmers/${editId}`, form);
@@ -384,6 +391,51 @@ export default function Swimmers() {
           {t('swimmers.newSwimmer')}
         </Button>
       </PageHeader>
+
+      {/* Pending deletion warning */}
+      {pendingDeletion.length > 0 && (
+        <div style={{
+          marginBottom: 20, padding: '16px 20px', borderRadius: 14,
+          background: 'rgba(251,191,36,0.06)',
+          border: '1px solid rgba(251,191,36,0.15)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+            color: '#fbbf24', fontSize: 14, fontWeight: 700,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" />
+            </svg>
+            {t('swimmers.pendingDeletionTitle', { count: pendingDeletion.length })}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {pendingDeletion.map(member => {
+              const daysLeft = Math.max(0, Math.ceil((new Date(member.scheduled_purge_at).getTime() - Date.now()) / 86400000));
+              const isUrgent = daysLeft <= 7;
+              return (
+                <div key={member.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '8px 12px', borderRadius: 8,
+                  background: 'rgba(6,13,31,0.3)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 500 }}>{member.name}</span>
+                    <span style={{ color: '#64748b', fontSize: 12 }}>{member.email}</span>
+                  </div>
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                    background: isUrgent ? 'rgba(239,68,68,0.15)' : 'rgba(251,191,36,0.12)',
+                    color: isUrgent ? '#ef4444' : '#fbbf24',
+                    border: `1px solid ${isUrgent ? 'rgba(239,68,68,0.25)' : 'rgba(251,191,36,0.2)'}`,
+                  }}>
+                    {t('swimmers.daysLeft', { count: daysLeft })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       {swimmers.length > 0 && (

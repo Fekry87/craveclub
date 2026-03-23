@@ -151,7 +151,9 @@
     "swimmerCount_plural": "{{count}} swimmers",
     "filteredCount": "{{filtered}} of {{total}} swimmer",
     "filteredCount_plural": "{{filtered}} of {{total}} swimmers",
-    "levelPlaceholder": "Beginner, Intermediate, Advanced"
+    "levelPlaceholder": "Beginner, Intermediate, Advanced",
+    "pendingDeletionTitle": "{{count}} member(s) scheduled for deletion",
+    "daysLeft": "{{count}} days left"
   },
   "coaches": {
     "title": "Coaches",

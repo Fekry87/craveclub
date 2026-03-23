@@ -294,6 +294,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/coaches/{coach}', [CoachManagementController::class, 'coachUpdate']);
             Route::delete('/coaches/{coach}', [CoachManagementController::class, 'coachDestroy']);
 
+            Route::get('/members/pending-deletion', [SwimmerManagementController::class, 'pendingDeletion']);
             Route::get('/swimmers', [SwimmerManagementController::class, 'swimmerIndex']);
             Route::post('/swimmers', [SwimmerManagementController::class, 'swimmerStore']);
             Route::get('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerShow']);
