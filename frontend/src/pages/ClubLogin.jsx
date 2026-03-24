@@ -243,11 +243,11 @@ export default function ClubLogin() {
           {/* Club branding */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             {club.logo_url ? (
-              <img src={club.logo_url} alt={club.name} style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'cover' }} />
+              <img src={club.logo_url} alt={club.display_name || club.name} style={{ width: 40, height: 40, borderRadius: 12, objectFit: 'cover' }} />
             ) : (
-              <ClubAvatar name={club.name} color={primary} size={40} />
+              <ClubAvatar name={club.display_name || club.name} color={primary} size={40} />
             )}
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>{club.name}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>{club.display_name || club.name}</span>
           </div>
 
           <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2 }}>
@@ -291,14 +291,14 @@ export default function ClubLogin() {
           transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
           {club.logo_url ? (
-            <img src={club.logo_url} alt={club.name} style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', border: `2px solid ${primary}33` }} />
+            <img src={club.logo_url} alt={club.display_name || club.name} style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', border: `2px solid ${primary}33` }} />
           ) : (
-            <ClubAvatar name={club.name} color={primary} size={44} />
+            <ClubAvatar name={club.display_name || club.name} color={primary} size={44} />
           )}
           <span style={{
             fontFamily: "'Outfit', sans-serif", fontSize: 21, fontWeight: 700,
             color: '#f1f5f9', letterSpacing: '-0.01em',
-          }}>{club.name}</span>
+          }}>{club.display_name || club.name}</span>
         </div>
 
         {/* Middle: Hero */}
@@ -416,7 +416,7 @@ export default function ClubLogin() {
             color: '#64748b', fontSize: 13, marginTop: 4, marginBottom: 28,
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            {t('auth.signInToPortal', { name: club.name })}
+            {t('auth.signInToPortal', { name: club.display_name || club.name })}
           </p>
 
           {renderForm()}
