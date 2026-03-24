@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -99,6 +99,19 @@ function RedirectByRole() {
   return <Navigate to={map[user.role] || '/login'} />;
 }
 
+/**
+ * Resolves /:clubSlug — if the slug matches a known app route prefix,
+ * redirect to /. Otherwise treat it as a club slug and render ClubLogin.
+ */
+function ClubSlugResolver() {
+  const { clubSlug } = useParams();
+  const RESERVED = ['login', 'portal', 'clubs', 'corporate', 'platform', 'club', 'coach', 'swimmer'];
+  if (RESERVED.includes(clubSlug?.toLowerCase())) {
+    return <Navigate to="/" replace />;
+  }
+  return <ClubLogin />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -194,6 +207,9 @@ function App() {
             <Route path="/swimmer/sessions" element={<SwimmerSessions />} />
             <Route path="/swimmer/evaluations" element={<FeatureRoute feature="evaluations"><SwimmerEvaluations /></FeatureRoute>} />
           </Route>
+
+          {/* Club-aware login: /:slug → branded login (must be AFTER all named routes) */}
+          <Route path="/:clubSlug" element={<ClubSlugResolver />} />
 
           <Route path="/" element={<RedirectByRole />} />
           <Route path="*" element={<Navigate to="/" />} />

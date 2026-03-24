@@ -69,12 +69,13 @@ api.interceptors.response.use(
       removeToken(scope);
       const path = window.location.pathname;
       // Don't redirect if already on a login page
-      if (!path.startsWith('/login') && !path.startsWith('/portal/')) {
+      const isLoginPage = path === '/login' || path.startsWith('/portal/');
+      if (!isLoginPage) {
         if (scope === 'corporate') {
           window.location.href = '/login';
         } else {
           const slug = getStoredClubSlug();
-          window.location.href = slug ? `/portal/${slug}` : '/login';
+          window.location.href = slug ? `/${slug}` : '/login';
         }
       }
     }

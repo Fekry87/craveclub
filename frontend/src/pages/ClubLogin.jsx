@@ -90,7 +90,9 @@ function ClubAvatar({ name, color, size = 48 }) {
 }
 
 export default function ClubLogin() {
-  const { slug } = useParams();
+  const params = useParams();
+  // Support both /portal/:slug and /:clubSlug routes
+  const slug = params.slug || params.clubSlug;
   const [club, setClub] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [email, setEmail] = useState('');
@@ -105,10 +107,14 @@ export default function ClubLogin() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const rawPrimary = club?.primary_color || club?.theme_color || '';
-  const primary = rawPrimary ? (rawPrimary.startsWith('#') ? rawPrimary : `#${rawPrimary}`) : '#22d3ee';
-  const rawSecondary = club?.secondary_color || '';
-  const secondary = rawSecondary ? (rawSecondary.startsWith('#') ? rawSecondary : `#${rawSecondary}`) : '#06b6d4';
+  /** Normalize color — DB may store with or without '#' prefix */
+  const normalizeColor = (raw, fallback) => {
+    if (!raw) return fallback;
+    return raw.startsWith('#') ? raw : `#${raw}`;
+  };
+
+  const primary = normalizeColor(club?.primary_color || club?.theme_color, '#22d3ee');
+  const secondary = normalizeColor(club?.secondary_color, '#06b6d4');
 
   // Check if already logged in for club scope (no auto-logout!)
   useEffect(() => {
@@ -118,9 +124,41 @@ export default function ClubLogin() {
 
   useEffect(() => {
     setMounted(true);
-    api.get(`/clubs/${slug}`)
-      .then(r => setClub(r.data))
-      .catch(() => setNotFound(true));
+    // Use /branding/:slug for richer data (features, social links, favicon); fall back to /clubs/:slug
+    api.get(`/branding/${slug}`)
+      .then(r => {
+        const b = r.data;
+        setClub({
+          name: b.club_name,
+          display_name: b.display_name,
+          logo_url: b.logo_url,
+          cover_url: b.cover_url,
+          favicon_url: b.favicon_url,
+          primary_color: b.primary_color,
+          secondary_color: b.secondary_color,
+          accent_color: b.accent_color,
+          support_email: b.support_email,
+          support_phone: b.support_phone,
+          social_links: b.social_links,
+          app_name: b.app_name,
+          features: b.features,
+        });
+        // Set favicon dynamically if available
+        if (b.favicon_url) {
+          const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+          link.rel = 'icon';
+          link.href = b.favicon_url;
+          document.head.appendChild(link);
+        }
+        // Set page title to club name
+        document.title = b.display_name || b.club_name || 'Club Portal';
+      })
+      .catch(() => {
+        // Fallback to /clubs/:slug if branding endpoint fails
+        api.get(`/clubs/${slug}`)
+          .then(r => setClub(r.data))
+          .catch(() => setNotFound(true));
+      });
     const handleResize = () => setIsMobile(window.innerWidth < 960);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -292,7 +330,7 @@ export default function ClubLogin() {
               background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-              {club.name}
+              {club.display_name || club.name}
             </span>
           </h1>
 
@@ -311,7 +349,7 @@ export default function ClubLogin() {
             opacity: mounted ? 1 : 0,
             transition: 'opacity 0.6s ease 0.6s',
           }}>
-            {club.contact_email && (
+            {club.support_email || club.contact_email && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.4s ease-out 0.7s both' }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 9,
@@ -324,11 +362,11 @@ export default function ClubLogin() {
                 </div>
                 <div>
                   <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>{t('auth.emailAddress')}</div>
-                  <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.contact_email}</div>
+                  <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.support_email || club.contact_email}</div>
                 </div>
               </div>
             )}
-            {club.contact_phone && (
+            {club.support_phone || club.contact_phone && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.4s ease-out 0.8s both' }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 9,
@@ -341,7 +379,7 @@ export default function ClubLogin() {
                 </div>
                 <div>
                   <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500 }}>{t('coaches.phone')}</div>
-                  <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.contact_phone}</div>
+                  <div style={{ color: '#e2e8f0', fontSize: 13 }}>{club.support_phone || club.contact_phone}</div>
                 </div>
               </div>
             )}
