@@ -66,6 +66,7 @@ export default function ManagerHomePage() {
   };
 
   useEffect(() => { loadData(); }, []);
+  useEffect(() => { if (user?.club?.name) document.title = user.club.name; }, [user?.club?.name]);
 
   const handleEnterSport = (mod) => {
     setSport(mod);
@@ -75,7 +76,7 @@ export default function ManagerHomePage() {
   const handleLogout = async () => {
     const clubSlug = user?.club?.slug || getStoredClubSlug();
     await logout();
-    navigate(clubSlug ? `/portal/${clubSlug}` : '/login');
+    navigate(clubSlug ? `/${clubSlug}` : '/login');
   };
 
   /* ── Greeting ── */

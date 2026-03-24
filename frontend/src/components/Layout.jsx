@@ -264,6 +264,7 @@ export default function Layout() {
   const brandLogo = isClubUser ? user.club.logo_url : null;
 
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+  useEffect(() => { document.title = brandName || 'CraveClubs'; }, [brandName]);
   useEffect(() => {
     const handleResize = () => { if (window.innerWidth > 768) setSidebarOpen(false); };
     window.addEventListener('resize', handleResize);

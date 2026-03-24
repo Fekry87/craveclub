@@ -104,6 +104,7 @@ export default function Login() {
 
   useEffect(() => {
     setMounted(true);
+    document.title = 'CraveClubs';
     api.get('/public/branding').then(r => setBranding(r.data)).catch(() => {});
     const handleResize = () => setIsMobile(window.innerWidth < 960);
     window.addEventListener('resize', handleResize);
