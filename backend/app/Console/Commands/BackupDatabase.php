@@ -6,6 +6,12 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Dump MySQL database, compress with gzip, and upload to Backblaze B2.
+ *
+ * Scheduled daily at 02:00 UTC via routes/console.php.
+ * Retains backups for 30 days with automatic pruning.
+ */
 class BackupDatabase extends Command
 {
     protected $signature = 'backup:database {--dry-run : Show what would happen without doing it}';

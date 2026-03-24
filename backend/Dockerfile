@@ -49,8 +49,8 @@ COPY . .
 # Create empty .env so Laravel can bootstrap
 RUN touch /var/www/.env
 
-# Run post-install scripts and pre-generate package manifest
-RUN composer run-script post-autoload-dump 2>/dev/null || true \
+# Rebuild autoloader with full classmap (ensures all Commands are discovered)
+RUN composer dump-autoload --optimize --no-dev \
     && php artisan package:discover --ansi || true
 
 # PHP error logging to stderr
