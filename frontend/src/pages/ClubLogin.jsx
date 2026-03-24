@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import api, { getStoredToken } from '../api/axios';
+import api from '../api/axios';
 
 const roleRedirects = {
   PLATFORM_ADMIN: '/corporate',
@@ -102,7 +102,6 @@ export default function ClubLogin() {
   const [mounted, setMounted] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 960);
-  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -115,12 +114,6 @@ export default function ClubLogin() {
 
   const primary = normalizeColor(club?.primary_color || club?.theme_color, '#22d3ee');
   const secondary = normalizeColor(club?.secondary_color, '#06b6d4');
-
-  // Check if already logged in for club scope (no auto-logout!)
-  useEffect(() => {
-    const token = getStoredToken('club');
-    if (token) setAlreadyLoggedIn(true);
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -170,7 +163,6 @@ export default function ClubLogin() {
     setLoading(true);
     try {
       const user = await login(email, password, slug);
-      setAlreadyLoggedIn(false);
       navigate(roleRedirects[user.role] || '/');
     } catch (err) {
       setError(err.response?.data?.message || t('auth.loginFailed'));
@@ -430,25 +422,6 @@ export default function ClubLogin() {
   function renderForm() {
     return (
       <>
-        {alreadyLoggedIn && (
-          <div style={{
-            background: `${primary}12`, border: `1px solid ${primary}2a`,
-            borderRadius: 10, padding: '10px 14px', marginBottom: 16,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            animation: 'fadeInUp 0.3s ease-out',
-          }}>
-            <span style={{ color: '#94dbea', fontSize: 12, fontWeight: 500 }}>{t('auth.activeSession')}</span>
-            <button type="button" onClick={() => navigate('/club')}
-              style={{
-                background: `${primary}20`, border: `1px solid ${primary}33`,
-                color: primary, borderRadius: 7, padding: '5px 12px', fontSize: 11,
-                fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-                fontFamily: "'DM Sans', sans-serif",
-              }}>
-              {t('actions.goToDashboard')}
-            </button>
-          </div>
-        )}
         <form onSubmit={handleSubmit}>
         {error && (
           <div style={{

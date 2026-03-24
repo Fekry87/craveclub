@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axios';
-import { getStoredToken } from '../api/axios';
 
 const roleRedirects = {
   PLATFORM_ADMIN: '/corporate',
@@ -86,7 +85,6 @@ export default function Login() {
   const [focusedField, setFocusedField] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 960);
   const [branding, setBranding] = useState(null);
-  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -95,12 +93,6 @@ export default function Login() {
   const primary = branding?.primary_color || '#8b5cf6';
   const secondary = branding?.secondary_color || '#a78bfa';
   const tagline = branding?.tagline || 'Club Management Platform';
-
-  // Check if already logged in for corporate scope (no auto-logout!)
-  useEffect(() => {
-    const token = getStoredToken('corporate');
-    if (token) setAlreadyLoggedIn(true);
-  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -347,25 +339,6 @@ export default function Login() {
   function renderForm() {
     return (
       <>
-        {alreadyLoggedIn && (
-          <div style={{
-            background: `${primary}1f`, border: `1px solid rgba(51,65,85,0.4)`,
-            borderRadius: 10, padding: '10px 14px', marginBottom: 16,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            animation: 'fadeInUp 0.3s ease-out',
-          }}>
-            <span style={{ color: primary, fontSize: 12, fontWeight: 500 }}>{t('auth.activeSession')}</span>
-            <button type="button" onClick={() => navigate('/corporate')}
-              style={{
-                background: `${primary}1f`, border: `1px solid rgba(51,65,85,0.4)`,
-                color: primary, borderRadius: 8, padding: '5px 12px',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-                fontFamily: "'DM Sans', sans-serif",
-              }}>
-              {t('actions.goToDashboard')}
-            </button>
-          </div>
-        )}
         <form onSubmit={handleSubmit}>
         {error && (
           <div style={{
