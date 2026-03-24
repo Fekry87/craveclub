@@ -170,7 +170,7 @@ export default function Login() {
           <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 20px' }}>{t('auth.signInManagePlatform')}</p>
 
           {renderForm()}
-          {renderDemoAccounts()}
+
         </div>
       </div>
     );
@@ -336,7 +336,7 @@ export default function Login() {
           </p>
 
           {renderForm()}
-          {renderDemoAccounts()}
+
         </div>
       </div>
     </div>
@@ -386,7 +386,7 @@ export default function Login() {
           {
             key: 'email',
             label: t('auth.emailAddress'),
-            placeholder: 'admin@craveclubs.com',
+            placeholder: 'email@example.com',
             icon: (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                 stroke={focusedField === 'email' ? primary : '#94a3b8'}
@@ -483,40 +483,4 @@ export default function Login() {
     );
   }
 
-  /* ─── Shared: Demo Account ─── */
-  function renderDemoAccounts() {
-    return (
-      <>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '20px 0' }}>
-          <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
-          <span style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{t('auth.demoAccount')}</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(51,65,85,0.4)' }} />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {[
-            { label: t('auth.platformAdmin'), email: 'admin@craveclubs.com' },
-          ].map(acc => (
-            <div key={acc.email}
-              onClick={() => { setEmail(acc.email); setPassword('Password123!'); setError(''); }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${primary}1f`; e.currentTarget.style.borderColor = primary; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(51,65,85,0.4)'; }}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
-                border: '1px solid rgba(51,65,85,0.4)',
-                transition: 'all 0.2s ease',
-              }}>
-              <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>{acc.label}</span>
-              <span style={{ color: primary, fontSize: 12, fontFamily: 'monospace', fontWeight: 500 }}>{acc.email}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 8, textAlign: 'center' }}>
-          Password: <span style={{ color: '#64748b', fontFamily: 'monospace' }}>Password123!</span>
-        </div>
-      </>
-    );
-  }
 }

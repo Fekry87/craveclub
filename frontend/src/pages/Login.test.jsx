@@ -38,7 +38,7 @@ describe('Login Page', () => {
 
   it('renders email and password fields', () => {
     renderLogin();
-    expect(screen.getByPlaceholderText('admin@craveclubs.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('email@example.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
   });
 
@@ -51,7 +51,7 @@ describe('Login Page', () => {
     mockLogin.mockResolvedValue({ role: 'PLATFORM_ADMIN' });
     renderLogin();
 
-    fireEvent.change(screen.getByPlaceholderText('admin@craveclubs.com'), {
+    fireEvent.change(screen.getByPlaceholderText('email@example.com'), {
       target: { value: 'admin@test.com' },
     });
     fireEvent.change(screen.getByPlaceholderText('Enter your password'), {
@@ -70,7 +70,7 @@ describe('Login Page', () => {
     });
     renderLogin();
 
-    fireEvent.change(screen.getByPlaceholderText('admin@craveclubs.com'), {
+    fireEvent.change(screen.getByPlaceholderText('email@example.com'), {
       target: { value: 'bad@test.com' },
     });
     fireEvent.change(screen.getByPlaceholderText('Enter your password'), {

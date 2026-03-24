@@ -91,9 +91,6 @@
     "enterPassword": "Enter your password",
     "loginFailed": "Login failed",
     "activeSession": "You have an active session",
-    "demoAccount": "demo account",
-    "demoAccounts": "demo accounts",
-    "platformAdmin": "Platform Admin",
     "manager": "Manager",
     "coach": "Coach",
     "swimmer": "Swimmer"
