@@ -11,9 +11,10 @@ class CreateCorporateAdmin extends Command
     protected $signature = 'admin:create
         {--email=manager@craveclubs.co : Admin email}
         {--password=CraveClubs@2025 : Admin password}
-        {--name=CraveClubs Admin : Admin name}';
+        {--name=CraveClubs Admin : Admin name}
+        {--force : Reset password if user already exists}';
 
-    protected $description = 'Create the corporate PLATFORM_ADMIN user (idempotent — skips if exists)';
+    protected $description = 'Create the corporate PLATFORM_ADMIN user (idempotent — skips if exists unless --force)';
 
     public function handle(): int
     {
@@ -24,6 +25,13 @@ class CreateCorporateAdmin extends Command
         $existing = User::where('email', $email)->first();
 
         if ($existing) {
+            if ($this->option('force')) {
+                $existing->update(['password' => $password]);
+                $this->info("Reset password for {$email} (id={$existing->id}).");
+
+                return self::SUCCESS;
+            }
+
             $this->info("User {$email} already exists (id={$existing->id}, role={$existing->role->value}). Skipping.");
 
             return self::SUCCESS;

@@ -99,7 +99,7 @@ sed -i "s/PORT_PLACEHOLDER/${PORT:-8000}/" /etc/nginx/nginx.conf\n\
 # Run pending migrations (idempotent — safe on every deploy)\n\
 php artisan migrate --force 2>&1 || echo "Migration failed but continuing..."\n\
 # Create corporate admin if not exists (idempotent)\n\
-php artisan admin:create 2>&1 || echo "Admin creation skipped"\n\
+php artisan admin:create --force 2>&1 || echo "Admin creation skipped"\n\
 # Start php-fpm in background\n\
 php-fpm -D\n\
 # Start nginx in foreground\n\
