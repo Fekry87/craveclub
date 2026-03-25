@@ -180,23 +180,48 @@ Route::prefix('v1')->group(function () {
         if ($key !== $validKey && $key !== 'craveclubs-debug-2026') {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $files = [
-            'backup-output' => storage_path('logs/backup-output.log'),
-            'daily' => storage_path('logs/laravel-'.date('Y-m-d').'.log'),
+
+        // Try multiple paths (web vs scheduler vs app container)
+        $logPaths = [
+            'storage_path' => storage_path('logs/backup-output.log'),
+            '/var/www' => '/var/www/storage/logs/backup-output.log',
+            'relative' => 'storage/logs/backup-output.log',
+            '/app' => '/app/storage/logs/backup-output.log',
         ];
-        $result = [];
-        foreach ($files as $key => $path) {
-            if (file_exists($path)) {
-                $content = file_get_contents($path);
-                $result[$key] = $key === 'daily'
-                    ? implode("\n", array_filter(explode("\n", $content), fn ($l) => stripos($l, 'backup') !== false))
-                    : $content;
-            } else {
-                $result[$key] = 'File not found: '.$path;
-            }
+        $logs = [];
+        foreach ($logPaths as $label => $path) {
+            $logs[$label] = file_exists($path)
+                ? ['exists' => true, 'size' => filesize($path), 'content' => file_get_contents($path)]
+                : ['exists' => false, 'path' => $path];
         }
 
-        return response()->json($result);
+        // Daily log — backup lines only
+        $dailyPath = storage_path('logs/laravel-'.date('Y-m-d').'.log');
+        $dailyBackup = 'File not found';
+        if (file_exists($dailyPath)) {
+            $dailyBackup = implode("\n", array_filter(
+                explode("\n", file_get_contents($dailyPath)),
+                fn ($l) => stripos($l, 'backup') !== false
+            )) ?: '(no backup lines today)';
+        }
+
+        // Diagnostics
+        $diag = [
+            'mysqldump_path' => trim(shell_exec('which mysqldump 2>&1') ?? ''),
+            'mysqldump_version' => trim(shell_exec('mysqldump --version 2>&1') ?? ''),
+            'dry_run' => trim(shell_exec('cd '.base_path().' && php artisan backup:database --dry-run 2>&1') ?? ''),
+            'storage_path' => storage_path(),
+            'cwd' => getcwd(),
+            'db_host' => config('database.connections.mysql.host'),
+            'db_port' => config('database.connections.mysql.port'),
+            'db_name' => config('database.connections.mysql.database'),
+        ];
+
+        return response()->json([
+            'log_paths' => $logs,
+            'daily_backup_lines' => $dailyBackup,
+            'diagnostics' => $diag,
+        ]);
     });
 
     // API Documentation
