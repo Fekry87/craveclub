@@ -42,7 +42,6 @@ class CreateCorporateAdmin extends Command
             'email' => $email,
             'password' => $password,
             'role' => UserRole::PLATFORM_ADMIN,
-            'is_active' => true,
             'club_id' => null,
         ]);
 
