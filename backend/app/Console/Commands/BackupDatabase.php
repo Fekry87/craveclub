@@ -6,29 +6,30 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use PDO;
 
 /**
- * Dump MySQL database, compress with gzip, and upload to Backblaze B2.
+ * Pure-PHP database backup — no mysqldump binary required.
  *
- * Scheduled daily at 02:00 UTC via routes/console.php.
+ * Connects via PDO, exports all tables to SQL, compresses with gzencode(),
+ * uploads to Backblaze B2. Scheduled daily at 02:00 UTC via routes/console.php.
  * Retains backups for 30 days with automatic pruning.
  */
 class BackupDatabase extends Command
 {
     protected $signature = 'backup:database {--dry-run : Show what would happen without doing it}';
 
-    protected $description = 'Dump MySQL database, compress, and upload to Backblaze B2';
+    protected $description = 'Dump MySQL database via PHP/PDO, compress, and upload to Backblaze B2';
 
     public function handle(): int
     {
         $startTime = now();
         $filename = 'craveclubs_'.now()->format('Y-m-d_H-i-s').'.sql.gz';
-        $tmpPath = sys_get_temp_dir().'/'.$filename;
         $b2Path = 'backups/daily/'.$filename;
 
         $this->info("Starting backup: {$filename}");
 
-        // ── 1. Resolve DB credentials (fallback for scheduler where vars may differ) ──
+        // ── 1. Resolve DB credentials ───────────────────────────────
         $host = config('database.connections.mysql.host')
             ?: config('database.connections.mysql.write.host')
             ?: data_get(config('database.connections.mysql.read'), 'host.0')
@@ -55,108 +56,82 @@ class BackupDatabase extends Command
             return 1;
         }
 
-        // ── 2. Find mysqldump binary (mariadb-dump is the real binary in Alpine) ──
-        $dumpBin = null;
-        foreach (['/usr/bin/mariadb-dump', '/usr/bin/mysqldump', 'mariadb-dump', 'mysqldump'] as $candidate) {
-            $which = trim(shell_exec("which {$candidate} 2>/dev/null") ?? '');
-            if ($which !== '') {
-                $dumpBin = $which;
-                break;
-            }
-        }
-
-        if (! $dumpBin) {
-            $msg = 'Neither mysqldump nor mariadb-dump found. PATH='.getenv('PATH');
-            $this->error($msg);
-            $this->logToDb('failed', $msg);
-
-            return 1;
-        }
-
-        $this->info("Using dump binary: {$dumpBin}");
-
-        // Dump SQL first, then gzip separately — avoids pipe masking mysqldump errors
-        $sqlPath = sys_get_temp_dir().'/craveclubs_'.now()->format('Y-m-d_H-i-s').'.sql';
-        $errPath = sys_get_temp_dir().'/backup_stderr.log';
-
-        $cmd = sprintf(
-            'MYSQL_PWD=%s %s --host=%s --port=%s --user=%s --single-transaction --quick --lock-tables=false %s > %s 2>%s',
-            escapeshellarg($password),
-            escapeshellarg($dumpBin),
-            escapeshellarg($host),
-            escapeshellarg($port),
-            escapeshellarg($username),
-            escapeshellarg($database),
-            escapeshellarg($sqlPath),
-            escapeshellarg($errPath)
-        );
+        $this->info("DB: {$username}@{$host}:{$port}/{$database}");
 
         if ($this->option('dry-run')) {
-            $this->info('[DRY RUN] Would run: '.preg_replace('/MYSQL_PWD=\S+/', 'MYSQL_PWD=[REDACTED]', $cmd));
+            $this->info('[DRY RUN] Would connect via PDO and export all tables');
             $this->info("[DRY RUN] Would upload to B2: {$b2Path}");
             $this->info('[DRY RUN] Would prune backups older than 30 days');
 
             return 0;
         }
 
-        // ── 3. Run dump ───────────────────────────────────────────────
-        $this->info("DB: {$username}@{$host}:{$port}/{$database}");
-        exec($cmd, $output, $exitCode);
-        $stderr = @file_get_contents($errPath) ?: '';
-        @unlink($errPath);
-
-        if ($exitCode !== 0 || ! file_exists($sqlPath) || filesize($sqlPath) < 100) {
-            $error = "mysqldump failed (exit {$exitCode}). stderr: {$stderr}";
-            $this->error($error);
-            $this->alertFailure($error);
-            $this->logToDb('failed', $error, null, null, now()->diffInSeconds($startTime));
-            @unlink($sqlPath);
-
-            return 1;
-        }
-
-        // Gzip the SQL file
-        $this->info('SQL dump: '.round(filesize($sqlPath) / 1024, 1).' KB — compressing...');
-        exec('gzip -f '.escapeshellarg($sqlPath), $gzOutput, $gzExit);
-        $tmpPath = $sqlPath.'.gz';
-
-        if ($gzExit !== 0 || ! file_exists($tmpPath)) {
-            $error = "gzip failed (exit {$gzExit})";
-            $this->error($error);
-            $this->alertFailure($error);
-            $this->logToDb('failed', $error, null, null, now()->diffInSeconds($startTime));
-            @unlink($sqlPath);
-
-            return 1;
-        }
-
-        $sizeKb = round(filesize($tmpPath) / 1024, 1);
-        $this->info("Dump complete: {$sizeKb} KB");
-
-        // ── 3. Upload to Backblaze B2 ─────────────────────────────────
+        // ── 2. Connect via PDO ──────────────────────────────────────
         try {
-            $stream = fopen($tmpPath, 'rb');
-            Storage::disk('b2')->put($b2Path, $stream, 'private');
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
+            $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
+            $pdo = new PDO($dsn, $username, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false,
+            ]);
         } catch (\Throwable $e) {
-            $error = 'B2 upload failed: '.$e->getMessage();
-            $this->error($error);
-            $this->alertFailure($error);
-            $this->logToDb('failed', $error, $b2Path, $sizeKb, now()->diffInSeconds($startTime));
-            @unlink($tmpPath);
+            $msg = "PDO connection failed: {$e->getMessage()}";
+            $this->error($msg);
+            $this->alertFailure($msg);
+            $this->logToDb('failed', $msg);
 
             return 1;
         }
 
-        // ── 4. Delete local temp file ─────────────────────────────────
-        @unlink($tmpPath);
+        // ── 3. Export database to SQL string ────────────────────────
+        try {
+            $sql = $this->exportDatabase($pdo, $database);
+        } catch (\Throwable $e) {
+            $msg = "Export failed: {$e->getMessage()}";
+            $this->error($msg);
+            $this->alertFailure($msg);
+            $this->logToDb('failed', $msg, null, null, now()->diffInSeconds($startTime));
 
-        // ── 5. Prune backups older than 30 days ───────────────────────
+            return 1;
+        }
+
+        $sqlSizeKb = round(strlen($sql) / 1024, 1);
+        $this->info("SQL export: {$sqlSizeKb} KB — compressing...");
+
+        // ── 4. Compress with gzencode (pure PHP) ────────────────────
+        $compressed = gzencode($sql, 9);
+        unset($sql); // free memory
+
+        if ($compressed === false) {
+            $msg = 'gzencode() failed';
+            $this->error($msg);
+            $this->alertFailure($msg);
+            $this->logToDb('failed', $msg, null, null, now()->diffInSeconds($startTime));
+
+            return 1;
+        }
+
+        $sizeKb = round(strlen($compressed) / 1024, 1);
+        $this->info("Compressed: {$sizeKb} KB");
+
+        // ── 5. Upload to Backblaze B2 ───────────────────────────────
+        try {
+            Storage::disk('b2')->put($b2Path, $compressed, 'private');
+        } catch (\Throwable $e) {
+            $msg = 'B2 upload failed: '.$e->getMessage();
+            $this->error($msg);
+            $this->alertFailure($msg);
+            $this->logToDb('failed', $msg, $b2Path, $sizeKb, now()->diffInSeconds($startTime));
+
+            return 1;
+        }
+
+        unset($compressed); // free memory
+
+        // ── 6. Prune backups older than 30 days ─────────────────────
         $this->pruneOldBackups();
 
-        // ── 6. Log success ────────────────────────────────────────────
+        // ── 7. Log success ──────────────────────────────────────────
         $duration = now()->diffInSeconds($startTime);
 
         Log::channel('daily')->info('BACKUP_SUCCESS', [
@@ -170,6 +145,95 @@ class BackupDatabase extends Command
         $this->logToDb('success', "Backup complete in {$duration}s", $b2Path, $sizeKb, $duration);
 
         return 0;
+    }
+
+    /**
+     * Export entire database to SQL using PDO queries.
+     */
+    private function exportDatabase(PDO $pdo, string $database): string
+    {
+        $lines = [];
+        $lines[] = "-- CraveClubs Database Backup";
+        $lines[] = '-- Generated: '.now()->toIso8601String();
+        $lines[] = "-- Database: {$database}";
+        $lines[] = '';
+        $lines[] = 'SET FOREIGN_KEY_CHECKS=0;';
+        $lines[] = "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';";
+        $lines[] = 'SET NAMES utf8mb4;';
+        $lines[] = '';
+
+        // Get all tables
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+        $this->info('Tables: '.count($tables));
+
+        foreach ($tables as $table) {
+            $this->output->write("  {$table}...");
+
+            // CREATE TABLE statement
+            $createStmt = $pdo->query("SHOW CREATE TABLE `{$table}`")->fetch();
+            $lines[] = "-- Table: {$table}";
+            $lines[] = "DROP TABLE IF EXISTS `{$table}`;";
+            $lines[] = $createStmt['Create Table'].';';
+            $lines[] = '';
+
+            // Row count
+            $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn();
+
+            if ($count === 0) {
+                $this->output->writeln(" 0 rows");
+
+                continue;
+            }
+
+            // Get columns for proper quoting
+            $columns = $pdo->query("SHOW COLUMNS FROM `{$table}`")->fetchAll();
+            $columnNames = array_map(fn ($c) => "`{$c['Field']}`", $columns);
+            $columnList = implode(', ', $columnNames);
+
+            // Export rows in chunks using unbuffered query
+            $lines[] = "LOCK TABLES `{$table}` WRITE;";
+
+            $batchSize = 500;
+            $offset = 0;
+            $rowsExported = 0;
+
+            while ($offset < $count) {
+                $rows = $pdo->query("SELECT * FROM `{$table}` LIMIT {$batchSize} OFFSET {$offset}")->fetchAll();
+
+                if (empty($rows)) {
+                    break;
+                }
+
+                $values = [];
+                foreach ($rows as $row) {
+                    $escaped = [];
+                    foreach ($row as $value) {
+                        if ($value === null) {
+                            $escaped[] = 'NULL';
+                        } else {
+                            $escaped[] = $pdo->quote($value);
+                        }
+                    }
+                    $values[] = '('.implode(',', $escaped).')';
+                }
+
+                $lines[] = "INSERT INTO `{$table}` ({$columnList}) VALUES";
+                $lines[] = implode(",\n", $values).';';
+
+                $rowsExported += count($rows);
+                $offset += $batchSize;
+            }
+
+            $lines[] = 'UNLOCK TABLES;';
+            $lines[] = '';
+
+            $this->output->writeln(" {$rowsExported} rows");
+        }
+
+        $lines[] = 'SET FOREIGN_KEY_CHECKS=1;';
+        $lines[] = '';
+
+        return implode("\n", $lines);
     }
 
     private function pruneOldBackups(): void
