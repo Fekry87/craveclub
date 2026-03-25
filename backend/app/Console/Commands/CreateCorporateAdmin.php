@@ -9,8 +9,8 @@ use Illuminate\Console\Command;
 class CreateCorporateAdmin extends Command
 {
     protected $signature = 'admin:create
-        {--email=manager@craveclubs.co : Admin email}
-        {--password=CraveClubs@2025 : Admin password}
+        {--email=admin@craveclubs.co : Admin email}
+        {--password=CraveClubs@1987 : Admin password}
         {--name=CraveClubs Admin : Admin name}
         {--force : Reset password if user already exists}';
 
