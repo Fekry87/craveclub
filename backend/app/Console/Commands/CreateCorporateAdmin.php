@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Enums\UserRole;
+use App\Models\User;
+use Illuminate\Console\Command;
+
+class CreateCorporateAdmin extends Command
+{
+    protected $signature = 'admin:create
+        {--email=manager@craveclubs.co : Admin email}
+        {--password=CraveClubs@2025 : Admin password}
+        {--name=CraveClubs Admin : Admin name}';
+
+    protected $description = 'Create the corporate PLATFORM_ADMIN user (idempotent — skips if exists)';
+
+    public function handle(): int
+    {
+        $email = $this->option('email');
+        $name = $this->option('name');
+        $password = $this->option('password');
+
+        $existing = User::where('email', $email)->first();
+
+        if ($existing) {
+            $this->info("User {$email} already exists (id={$existing->id}, role={$existing->role->value}). Skipping.");
+
+            return self::SUCCESS;
+        }
+
+        $user = User::create([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+            'role' => UserRole::PLATFORM_ADMIN,
+            'is_active' => true,
+            'club_id' => null,
+        ]);
+
+        $this->info("Created PLATFORM_ADMIN: {$user->email} (id={$user->id})");
+
+        return self::SUCCESS;
+    }
+}
