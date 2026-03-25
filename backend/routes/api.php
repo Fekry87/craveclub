@@ -177,6 +177,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/docs', [ApiDocController::class, 'docs']);
 
     // Public
+    Route::get('/clubs', [PublicController::class, 'clubIndex']);
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
