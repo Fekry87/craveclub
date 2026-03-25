@@ -109,7 +109,6 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      setAlreadyLoggedIn(false);
       navigate(roleRedirects[user.role] || '/login');
     } catch (err) {
       setError(err.response?.data?.message || t('auth.loginFailed'));
