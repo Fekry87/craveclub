@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,7 +36,9 @@ class BackupDatabase extends Command
         $password = config('database.connections.mysql.password');
 
         if (empty($database) || empty($username)) {
-            $this->error('Database credentials missing — check DB_* env vars.');
+            $msg = 'Database credentials missing — check DB_* env vars.';
+            $this->error($msg);
+            $this->logToDb('failed', $msg);
 
             return 1;
         }
@@ -73,6 +76,7 @@ class BackupDatabase extends Command
             $error = "mysqldump failed (exit {$exitCode}). stderr: {$stderr}";
             $this->error($error);
             $this->alertFailure($error);
+            $this->logToDb('failed', $error, null, null, now()->diffInSeconds($startTime));
             @unlink($sqlPath);
 
             return 1;
@@ -87,6 +91,7 @@ class BackupDatabase extends Command
             $error = "gzip failed (exit {$gzExit})";
             $this->error($error);
             $this->alertFailure($error);
+            $this->logToDb('failed', $error, null, null, now()->diffInSeconds($startTime));
             @unlink($sqlPath);
 
             return 1;
@@ -103,8 +108,10 @@ class BackupDatabase extends Command
                 fclose($stream);
             }
         } catch (\Throwable $e) {
-            $this->error('B2 upload failed: '.$e->getMessage());
-            $this->alertFailure('B2 upload failed: '.$e->getMessage());
+            $error = 'B2 upload failed: '.$e->getMessage();
+            $this->error($error);
+            $this->alertFailure($error);
+            $this->logToDb('failed', $error, $b2Path, $sizeKb, now()->diffInSeconds($startTime));
             @unlink($tmpPath);
 
             return 1;
@@ -127,6 +134,7 @@ class BackupDatabase extends Command
         ]);
 
         $this->info("Backup complete in {$duration}s -> {$b2Path}");
+        $this->logToDb('success', "Backup complete in {$duration}s", $b2Path, $sizeKb, $duration);
 
         return 0;
     }
@@ -151,6 +159,22 @@ class BackupDatabase extends Command
             }
         } catch (\Throwable $e) {
             Log::warning('BACKUP_PRUNE_FAILED', ['error' => $e->getMessage()]);
+        }
+    }
+
+    private function logToDb(string $status, string $message, ?string $filePath = null, ?float $sizeKb = null, ?int $duration = null): void
+    {
+        try {
+            DB::table('backup_logs')->insert([
+                'status' => $status,
+                'message' => $message,
+                'file_path' => $filePath,
+                'size_kb' => $sizeKb,
+                'duration_s' => $duration,
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            $this->warn('Could not write to backup_logs: '.$e->getMessage());
         }
     }
 

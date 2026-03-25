@@ -217,7 +217,20 @@ Route::prefix('v1')->group(function () {
             'db_name' => config('database.connections.mysql.database'),
         ];
 
+        // Database backup logs (shared across web + scheduler)
+        $backupLogs = [];
+        try {
+            $backupLogs = \Illuminate\Support\Facades\DB::table('backup_logs')
+                ->orderByDesc('id')
+                ->limit(10)
+                ->get()
+                ->toArray();
+        } catch (\Throwable $e) {
+            $backupLogs = ['error' => $e->getMessage()];
+        }
+
         return response()->json([
+            'backup_logs_db' => $backupLogs,
             'log_paths' => $logs,
             'daily_backup_lines' => $dailyBackup,
             'diagnostics' => $diag,
