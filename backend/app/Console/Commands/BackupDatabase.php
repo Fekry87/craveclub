@@ -40,14 +40,19 @@ class BackupDatabase extends Command
             return 1;
         }
 
+        // Dump SQL first, then gzip separately — avoids pipe masking mysqldump errors
+        $sqlPath = sys_get_temp_dir().'/craveclubs_'.now()->format('Y-m-d_H-i-s').'.sql';
+        $errPath = sys_get_temp_dir().'/backup_stderr.log';
+
         $cmd = sprintf(
-            'MYSQL_PWD=%s mysqldump --host=%s --port=%s --user=%s --single-transaction --quick --lock-tables=false %s | gzip > %s 2>&1',
+            'MYSQL_PWD=%s mysqldump --host=%s --port=%s --user=%s --single-transaction --quick --lock-tables=false %s > %s 2>%s',
             escapeshellarg($password),
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
             escapeshellarg($database),
-            escapeshellarg($tmpPath)
+            escapeshellarg($sqlPath),
+            escapeshellarg($errPath)
         );
 
         if ($this->option('dry-run')) {
@@ -59,13 +64,30 @@ class BackupDatabase extends Command
         }
 
         // ── 2. Run dump ───────────────────────────────────────────────
+        $this->info("DB: {$username}@{$host}:{$port}/{$database}");
         exec($cmd, $output, $exitCode);
+        $stderr = @file_get_contents($errPath) ?: '';
+        @unlink($errPath);
 
-        if ($exitCode !== 0 || ! file_exists($tmpPath) || filesize($tmpPath) < 100) {
-            $error = 'mysqldump failed (exit '.$exitCode.'). Output: '.implode(' ', $output);
+        if ($exitCode !== 0 || ! file_exists($sqlPath) || filesize($sqlPath) < 100) {
+            $error = "mysqldump failed (exit {$exitCode}). stderr: {$stderr}";
             $this->error($error);
             $this->alertFailure($error);
-            @unlink($tmpPath);
+            @unlink($sqlPath);
+
+            return 1;
+        }
+
+        // Gzip the SQL file
+        $this->info('SQL dump: '.round(filesize($sqlPath) / 1024, 1).' KB — compressing...');
+        exec('gzip -f '.escapeshellarg($sqlPath), $gzOutput, $gzExit);
+        $tmpPath = $sqlPath.'.gz';
+
+        if ($gzExit !== 0 || ! file_exists($tmpPath)) {
+            $error = "gzip failed (exit {$gzExit})";
+            $this->error($error);
+            $this->alertFailure($error);
+            @unlink($sqlPath);
 
             return 1;
         }
