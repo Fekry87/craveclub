@@ -28,28 +28,61 @@ class BackupDatabase extends Command
 
         $this->info("Starting backup: {$filename}");
 
-        // ── 1. Build mysqldump command ────────────────────────────────
-        $host = config('database.connections.mysql.host');
-        $port = config('database.connections.mysql.port', 3306);
-        $database = config('database.connections.mysql.database');
-        $username = config('database.connections.mysql.username');
-        $password = config('database.connections.mysql.password');
+        // ── 1. Resolve DB credentials (fallback for scheduler where vars may differ) ──
+        $host = config('database.connections.mysql.host')
+            ?: config('database.connections.mysql.write.host')
+            ?: data_get(config('database.connections.mysql.read'), 'host.0')
+            ?: env('DB_HOST')
+            ?: env('MYSQLHOST');
+        $port = config('database.connections.mysql.port', 3306)
+            ?: env('DB_PORT', 3306)
+            ?: env('MYSQLPORT', 3306);
+        $database = config('database.connections.mysql.database')
+            ?: env('DB_DATABASE')
+            ?: env('MYSQLDATABASE');
+        $username = config('database.connections.mysql.username')
+            ?: env('DB_USERNAME')
+            ?: env('MYSQLUSER');
+        $password = config('database.connections.mysql.password')
+            ?: env('DB_PASSWORD')
+            ?: env('MYSQLPASSWORD', '');
 
-        if (empty($database) || empty($username)) {
-            $msg = 'Database credentials missing — check DB_* env vars.';
+        if (empty($database) || empty($username) || empty($host)) {
+            $msg = "DB credentials missing — host:{$host} user:{$username} db:{$database}";
             $this->error($msg);
             $this->logToDb('failed', $msg);
 
             return 1;
         }
 
+        // ── 2. Find mysqldump binary (mariadb-dump is the real binary in Alpine) ──
+        $dumpBin = null;
+        foreach (['/usr/bin/mariadb-dump', '/usr/bin/mysqldump', 'mariadb-dump', 'mysqldump'] as $candidate) {
+            $which = trim(shell_exec("which {$candidate} 2>/dev/null") ?? '');
+            if ($which !== '') {
+                $dumpBin = $which;
+                break;
+            }
+        }
+
+        if (! $dumpBin) {
+            $msg = 'Neither mysqldump nor mariadb-dump found. PATH='.getenv('PATH');
+            $this->error($msg);
+            $this->logToDb('failed', $msg);
+
+            return 1;
+        }
+
+        $this->info("Using dump binary: {$dumpBin}");
+
         // Dump SQL first, then gzip separately — avoids pipe masking mysqldump errors
         $sqlPath = sys_get_temp_dir().'/craveclubs_'.now()->format('Y-m-d_H-i-s').'.sql';
         $errPath = sys_get_temp_dir().'/backup_stderr.log';
 
         $cmd = sprintf(
-            'MYSQL_PWD=%s mysqldump --host=%s --port=%s --user=%s --single-transaction --quick --lock-tables=false %s > %s 2>%s',
+            'MYSQL_PWD=%s %s --host=%s --port=%s --user=%s --single-transaction --quick --lock-tables=false %s > %s 2>%s',
             escapeshellarg($password),
+            escapeshellarg($dumpBin),
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
@@ -66,7 +99,7 @@ class BackupDatabase extends Command
             return 0;
         }
 
-        // ── 2. Run dump ───────────────────────────────────────────────
+        // ── 3. Run dump ───────────────────────────────────────────────
         $this->info("DB: {$username}@{$host}:{$port}/{$database}");
         exec($cmd, $output, $exitCode);
         $stderr = @file_get_contents($errPath) ?: '';
