@@ -23,11 +23,32 @@ class BackupDatabase extends Command
 
     public function handle(): int
     {
+        error_log('BackupDatabase started at '.now());
+
         $startTime = now();
         $filename = 'craveclubs_'.now()->format('Y-m-d_H-i-s').'.sql.gz';
         $b2Path = 'backups/daily/'.$filename;
 
         $this->info("Starting backup: {$filename}");
+
+        // ── 0. Verify backup_logs table is reachable ────────────────
+        try {
+            DB::table('backup_logs')->insert([
+                'status' => 'started',
+                'message' => "Backup started: {$filename}",
+                'created_at' => now(),
+            ]);
+            error_log('BackupDatabase: wrote started record to backup_logs');
+        } catch (\Throwable $e) {
+            error_log('BackupDatabase: backup_logs write FAILED: '.$e->getMessage());
+            // Check if table exists
+            try {
+                $exists = DB::select("SHOW TABLES LIKE 'backup_logs'");
+                error_log('BackupDatabase: backup_logs table exists: '.($exists ? 'YES' : 'NO'));
+            } catch (\Throwable $e2) {
+                error_log('BackupDatabase: SHOW TABLES failed: '.$e2->getMessage());
+            }
+        }
 
         // ── 1. Resolve DB credentials ───────────────────────────────
         $host = config('database.connections.mysql.host')
@@ -261,6 +282,8 @@ class BackupDatabase extends Command
 
     private function logToDb(string $status, string $message, ?string $filePath = null, ?float $sizeKb = null, ?int $duration = null): void
     {
+        error_log("BackupDatabase [{$status}]: {$message}");
+
         try {
             DB::table('backup_logs')->insert([
                 'status' => $status,
@@ -270,7 +293,9 @@ class BackupDatabase extends Command
                 'duration_s' => $duration,
                 'created_at' => now(),
             ]);
+            error_log("BackupDatabase: logToDb wrote [{$status}] successfully");
         } catch (\Throwable $e) {
+            error_log("BackupDatabase: logToDb FAILED: {$e->getMessage()}");
             $this->warn('Could not write to backup_logs: '.$e->getMessage());
         }
     }
