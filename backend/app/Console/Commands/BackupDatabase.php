@@ -51,25 +51,38 @@ class BackupDatabase extends Command
         }
 
         // ── 1. Resolve DB credentials ───────────────────────────────
-        $host = config('database.connections.mysql.host')
-            ?: config('database.connections.mysql.write.host')
-            ?: data_get(config('database.connections.mysql.read'), 'host.0')
-            ?: env('DB_HOST')
-            ?: env('MYSQLHOST');
-        $port = config('database.connections.mysql.port', 3306)
-            ?: env('DB_PORT', 3306)
-            ?: env('MYSQLPORT', 3306);
-        $database = config('database.connections.mysql.database')
-            ?: env('DB_DATABASE')
-            ?: env('MYSQLDATABASE');
-        $username = config('database.connections.mysql.username')
-            ?: env('DB_USERNAME')
-            ?: env('MYSQLUSER');
-        $password = config('database.connections.mysql.password')
-            ?: env('DB_PASSWORD')
-            ?: env('MYSQLPASSWORD', '');
+        // Env vars first (always strings, work on scheduler where config may be null).
+        // Config values can be arrays (read/write split) so extract string carefully.
+        $host = env('DB_HOST')
+            ?: env('MYSQLHOST')
+            ?: $this->resolveConfigString('database.connections.mysql.host')
+            ?: $this->resolveConfigString('database.connections.mysql.write.host')
+            ?: data_get(config('database.connections.mysql.read'), 'host.0');
+        $port = env('DB_PORT')
+            ?: env('MYSQLPORT')
+            ?: $this->resolveConfigString('database.connections.mysql.port')
+            ?: 3306;
+        $database = env('DB_DATABASE')
+            ?: env('MYSQLDATABASE')
+            ?: config('database.connections.mysql.database');
+        $username = env('DB_USERNAME')
+            ?: env('MYSQLUSER')
+            ?: config('database.connections.mysql.username');
+        $password = env('DB_PASSWORD')
+            ?: env('MYSQLPASSWORD')
+            ?: config('database.connections.mysql.password')
+            ?: '';
 
-        if (empty($database) || empty($username) || empty($host)) {
+        // Ensure all values are strings (not arrays)
+        $host = (string) $host;
+        $port = (string) ($port ?: 3306);
+        $database = (string) $database;
+        $username = (string) $username;
+        $password = (string) $password;
+
+        error_log("BackupDatabase credentials: host={$host} port={$port} db={$database} user={$username}");
+
+        if ($host === '' || $database === '' || $username === '') {
             $msg = "DB credentials missing — host:{$host} user:{$username} db:{$database}";
             $this->error($msg);
             $this->logToDb('failed', $msg);
@@ -255,6 +268,25 @@ class BackupDatabase extends Command
         $lines[] = '';
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Config values may be a string, an array (read/write split), or null.
+     * Extract a usable string value.
+     */
+    private function resolveConfigString(string $key): ?string
+    {
+        $value = config($key);
+
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            return is_string($value[0] ?? null) ? $value[0] : null;
+        }
+
+        return null;
     }
 
     private function pruneOldBackups(): void
