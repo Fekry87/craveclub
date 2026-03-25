@@ -173,6 +173,30 @@ Route::prefix('v1')->group(function () {
     // Metrics (protected by X-Metrics-Key header)
     Route::get('/metrics', [MetricsController::class, 'index']);
 
+    // Temporary debug: read backup scheduler output (remove after debugging)
+    Route::get('/debug/backup-log', function () {
+        if (request()->header('X-Debug-Key') !== config('app.metrics_secret_key')) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $files = [
+            'backup-output' => storage_path('logs/backup-output.log'),
+            'daily' => storage_path('logs/laravel-'.date('Y-m-d').'.log'),
+        ];
+        $result = [];
+        foreach ($files as $key => $path) {
+            if (file_exists($path)) {
+                $content = file_get_contents($path);
+                $result[$key] = $key === 'daily'
+                    ? implode("\n", array_filter(explode("\n", $content), fn ($l) => stripos($l, 'backup') !== false))
+                    : $content;
+            } else {
+                $result[$key] = 'File not found: '.$path;
+            }
+        }
+
+        return response()->json($result);
+    });
+
     // API Documentation
     Route::get('/docs', [ApiDocController::class, 'docs']);
 
