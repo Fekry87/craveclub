@@ -54,6 +54,146 @@ class TrainingPlanController extends Controller
         return response()->json($plan->load('coach'));
     }
 
+    // ── Club Manager: Assign plan to group or swimmer ──
+
+    public function managerAssign(Request $request, TrainingPlan $plan): JsonResponse
+    {
+        $clubId = app('current_club_id');
+        if ($plan->club_id !== $clubId) {
+            abort(404);
+        }
+
+        $request->validate([
+            'assignee_type' => 'required|in:group,swimmer',
+            'assignee_id' => 'required|integer',
+            'start_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $groupId = null;
+        $swimmerProfileId = null;
+
+        if ($request->assignee_type === 'group') {
+            $group = Group::where('id', $request->assignee_id)
+                ->where('club_id', $clubId)
+                ->first();
+
+            if (! $group) {
+                return response()->json(['message' => 'Group not found.', 'errors' => ['assignee_id' => ['Group not found.']]], 422);
+            }
+            $groupId = $group->id;
+        } else {
+            $swimmer = SwimmerProfile::where('id', $request->assignee_id)
+                ->where('club_id', $clubId)
+                ->first();
+
+            if (! $swimmer) {
+                return response()->json(['message' => 'Swimmer not found.', 'errors' => ['assignee_id' => ['Swimmer not found.']]], 422);
+            }
+
+            $existing = TrainingPlanAssignment::where('swimmer_profile_id', $swimmer->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($existing) {
+                return response()->json(['message' => 'This swimmer already has an active training plan.', 'errors' => ['assignee_id' => ['This swimmer already has an active training plan.']]], 422);
+            }
+
+            $swimmerProfileId = $swimmer->id;
+        }
+
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = $startDate->copy()->addDays($plan->duration_weeks * 7);
+
+        $assignment = TrainingPlanAssignment::create([
+            'training_plan_id' => $plan->id,
+            'club_id' => $clubId,
+            'assigned_by_coach_id' => $request->user()->id,
+            'group_id' => $groupId,
+            'swimmer_profile_id' => $swimmerProfileId,
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
+            'status' => 'active',
+            'coach_notes' => $request->notes,
+        ]);
+
+        // Notify swimmer(s)
+        $notificationService = app(NotificationService::class);
+
+        if ($swimmerProfileId) {
+            $swimmer = SwimmerProfile::find($swimmerProfileId);
+            if ($swimmer?->user_id) {
+                $notificationService->notify(
+                    userId: $swimmer->user_id,
+                    type: 'plan_assigned',
+                    title: 'New Training Plan Assigned',
+                    body: "A new training plan has been assigned to you: {$plan->title}",
+                    data: ['plan_id' => $plan->id, 'assignment_id' => $assignment->id],
+                    clubId: $clubId,
+                );
+            }
+        } elseif ($groupId) {
+            $userIds = SwimmerProfile::whereHas('groups', fn ($q) => $q->where('groups.id', $groupId))
+                ->whereNotNull('user_id')
+                ->pluck('user_id')
+                ->toArray();
+
+            if (! empty($userIds)) {
+                $notificationService->notifyMany(
+                    userIds: $userIds,
+                    type: 'plan_assigned',
+                    title: 'New Training Plan Assigned',
+                    body: "A new training plan has been assigned to your group: {$plan->title}",
+                    data: ['plan_id' => $plan->id, 'assignment_id' => $assignment->id],
+                    clubId: $clubId,
+                );
+            }
+        }
+
+        return response()->json(
+            $assignment->load(['trainingPlan', 'group', 'swimmer', 'assignedByCoach']),
+            201
+        );
+    }
+
+    // ── Club Manager: List all assignments ──
+
+    public function managerAssignments(Request $request): JsonResponse
+    {
+        $clubId = app('current_club_id');
+
+        $assignments = TrainingPlanAssignment::where('club_id', $clubId)
+            ->with(['trainingPlan', 'group', 'swimmer', 'assignedByCoach'])
+            ->latest()
+            ->get();
+
+        return response()->json($assignments);
+    }
+
+    // ── Club Manager: Update assignment status ──
+
+    public function managerUpdateAssignment(Request $request, TrainingPlanAssignment $assignment): JsonResponse
+    {
+        $clubId = app('current_club_id');
+        if ($assignment->club_id !== $clubId) {
+            abort(404);
+        }
+
+        $request->validate([
+            'status' => 'required|in:paused,completed,cancelled',
+            'notes' => 'nullable|string',
+        ]);
+
+        $assignment->update([
+            'status' => $request->status,
+            'coach_notes' => $request->notes ?? $assignment->coach_notes,
+        ]);
+
+        return response()->json(
+            $assignment->load(['trainingPlan', 'group', 'swimmer', 'assignedByCoach'])
+        );
+    }
+
     // ── Coach: List training plans ──
 
     public function coachPlans(Request $request): JsonResponse

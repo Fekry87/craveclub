@@ -218,11 +218,28 @@ class RecurringScheduleController extends Controller
             }
         }
 
+        // Detect if session-affecting fields changed
+        $sessionFields = ['period_start', 'period_end', 'days_of_week', 'start_time', 'duration_minutes', 'location', 'training_plan_id', 'group_id', 'coach_user_id'];
+        $changed = array_intersect_key($validated, array_flip($sessionFields));
+
         $recurringSchedule->update($validated);
+
+        // Auto-regenerate sessions if schedule is active and session fields changed
+        $regenerated = null;
+        if (! empty($changed) && $recurringSchedule->status === 'active') {
+            TrainingSession::where('recurring_schedule_id', $recurringSchedule->id)->delete();
+            $regenerated = $this->generator->generate($recurringSchedule->fresh());
+        }
+
         $recurringSchedule->load(['group:id,name', 'coach:id,name', 'holidays']);
         $recurringSchedule->loadCount(['sessions', 'holidays']);
 
-        return response()->json($recurringSchedule);
+        $response = $recurringSchedule->toArray();
+        if ($regenerated) {
+            $response['regenerated'] = $regenerated;
+        }
+
+        return response()->json($response);
     }
 
     public function destroy(RecurringSchedule $recurringSchedule): JsonResponse

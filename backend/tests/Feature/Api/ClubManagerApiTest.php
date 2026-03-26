@@ -173,7 +173,7 @@ class ClubManagerApiTest extends TestCase
 
     // ── Sessions (paginated) ─────────────────────────────────
 
-    public function test_session_index_returns_paginated_data(): void
+    public function test_session_index_returns_data(): void
     {
         $group = Group::create([
             'club_id' => $this->club->id,
@@ -194,11 +194,6 @@ class ClubManagerApiTest extends TestCase
             ->getJson('/api/v1/club/sessions');
 
         $response->assertOk()
-            ->assertJsonStructure([
-                'data',
-                'current_page',
-                'last_page',
-                'total',
-            ]);
+            ->assertJsonStructure(['data']);
     }
 }

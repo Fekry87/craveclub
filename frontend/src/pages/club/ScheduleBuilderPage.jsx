@@ -668,7 +668,7 @@ export default function ScheduleBuilderPage() {
               >
                 <option value="">None</option>
                 {plans.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id}>{p.title || p.name}</option>
                 ))}
               </select>
             </FieldGroup>

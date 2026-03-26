@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getTrainingPlans, createPlan, updatePlan, deletePlan, assignPlanToCoach,
+  managerAssignPlan, getManagerAssignments, managerUpdateAssignment,
   getCoachPlans, assignPlan, getCoachAssignments, updateAssignment,
 } from '../../api/trainingPlans';
 import api from '../../api/axios';
@@ -84,12 +85,18 @@ export default function TrainingPlansPage() {
     setLoadError('');
     try {
       if (isManager) {
-        const [plansRes, coachesRes] = await Promise.all([
+        const [plansRes, coachesRes, groupsRes, swimmersRes, assignRes] = await Promise.all([
           getTrainingPlans(),
           api.get('/club/coaches'),
+          api.get('/club/groups'),
+          api.get('/club/swimmers'),
+          getManagerAssignments(),
         ]);
         setPlans(plansRes.data?.data || plansRes.data || []);
         setCoaches(coachesRes.data?.data || coachesRes.data || []);
+        setGroups(groupsRes.data?.data || groupsRes.data || []);
+        setSwimmers(swimmersRes.data?.data || swimmersRes.data || []);
+        setAssignments(assignRes.data?.data || assignRes.data || []);
       } else if (isCoach) {
         const [plansRes, assignRes, groupsRes, swimmersRes] = await Promise.all([
           getCoachPlans(),
@@ -257,12 +264,17 @@ export default function TrainingPlansPage() {
     setSaving(true);
     setError('');
     try {
-      await assignPlan(assignPlanId, {
+      const payload = {
         assignee_type: assignType,
         assignee_id: Number(assigneeId),
         start_date: assignStartDate,
         notes: assignNotes || undefined,
-      });
+      };
+      if (isManager) {
+        await managerAssignPlan(assignPlanId, payload);
+      } else {
+        await assignPlan(assignPlanId, payload);
+      }
       closeModal();
       loadData();
     } catch (err) {
@@ -277,10 +289,14 @@ export default function TrainingPlansPage() {
     }
   };
 
-  // ── Assignment status update (Coach) ──
+  // ── Assignment status update ──
   const handleStatusUpdate = async (assignment, newStatus) => {
     try {
-      await updateAssignment(assignment.id, { status: newStatus });
+      if (isManager) {
+        await managerUpdateAssignment(assignment.id, { status: newStatus });
+      } else {
+        await updateAssignment(assignment.id, { status: newStatus });
+      }
       loadData();
     } catch {
       // silent
@@ -548,8 +564,8 @@ export default function TrainingPlansPage() {
         )}
       </PageHeader>
 
-      {/* ── Tab bar (Coach: plans | assignments) ── */}
-      {isCoach && (
+      {/* ── Tab bar (plans | assignments) ── */}
+      {(isCoach || isManager) && (
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: 4, background: 'rgba(6,13,31,0.5)', borderRadius: 12, border: '1px solid rgba(51,65,85,0.2)' }}>
           {['plans', 'assignments'].map(t => (
             <button key={t} type="button" onClick={() => setTab(t)} style={{
@@ -566,7 +582,7 @@ export default function TrainingPlansPage() {
       )}
 
       {/* ── Manager filter tabs ── */}
-      {isManager && (
+      {isManager && tab === 'plans' && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { key: 'all', label: 'All' },
@@ -589,7 +605,7 @@ export default function TrainingPlansPage() {
       )}
 
       {/* ── Plans grid / Assignments table ── */}
-      {(isManager || tab === 'plans') && (
+      {tab === 'plans' && (
         filteredPlans.length === 0 ? (
           <div style={emptyBoxStyle}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>&#128203;</div>
@@ -619,8 +635,8 @@ export default function TrainingPlansPage() {
         )
       )}
 
-      {/* ── Assignments table (Coach) ── */}
-      {isCoach && tab === 'assignments' && (
+      {/* ── Assignments table ── */}
+      {(isCoach || isManager) && tab === 'assignments' && (
         <AssignmentsTable
           assignments={assignments}
           onStatusUpdate={handleStatusUpdate}
@@ -859,7 +875,7 @@ function PlanCard({ plan, index, isManager, isCoach, coaches, onEdit, onDelete, 
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>
           </button>
         )}
-        {isCoach && (
+        {(isCoach || isManager) && (
           <button type="button" onClick={onAssignPlan} title="Assign to Group/Swimmer"
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.12)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
