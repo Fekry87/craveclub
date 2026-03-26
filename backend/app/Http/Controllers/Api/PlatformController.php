@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class PlatformController extends Controller
 {
@@ -41,7 +43,7 @@ class PlatformController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:clubs,slug',
+            'slug' => ['required', 'string', 'max:255', Rule::unique('clubs', 'slug')->withoutTrashed()],
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'about' => 'nullable|string',
@@ -91,7 +93,7 @@ class PlatformController extends Controller
     {
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|max:255|unique:clubs,slug,'.$club->id,
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('clubs', 'slug')->ignore($club->id)->withoutTrashed()],
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'about' => 'nullable|string',
@@ -99,10 +101,17 @@ class PlatformController extends Controller
             'contact_phone' => 'nullable|string|max:20',
         ]);
 
+        $oldSlug = $club->slug;
         $before = $club->toArray();
         $club->update($request->only([
             'name', 'slug', 'logo_url', 'theme_color', 'about', 'contact_email', 'contact_phone',
         ]));
+
+        // Bust branding cache (covers slug change too)
+        Cache::forget("branding_{$oldSlug}");
+        if ($club->slug !== $oldSlug) {
+            Cache::forget("branding_{$club->slug}");
+        }
 
         return response()->json($club);
     }

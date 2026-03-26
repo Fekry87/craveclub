@@ -39,6 +39,25 @@ class PublicController extends Controller
     }
 
     /**
+     * Active sport modules for a club (by slug, no header required).
+     */
+    public function clubSports(string $slug): JsonResponse
+    {
+        $club = Club::where('slug', $slug)->where('is_active', true)->first();
+
+        if (! $club) {
+            return response()->json(['data' => []]);
+        }
+
+        $modules = $club->activeSportModules()
+            ->where('sport_modules.is_active', true)
+            ->orderBy('sort_order')
+            ->get(['sport_modules.id', 'sport_modules.name', 'sport_modules.slug', 'sport_modules.description', 'sport_modules.icon', 'sport_modules.color']);
+
+        return response()->json(['data' => $modules]);
+    }
+
+    /**
      * Public corporate branding — no auth required.
      */
     public function corporateBranding(): JsonResponse
