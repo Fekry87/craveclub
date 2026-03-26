@@ -13,6 +13,7 @@ use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class CorporateController extends Controller
 {
@@ -95,7 +96,7 @@ class CorporateController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:clubs,slug',
+            'slug' => ['required', 'string', 'max:255', Rule::unique('clubs', 'slug')->withoutTrashed()],
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'primary_color' => 'nullable|string|max:7',
@@ -185,7 +186,7 @@ class CorporateController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'slug' => 'sometimes|string|max:255|unique:clubs,slug,'.$club->id,
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('clubs', 'slug')->ignore($club->id)->withoutTrashed()],
             'logo_url' => 'nullable|string|max:500',
             'theme_color' => 'nullable|string|max:7',
             'primary_color' => 'nullable|string|max:7',
@@ -201,11 +202,19 @@ class CorporateController extends Controller
             'manager_password' => 'nullable|string|min:8',
         ]);
 
+        $oldSlug = $club->slug;
+
         $club->update($request->only([
             'name', 'slug', 'logo_url', 'theme_color',
             'primary_color', 'secondary_color', 'accent_color', 'font_preference',
             'about', 'contact_email', 'contact_phone', 'max_branches',
         ]));
+
+        // Bust branding cache (covers slug change too)
+        Cache::forget("branding_{$oldSlug}");
+        if ($club->slug !== $oldSlug) {
+            Cache::forget("branding_{$club->slug}");
+        }
 
         // Update manager account if fields provided
         if ($manager) {

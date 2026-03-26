@@ -179,6 +179,7 @@ Route::prefix('v1')->group(function () {
     // Public
     Route::get('/clubs', [PublicController::class, 'clubIndex']);
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
+    Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
 
