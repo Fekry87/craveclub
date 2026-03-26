@@ -45,7 +45,9 @@ class SessionManagementController extends Controller
             ]);
         }
 
-        return response()->json($query->orderBy('date', 'desc')->orderBy('start_time')->paginate($request->input('per_page', 15)));
+        $sessions = $query->orderBy('date', 'desc')->orderBy('start_time')->get();
+
+        return response()->json(['data' => $sessions]);
     }
 
     public function sessionStore(StoreSessionRequest $request): JsonResponse
