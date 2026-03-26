@@ -357,6 +357,9 @@ Route::prefix('v1')->group(function () {
 
                 // Training Plan Assignment (Manager)
                 Route::post('/training-plans/{plan}/assign-to-coach', [TrainingPlanController::class, 'assignToCoach']);
+                Route::post('/training-plans/{plan}/assign', [TrainingPlanController::class, 'managerAssign']);
+                Route::get('/training-plans/assignments', [TrainingPlanController::class, 'managerAssignments']);
+                Route::patch('/training-plans/assignments/{assignment}', [TrainingPlanController::class, 'managerUpdateAssignment']);
             });
 
             // Recurring Schedules

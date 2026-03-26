@@ -7,6 +7,11 @@ export const updatePlan = (id, data) => api.put(`/club/plans/${id}`, data);
 export const deletePlan = (id) => api.delete(`/club/plans/${id}`);
 export const assignPlanToCoach = (planId, coachUserId) =>
   api.post(`/club/training-plans/${planId}/assign-to-coach`, { coach_user_id: coachUserId });
+export const managerAssignPlan = (planId, data) =>
+  api.post(`/club/training-plans/${planId}/assign`, data);
+export const getManagerAssignments = () => api.get('/club/training-plans/assignments');
+export const managerUpdateAssignment = (id, data) =>
+  api.patch(`/club/training-plans/assignments/${id}`, data);
 
 // Coach endpoints
 export const getCoachPlans = () => api.get('/coach/training-plans');
