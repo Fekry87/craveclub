@@ -105,5 +105,4 @@ class AuthController extends Controller
             'user' => $this->buildUserPayload($request->user()),
         ]);
     }
-
 }
