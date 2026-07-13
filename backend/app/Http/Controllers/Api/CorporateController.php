@@ -50,7 +50,8 @@ class CorporateController extends Controller
         $totalUsers = User::where('role', '!=', UserRole::PLATFORM_ADMIN)->count();
         $totalManagers = User::where('role', UserRole::CLUB_MANAGER)->count();
         $totalCoaches = User::where('role', UserRole::COACH)->count();
-        $totalSwimmers = User::where('role', UserRole::SWIMMER)->count();
+        // Count swimmer members (profiles), not just swimmers with login accounts
+        $totalSwimmers = \App\Models\SwimmerProfile::withoutGlobalScopes()->whereNull('deleted_at')->count();
         $clubsThisMonth = Club::where('created_at', '>=', now()->startOfMonth())->count();
 
         // Feature usage summary
@@ -81,7 +82,7 @@ class CorporateController extends Controller
     {
         $query = Club::with(['features', 'activeSportModules' => function ($q) {
             $q->select('sport_modules.id', 'name', 'slug', 'icon', 'color');
-        }])->withCount(['users', 'branches']);
+        }])->withCount(['users', 'branches', 'swimmerProfiles']);
 
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");

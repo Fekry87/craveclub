@@ -84,13 +84,13 @@ class PublicRegistrationController extends Controller
             $query->whereJsonContains('sport_ids', $request->sport_id);
         }
 
+        // Public endpoint: expose only what the registration wizard needs.
+        // Coach email/phone are NOT returned to anonymous callers (email is also a login id).
         $coaches = $query->get()->map(fn ($coach) => [
             'id' => $coach->id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
             'avatar_url' => $coach->user->avatar ?? null,
-            'email' => $coach->user->email ?? null,
-            'phone' => $coach->phone,
             'specialization' => $coach->specialization,
             'bio' => $coach->bio,
             'experience_years' => $coach->experience_years,
@@ -111,15 +111,13 @@ class PublicRegistrationController extends Controller
             abort(404);
         }
 
-        $coach->load('user:id,name,email,avatar');
+        $coach->load('user:id,name,avatar');
 
         return response()->json([
             'id' => $coach->id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
             'avatar_url' => $coach->user->avatar ?? null,
-            'email' => $coach->user->email ?? null,
-            'phone' => $coach->phone,
             'specialization' => $coach->specialization,
             'bio' => $coach->bio,
             'experience_years' => $coach->experience_years,
@@ -234,6 +232,7 @@ class PublicRegistrationController extends Controller
         try {
             $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId) {
                 return Registration::create(array_merge($validated, [
+                    'reference_code' => 'REG-'.strtoupper(\Illuminate\Support\Str::random(8)),
                     'club_id' => $clubId,
                     'sport_module_id' => $sportModuleId,
                     'total_amount' => $plan->price,
@@ -262,21 +261,25 @@ class PublicRegistrationController extends Controller
         return response()->json([
             'message' => 'Registration submitted successfully.',
             'registration_id' => $registration->id,
+            'reference_code' => $registration->reference_code,
             'status' => 'pending',
         ], 201);
     }
 
     /**
-     * Check registration status.
+     * Check registration status by its unguessable reference code.
+     *
+     * Looked up by reference_code (not the sequential id) so applicant PII can't
+     * be harvested by iterating numeric ids against a public club slug.
      */
-    public function status(int $id): JsonResponse
+    public function status(string $reference): JsonResponse
     {
-        $registration = Registration::where('id', $id)
+        $registration = Registration::where('reference_code', $reference)
             ->where('club_id', app('current_club_id'))
             ->firstOrFail();
 
         return response()->json([
-            'id' => $registration->id,
+            'reference_code' => $registration->reference_code,
             'status' => $registration->status,
             'swimmer_name' => $registration->full_name,
         ]);

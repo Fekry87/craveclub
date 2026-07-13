@@ -24,7 +24,7 @@
 - Slow query logger: DB::listen in AppServiceProvider logs queries >100ms with SQL, bindings, time_ms, request_id, club_id, URL; also increments Redis counter `slow_queries:YYYY-MM-DD-HH` (graceful if Redis unavailable)
 - Metrics endpoint exposes `performance.slow_queries_last_hour` from Redis counter
 - Performance indexes: 3 migration passes (000045, 000066, 000067) covering attendance, sessions, evaluations, memberships, notifications, assignments
-- Database backups: `php artisan backup:database` — mysqldump → gzip → upload to Backblaze B2 (`b2` disk); scheduled daily at 02:00 UTC; 30-day retention with auto-prune; Sentry alert on failure; `--dry-run` flag for testing
+- Database backups: `php artisan backup:database` — pure PHP/PDO dump (no mysqldump binary) → gzencode() → upload to Backblaze B2 (`b2` disk); scheduled daily at 02:00 UTC; 30-day retention with auto-prune; Sentry alert on failure; `--dry-run` flag for testing; results logged to `backup_logs` table
 - Backup storage: `b2` disk in `filesystems.php` — S3-compatible driver pointing to Backblaze B2; reuses same `AWS_*` env vars (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, AWS_ENDPOINT, AWS_DEFAULT_REGION)
 - Queue: Redis in production (`QUEUE_CONNECTION=redis`), database in dev; `jobs`, `job_batches`, `failed_jobs` tables in migration 000018
 - Queue monitoring: `queue:health-check` command runs every 5min, alerts on >5 failures/hour via log + Sentry; health endpoint includes `failed_last_hour`
@@ -33,8 +33,10 @@
 - Version check: `GET /api/v1/app/version-check` — public endpoint, returns `force_update` (below minimum), `update_available` (below latest), per-platform minimum versions, store URLs
 - Version config: `config/app_versions.php` — `MINIMUM_IOS_VERSION`, `MINIMUM_ANDROID_VERSION`, `APP_LATEST_VERSION`, store URLs from env
 - Deployment: Procfile with 4 processes (web, worker, scheduler, reverb) for Railway.app; see `backend/docs/DEPLOYMENT.md`
-- Procfile web startup order: sed (nginx port) → `config:cache` → `route:cache` → `view:cache` → php-fpm → nginx — config must be cached first since routes/views depend on it
+- Procfile web startup order: sed (nginx port) → `config:cache` → `route:cache` → `view:cache` → `migrate --force` → `admin:create --force` → php-fpm → nginx — config must be cached first since routes/views depend on it
 - Railway Docker build: `backend/railway.json` sets `dockerfilePath: "backend/Dockerfile"` + `dockerContext: "backend"` — build context is `backend/`, so Dockerfile COPY paths are relative to `backend/` (NOT repo root); `.dockerignore` in `backend/` is used
+- Railway scheduler service: separate filesystem from web — log files and config cache are NOT shared; use database (not log files) for cross-service communication; `config()` may return null if config isn't cached, use `env()` directly as fallback
+- Railway Nixpacks fallback: `backend/nixpacks.toml` exists alongside Dockerfile — if a Railway service isn't explicitly set to Dockerfile builder, it may use Nixpacks instead; verify each service's builder in Railway dashboard
 - Stateless architecture: no user data on local disk; S3 for uploads, Redis for cache/queue, Sanctum tokens for auth — ready for horizontal scaling with zero code changes
 - CI/CD: GitHub Actions — `ci.yml` (PR + push: MySQL + Redis services, backend tests, frontend tests, Pint lint), `deploy.yml` (push to main: tests → Railway deploy → health check)
 - CI env: `backend/.env.ci` — MySQL 8.0 + Redis 7, `QUEUE_CONNECTION=sync`, safe to commit (no secrets)
@@ -48,6 +50,10 @@
 - Private channels scoped by club: `private-club.{club_id}` (CLUB_MANAGER only), `private-club.{club_id}.coach` (COACH + CLUB_MANAGER)
 - Broadcasting auth: `POST /api/v1/broadcasting/auth` under `auth:sanctum` middleware
 - SoftDeletes on 8 critical models: Club, User, CoachProfile, SwimmerProfile, Group, TrainingSession, Registration, SubscriptionPlan — `deleted_at` column added via migration 000054
+- Account deletion: soft delete with 30-day recovery window — `deletion_requested_at` + `scheduled_purge_at` columns on users (migration 000068)
+- Account deletion endpoints: `POST /account/delete` (auth), `POST /account/reactivate` (public), `GET /account/deletion-status` (public)
+- `accounts:purge` command permanently deletes expired accounts — scheduled daily at 03:00 UTC
+- Login checks for pending deletion before `Auth::attempt` — returns 403 with `status: pending_deletion`
 - AuditService: `AuditService::log($action, $model, $modelId, $metadata, $clubId)` — writes to `storage/logs/audit.log` (daily, 90-day retention)
 - Audit logging on: registration.approved, registration.rejected, swimmer.deleted, coach.deleted, club.deleted, leaderboard.settings_changed, features.updated
 - White-label branding: Club model has display_name, cover_url, favicon_url, app_name, support_email, support_phone, social_links (JSON), custom_domain, is_domain_active, branding_tier (shared|branded)
@@ -72,6 +78,7 @@
 - Weekly report risk signals: red (missed all of 2+ sessions), yellow (<60% attendance or avg rating <2.5), green (default) — English reason strings
 - Weekly report endpoints: swimmer (no risk), coach (own group swimmers), manager (all club swimmers) — `?week=YYYY-WNN` optional param
 - Public sports API: `GET /api/v1/sports` and alias `GET /api/v1/public/sports` — both under `club.header` middleware, no auth required
+- Public clubs API: `GET /api/v1/clubs` — no auth, returns active clubs with id, name, display_name, slug, logo_url, primary_color, about
 - Sport Module Architecture: Corporate creates SportModule catalog → assigns to clubs via club_sport_modules → Manager sees sport cards dashboard → sport.context middleware sets app('current_sport_module_id') → all entities (Group, TrainingSession, TrainingPlan, Registration) have nullable sport_module_id
 - Sport-scoped routes: GET/POST /api/v1/club/{sportSlug}/groups|sessions|swimmers|coaches|training-plans require sport.context middleware — resolves slug to sport_module_id
 - Backward compat: all existing /club/* routes work unchanged — sport_module_id is always nullable, never required on existing endpoints
@@ -83,7 +90,7 @@
 - Notification System: Notification + PushToken models, NotificationService (notify, notifyMany, markRead, markAllRead, registerPushToken), SendPushNotification job (Expo Push API, 3 retries)
 - Notification triggers: absence_alert (coach), repeated_absence (manager, 3+ consecutive), registration_approved/rejected (swimmer user), subscription_expiring (manager, 14/7/1 day), session_reminder (swimmers, 24h before)
 - Notification API: GET /notifications (paginated + unread_count), PUT /notifications/{id}/read, PUT /notifications/read-all, POST /notifications/push-token — all under auth:sanctum
-- Scheduled commands: `notifications:subscription-reminders` (daily 09:00), `notifications:session-reminders` (daily 08:00) — registered in routes/console.php; both are idempotent (check for existing notifications before creating)
+- Scheduled commands: `notifications:subscription-reminders` (daily 09:00), `notifications:session-reminders` (daily 08:00), `accounts:purge` (daily 03:00 UTC) — registered in routes/console.php; all are idempotent
 - Frontend NotificationBell: exported from Layout.jsx, reused in ManagerHomePage; polls every 60s, dropdown with last 5 notifications, mark read, navigate on click
 - Club Manager two-tier routing: `/club` renders full-screen ManagerHomePage (no sidebar, own top bar with club logo + NotificationBell + Sign Out); `/club/*` routes render inside Layout (with sidebar). Both wrapped in separate `SportModuleProvider` instances
 - Layout main content area: fixed content header bar (64px, backdrop blur, sticky z-index) with breadcrumb/brand on left + NotificationBell on right; page content scrolls independently below (`overflow: hidden` on main, `overflowY: auto` on content div)
@@ -91,6 +98,7 @@
 - Public coaches API returns both `photo` and `avatar_url` (same value) for backward compat with portal and mobile
 - Public coach schedule endpoint transforms raw CoachSchedule records into mobile-expected shape: `{ coach_id, slots: [{ day, start_time, end_time }] }`
 - Registration accepts guardian fields: `guardian_name`, `guardian_phone`, `guardian_email` — nullable, stored on Registration model
+- Session index endpoint (`GET /club/sessions`) returns all sessions without pagination (`.get()` not `.paginate()`) — frontend reads `r.data.data` directly
 - Session attendance endpoint (`GET /coach/sessions/{id}/attendance`) returns `end_time` and nested `group` object in session data — required by mobile
 - i18n: Frontend is bilingual (Arabic RTL + English LTR) via i18next + react-i18next; backend notification titles/bodies, risk reasons, SMS messages, and seeder data remain English-only
 - i18n config: `frontend/src/i18n/index.js` — fallbackLng: 'en', localStorage key `craveclubs_lang`, supported: ['ar', 'en']
@@ -100,6 +108,12 @@
 - RTL font: IBM Plex Sans Arabic (Google Fonts) — applied via CSS `html[dir="rtl"]` rules in index.css
 - Nav labels use translation keys: `allNavItems` and `CLUB_MANAGER_NAV` store key strings (e.g., `'nav.dashboard'`), resolved via `t()` at render time
 - PageLoader (Suspense fallback) reads `localStorage.getItem('craveclubs_lang')` directly since i18n may not be initialized yet
+
+## Git Workflow
+- Always work on the `staging` branch
+- Never commit directly to `main`
+- All new features and fixes go to `staging` first
+- To deploy to production: merge staging → main via Pull Request on GitHub
 
 ## Common Commands
 - `cd backend && php artisan test` — run all tests (229 tests)
@@ -115,7 +129,7 @@
 - `k6 run tests/load/stress.js` — run stress test ramping to 200 VUs
 - `cd backend && php artisan backup:database` — run database backup manually
 - `cd backend && php artisan backup:database --dry-run` — preview backup without executing
-- Demo club slug is `future-academy` — use `/portal/future-academy` to login (manager@futureacademy.com / Password123!)
+- Demo club slug is `future-academy` — use `/future-academy` to login (manager@futureacademy.com / Password123!)
 
 ## Key Patterns
 - Club-scoped controllers: always query with `->where('club_id', app('current_club_id'))` and `abort(404)` if record's `club_id` doesn't match
@@ -129,7 +143,8 @@
 - `SubscriptionPlan` reorder endpoint expects `ordered_ids` field (array of plan IDs in desired order)
 - Registration approval chain: `registration.coach_id` → `coach_profiles.id` → `user_id` → `groups.coach_user_id` — used to auto-assign swimmers to groups
 - User model `'password' => 'hashed'` cast auto-hashes plain passwords on create — no need to call `Hash::make()`
-- Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
+- User model has NO `is_active` column — `is_active` exists on clubs, branches, plans, but NOT users; do NOT pass `is_active` in `User::create()`
+- Migration numbering: sequential from `2024_01_01_000069_` — check last number before adding new migrations
 - Rate limits: env-configurable via `RATE_LIMIT_AUTH` (default 60) and `RATE_LIMIT_GUEST` (default 20) in AppServiceProvider — useful for load testing without code changes
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
@@ -138,7 +153,8 @@
 - Show Laravel 422 validation errors: `Object.values(err.response.data.errors).map(arr => arr[0])`
 - ErrorBoundary hierarchy: top-level ErrorBoundary + RouteErrorBoundary per-page (wraps `<Outlet />`)
 - Feature-gating: `feature:` middleware on backend, `FeatureRoute` component on frontend
-- Scope detection from URL: `/login`, `/corporate/*` → corporate; `/portal/*`, `/club/*`, `/coach/*`, `/swimmer/*` → club
+- Scope detection from URL: `/login`, `/corporate/*` → corporate; `/:clubSlug`, `/portal/*`, `/club/*`, `/coach/*`, `/swimmer/*` → club
+- Login pages have NO active session detection — users always see fresh login form (no "Go to Dashboard" shortcut)
 - Registration wizard steps: no `<form>` tags — use `type="button"` on buttons, `onClick` handlers with validation
 - Registration state: `RegistrationContext` with `useReducer` + `sessionStorage` persistence (key: `crave_registration_draft`)
 - Registration context stores human-readable names (`branchName`, `planName`, `planPrice`, `coachName`) alongside IDs for the review step
@@ -164,8 +180,11 @@
 - `backend/config/sentry.php` — Sentry configuration (published via vendor:publish)
 - `backend/database/migrations/2024_01_01_000067_add_performance_indexes_v3.php` — v3 indexes (session+present, session+rating, group+date+status, assignment composites)
 - `backend/docs/EXPLAIN_QUERIES.sql` — EXPLAIN QUERY PLAN reference for verifying index usage on critical queries
-- `backend/app/Console/Commands/BackupDatabase.php` — daily MySQL backup: mysqldump → gzip → B2 upload → 30-day prune → Sentry alert on failure
+- `backend/app/Console/Commands/BackupDatabase.php` — daily MySQL backup: PDO export → gzencode → B2 upload → 30-day prune → Sentry alert on failure; logs to `backup_logs` table
+- `backend/app/Console/Commands/PurgeDeletedAccounts.php` — permanently delete expired accounts (30-day grace period)
 - `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
+- `backend/app/Http/Controllers/Api/AccountDeletionController.php` — account deletion: requestDeletion, reactivate, status
+- `backend/tests/Feature/AccountDeletionTest.php` — 12 tests for full account deletion lifecycle
 - `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
 - `Procfile` — Railway process definitions: web, worker, scheduler, reverb
 - `backend/railway.json` — Railway build config: DOCKERFILE builder, dockerContext=backend
@@ -252,6 +271,7 @@
 - `.github/workflows/ci.yml` — CI pipeline (MySQL + Redis services, backend + frontend tests, Pint lint)
 - `.github/workflows/deploy.yml` — deploy pipeline (tests → Railway deploy → migrate:safe → health check)
 - `backend/.env.ci` — CI environment config (MySQL + Redis, sync queue, no secrets)
+- `backend/app/Console/Commands/CreateCorporateAdmin.php` — idempotent admin creation (`admin:create --force` resets password if exists); runs on every deploy via Procfile
 - `backend/app/Console/Commands/SafeMigrate.php` — safe migration command (checks pending, migrates, rebuilds caches)
 - `backend/app/Http/Middleware/TrackResponseTime.php` — global middleware: X-Response-Time header + SLOW_REQUEST logging (>500ms)
 - `backend/app/Http/Controllers/Api/MetricsController.php` — system metrics endpoint (protected by X-Metrics-Key header)
@@ -318,7 +338,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `async onClick` handlers with bare `await` (no try/catch) silently swallow errors — buttons appear broken
 - `Button` component spreads `{...props}` AFTER `style` — never pass `style` prop directly, it overrides internal styles
 - Login endpoint has its own `throttle:10,1` — separate from authenticated routes
-- Club portal login is at `/portal/:slug`, corporate login at `/login` — different auth flows
+- Club portal login is at `/:clubSlug` (also `/portal/:slug` for compat), corporate login at `/login` — different auth flows; ClubLogin.jsx fetches branding from `/branding/:slug` and sets document.title to club display_name
 - Coach schedule FK references `coach_profiles` table (not `users`) — `coach_id` points to `coach_profiles.id`
 - `broadcast()->toOthers()` must be called OUTSIDE DB transactions — transactions hold locks and delay the broadcast; broadcast must also be wrapped in its own try/catch for graceful degradation when Reverb is offline
 - Registration wizard steps must NOT use `<form>` tags — use `type="button"` on all buttons to prevent accidental submits
@@ -335,6 +355,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - SubscriptionPlan reorder uses `ordered_ids` key — NOT `order`
 - In tests, models using `BelongsToClub` trait need `::withoutGlobalScopes()` when querying across clubs
 - jsdom (Vitest) has `window.innerWidth = 0` — Login page renders mobile layout in tests; use exact placeholders `admin@craveclubs.com` and `Enter your password`
+- Tests use `Model::create()` directly (no factories) — `Club::factory()` / `User::factory()` do NOT exist; create with explicit arrays
 - CI requires `coverage: xdebug` and `--coverage --min=60` — tests fail if coverage drops below 60%
 - All CRUD create/edit forms use `FormPage` (not `Modal`) — only delete confirmations, member pickers, and assign modals use `Modal`
 - `FormPage` import: available from both `'../components/ui/FormPage'` and barrel `'../components/CrudTable'`
@@ -360,6 +381,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - SportContext middleware checks `sportSlug` route param first, then `sport`, then `X-Sport-Module` header, then `sport_module_id` input
 - CoachPerformanceController routes (`/coaches/performance`, `/coaches/performance/compare`) must be registered BEFORE `/coaches/{coach}` in api.php to avoid route conflicts
 - CoachProfile has both `id` (profile ID) and `user_id` (User FK) — API routes use `user_id`, performance summary returns both; compare endpoint maps user_id→profile_id for filtering
+- SwimmerProfile `first_name` + `last_name` is the authoritative name source — `User.name` is set once at creation and may go stale; always prefer profile name in queries
 - `PageHeader` component uses internal `PAGE_DESCRIPTIONS` dict — does NOT accept a `subtitle` prop
 - `Modal` component signature is `Modal({ title, onClose, children, icon })` — does NOT accept `wide` prop
 - NotificationService.notify() dispatches push notifications outside DB transactions — safe for broadcast
@@ -379,6 +401,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Club Manager sidebar uses grouped navigation: `CLUB_MANAGER_NAV` array with 4 sections (Heroes, Training, Business, Club Management), each with section header + feature-gated items; other roles use flat nav list
 - Sport module card stats: `branches_count` (club-level), `new_registrations_count` (pending, sport-scoped), `active_swimmers_count` (sport-scoped) — computed in `ClubDashboardController.sportModules()`
 - Mobile app `.env` has `EXPO_PUBLIC_API_URL` — must match computer's current local IP (not localhost); use `--host=0.0.0.0` when running `php artisan serve` for mobile access
+- Procfile `web:` command overrides Dockerfile `CMD` — if startup tasks (migrate, admin:create) are only in Dockerfile's `start.sh`, they never run; must be in Procfile
 - Railway Dockerfile COPY paths must be relative to `backend/` (the `dockerContext`) — do NOT prefix with `backend/`; if you change `dockerContext` in `railway.json`, all COPY paths and `.dockerignore` location must match
 - Raw SQL date functions differ: SQLite uses `strftime('%Y-%m', col)`, MySQL uses `DATE_FORMAT(col, '%Y-%m')` — always use `DB::getDriverName()` to pick the right one (dev=SQLite, prod=MySQL)
 - Monolog 3 uses immutable `LogRecord` objects (not arrays) — processors must implement `ProcessorInterface`, use `$record->with(extra: ...)` not `$record['extra'] = ...`
@@ -387,8 +410,8 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - TrainingSession `effectiveSwimmers` attribute fires a DB query on every access — in loops, compute IDs from pre-loaded relations instead
 - ClubAnalyticsService methods are cached (1hr TTL) — N+1 fixes reduce cold-cache query count from 50+ to 5-8 per endpoint
 - `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
-- Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min), backup:database (02:00 UTC) — registered via `Schedule::command()`
-- Migration numbering: sequential from `2024_01_01_000067_` — check last number before adding new migrations
+- Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min), backup:database (02:00 UTC), accounts:purge (03:00 UTC) — registered via `Schedule::command()`
+- Migration numbering: sequential from `2024_01_01_000069_` — check last number before adding new migrations
 - `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
 - Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
 - `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false
@@ -399,4 +422,6 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `SubscriptionPlanController` store/update wrap `is_popular` clearing in `DB::transaction` — do NOT remove the transaction
 - User model `$hidden` includes `email_verified_at` in addition to `password` and `remember_token` — do NOT expose in API responses
 - `DB::forgetRecordedQueries()` does not exist on SQLite — use plain `DB::listen()` without cleanup in tests
+- `config('database.connections.mysql.host')` may return an array (read/write split) — use `env('DB_HOST')` or extract string before interpolation; same applies to `write.host`
+- `league/flysystem-aws-s3-v3` must be in `require` (not `require-dev`) — needed by scheduler for B2 uploads; Dockerfile runs `composer install --no-dev`
 - Telescope is dev-only (`--dev`) — do NOT require it in production; tables exist in migration but package only loads in dev

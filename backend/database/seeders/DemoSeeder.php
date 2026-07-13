@@ -96,7 +96,7 @@ class DemoSeeder extends Seeder
 
         // Club Manager
         User::create([
-            'name' => 'Club Manager',
+            'name' => 'Mahmoud Sami',
             'email' => 'manager@futureacademy.com',
             'password' => $seederPassword,
             'role' => UserRole::CLUB_MANAGER,

@@ -93,7 +93,7 @@ export function MiniChart({ data = [], type = 'bar', color = '#22d3ee', height =
         {data.map((d, i) => {
           const barPct = allZero ? 6 : Math.max((d.value / max) * 100, 4);
           return (
-            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div key={i} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
               <div style={{
                 width: '70%', borderRadius: 4,
                 height: `${barPct}%`,

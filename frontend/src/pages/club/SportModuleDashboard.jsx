@@ -94,6 +94,19 @@ export default function SportModuleDashboard() {
   );
 }
 
+// Map RemixIcon sport names → emoji (web has no RemixIcon font loaded).
+// Falls back to the sport name's initial so new sports still show something sensible.
+const SPORT_EMOJI = {
+  'drop-fill': '🏊', 'water-flash-fill': '🏊', 'football-fill': '⚽',
+  'basketball-fill': '🏀', 'tennis-fill': '🎾', 'ping-pong-fill': '🏓',
+  'run-fill': '🏃', 'boxing-fill': '🥊', 'bike-fill': '🚴', 'football-line': '⚽',
+};
+
+function sportGlyph(module) {
+  if (SPORT_EMOJI[module.icon]) return SPORT_EMOJI[module.icon];
+  return module.name ? module.name.charAt(0).toUpperCase() : '?';
+}
+
 export function SportCard({ module, onEnter }) {
   const [hovered, setHovered] = useState(false);
   const color = module.color || '#8b5cf6';
@@ -126,7 +139,7 @@ export function SportCard({ module, onEnter }) {
           fontSize: 20, fontWeight: 700, color,
           flexShrink: 0,
         }}>
-          {module.icon ? module.icon.charAt(0).toUpperCase() : '?'}
+          {sportGlyph(module)}
         </div>
         <div>
           <div style={{

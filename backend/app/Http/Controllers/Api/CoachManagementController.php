@@ -29,7 +29,8 @@ class CoachManagementController extends Controller
 
     public function coachIndex(Request $request): JsonResponse
     {
-        $query = CoachProfile::with('user');
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = CoachProfile::where('club_id', app('current_club_id'))->with('user');
         if ($search = $request->input('search')) {
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");

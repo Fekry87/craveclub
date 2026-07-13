@@ -98,12 +98,32 @@ class NotificationService
 
     /**
      * Register or update a push token for a user.
+     *
+     * Scoped to (token, user_id): a token already registered to a DIFFERENT user
+     * is reassigned to the current user (device handed over / account switch on the
+     * same physical device) rather than silently leaving it bound to the old owner.
+     * This closes the "re-bind by token string" cross-user hijack — the actor must
+     * hold both the (high-entropy) token AND an authenticated session as themselves.
      */
     public function registerPushToken(int $userId, string $token, string $platform = 'expo'): PushToken
     {
+        $existing = PushToken::where('token', $token)->first();
+
+        if ($existing && $existing->user_id !== $userId) {
+            // Same device now used by a different account: transfer ownership,
+            // refresh timestamps so it isn't treated as stale.
+            $existing->update([
+                'user_id' => $userId,
+                'platform' => $platform,
+                'updated_at' => now(),
+            ]);
+
+            return $existing;
+        }
+
         return PushToken::updateOrCreate(
-            ['token' => $token],
-            ['user_id' => $userId, 'platform' => $platform],
+            ['token' => $token, 'user_id' => $userId],
+            ['platform' => $platform],
         );
     }
 }

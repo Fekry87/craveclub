@@ -407,6 +407,7 @@ export default function Login() {
               <input
                 type={field.key} value={field.key === 'email' ? email : password}
                 onChange={e => field.key === 'email' ? setEmail(e.target.value) : setPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSubmit(e); }}
                 required
                 onFocus={() => setFocusedField(field.key)}
                 onBlur={() => setFocusedField(null)}

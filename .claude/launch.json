@@ -3,16 +3,14 @@
   "configurations": [
     {
       "name": "backend",
-      "runtimeExecutable": "php",
-      "runtimeArgs": ["artisan", "serve"],
-      "cwd": "backend",
+      "runtimeExecutable": "/opt/homebrew/bin/php",
+      "runtimeArgs": ["backend/artisan", "serve"],
       "port": 8000
     },
     {
       "name": "frontend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "cwd": "frontend",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
       "port": 5173
     }
   ]

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CoachProfile;
 use App\Models\RecurringSchedule;
 use App\Models\TrainingSession;
 use Carbon\Carbon;
@@ -18,6 +19,11 @@ class SessionGeneratorService
      */
     public function generate(RecurringSchedule $schedule): array
     {
+        // Groups have no branch column; the schedule's coach carries the branch.
+        $branchId = $schedule->coach_user_id
+            ? CoachProfile::where('user_id', $schedule->coach_user_id)->value('branch_id')
+            : null;
+
         $dates = $this->computeDates($schedule);
         $existingDates = TrainingSession::where('recurring_schedule_id', $schedule->id)
             ->pluck('date')
@@ -46,7 +52,7 @@ class SessionGeneratorService
 
             $toCreate[] = [
                 'club_id' => $schedule->club_id,
-                'branch_id' => $schedule->group?->branch_id,
+                'branch_id' => $branchId,
                 'coach_user_id' => $schedule->coach_user_id,
                 'group_id' => $schedule->group_id,
                 'plan_id' => $schedule->training_plan_id,

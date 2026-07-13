@@ -27,7 +27,8 @@ class GroupManagementController extends Controller
 
     public function groupIndex(Request $request): JsonResponse
     {
-        $query = Group::with(['coach', 'swimmers']);
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = Group::where('club_id', app('current_club_id'))->with(['coach', 'swimmers']);
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");
         }

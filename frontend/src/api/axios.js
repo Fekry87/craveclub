@@ -65,11 +65,21 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
+      // A 401 from the login/reactivate call itself is a failed attempt,
+      // not an expired session — let the page render its own error.
+      const requestUrl = error.config?.url || '';
+      const isAuthAttempt = requestUrl.includes('/auth/login') || requestUrl.includes('/account/reactivate');
+      if (isAuthAttempt) return Promise.reject(error);
+
       const scope = getAuthScope();
       removeToken(scope);
       const path = window.location.pathname;
-      // Don't redirect if already on a login page
-      const isLoginPage = path === '/login' || path.startsWith('/portal/');
+      // Don't redirect if already on a login page.
+      // Club login lives at /:clubSlug (single segment) as well as /portal/:slug.
+      const isLoginPage =
+        path === '/login' ||
+        path.startsWith('/portal/') ||
+        /^\/[^/]+\/?$/.test(path) && !path.startsWith('/corporate') && !path.startsWith('/club') && !path.startsWith('/coach') && !path.startsWith('/swimmer');
       if (!isLoginPage) {
         if (scope === 'corporate') {
           window.location.href = '/login';

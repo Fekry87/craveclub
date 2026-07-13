@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSessionRequest;
 use App\Http\Requests\UpdateSessionRequest;
 use App\Models\Attendance;
+use App\Models\CoachProfile;
 use App\Models\DailyEvaluation;
 use App\Models\Group;
 use App\Models\TrainingSession;
@@ -14,6 +15,23 @@ use Illuminate\Http\Request;
 
 class SessionManagementController extends Controller
 {
+    /**
+     * Resolve the branch a session belongs to from its group's coach.
+     * Groups have no branch column; the coach's profile carries the branch.
+     */
+    private function branchIdForGroup(?int $groupId): ?int
+    {
+        if (! $groupId) {
+            return null;
+        }
+        $group = Group::find($groupId);
+        if (! $group || ! $group->coach_user_id) {
+            return null;
+        }
+
+        return CoachProfile::where('user_id', $group->coach_user_id)->value('branch_id');
+    }
+
     /**
      * Guard: abort 404 if the model doesn't belong to the current club.
      */
@@ -28,7 +46,8 @@ class SessionManagementController extends Controller
 
     public function sessionIndex(Request $request): JsonResponse
     {
-        $query = TrainingSession::with(['group', 'plan']);
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = TrainingSession::where('club_id', app('current_club_id'))->with(['group', 'plan']);
         if ($date = $request->input('date')) {
             $query->where('date', $date);
         }
@@ -54,8 +73,7 @@ class SessionManagementController extends Controller
     {
         $sportModuleId = $request->sport_module_id;
         if (! $sportModuleId && $request->group_id) {
-            $group = Group::find($request->group_id);
-            $sportModuleId = $group?->sport_module_id;
+            $sportModuleId = Group::find($request->group_id)?->sport_module_id;
         }
 
         $session = TrainingSession::create(array_merge(
@@ -63,6 +81,8 @@ class SessionManagementController extends Controller
             [
                 'club_id' => $request->user()->club_id,
                 'sport_module_id' => $sportModuleId,
+                // Inherit branch from the group's coach so branch session counts stay accurate
+                'branch_id' => $this->branchIdForGroup($request->group_id),
             ]
         ));
 
@@ -88,6 +108,7 @@ class SessionManagementController extends Controller
             [
                 'club_id' => $request->user()->club_id,
                 'sport_module_id' => app('current_sport_module_id'),
+                'branch_id' => $request->group_id ? Group::find($request->group_id)?->branch_id : null,
             ]
         ));
 
