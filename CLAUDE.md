@@ -114,9 +114,14 @@
 - Never commit directly to `main`
 - All new features and fixes go to `staging` first
 - To deploy to production: merge staging → main via Pull Request on GitHub
+- Two separate repos: backend+frontend live in `github.com/Fekry87/craveclub` (this repo); the mobile app lives in `github.com/Fekry87/craveclubs-mobile` (the `Club App/SwimmingApp` directory). The mobile repo commits to `main` directly — branch first, PR, merge.
+- **Production deploys happen via Railway's native GitHub integration** (Railway watches `main` and auto-deploys on push), NOT the GitHub Actions `deploy.yml`. That `deploy.yml` deploy job is broken (`if: ${{ secrets.PRODUCTION_URL }}` — `secrets` is not allowed in `if:`, so the workflow fails at parse time in 0s on every merge). Its red X is cosmetic; do NOT "fix" it or you create a double-deploy race with Railway. The `ci.yml` workflow (tests + Pint lint) is the one that must stay green.
+- Production backend URL: `https://web-production-c3c32.up.railway.app`. Health: `/api/v1/health` (200 = healthy). The `api.craveclubs.com` custom domain is NOT set up (NXDOMAIN) — do not point anything at it until it's configured in Railway.
+- CI Pint lint gate: run `cd backend && vendor/bin/pint` before pushing — CI fails the whole lint step on ANY style issue across all 253 files (incl. pre-existing debt), not just changed files.
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (229 tests)
+- `cd backend && php artisan test` — run all tests (242 tests)
+- `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
 - `cd frontend && npx vitest run` — run all frontend tests (22 tests)
 - `cd backend && php artisan serve` — start API server (port 8000)
 - `cd frontend && npm run dev` — start Vite dev server (port 5173)
@@ -170,7 +175,10 @@
 - `backend/app/Http/Controllers/Api/BranchController.php` — reference CRUD controller with manual club-scoping pattern
 - `backend/app/Http/Controllers/Api/PublicRegistrationController.php` — public registration endpoint, fires `NewRegistrationSubmitted` broadcast
 - `backend/app/Events/NewRegistrationSubmitted.php` — Reverb broadcast event for real-time registration notifications
-- `backend/routes/channels.php` — private channel authorization (`club.{clubId}`)
+- `backend/app/Events/SessionStarted.php` / `SessionCompleted.php` — broadcast on `private-swimmer.{userId}` when a coach starts/completes a session (mobile real-time)
+- `backend/app/Http/Controllers/Api/Concerns/BuildsUserPayload.php` — shared trait: enriched user payload (incl. `features`) + `tokenExpiryForRequest()`; used by AuthController + AccountDeletionController
+- `backend/database/migrations/2024_01_01_000070_add_reference_code_to_registrations.php` — adds unguessable `reference_code` for the public status lookup
+- `backend/routes/channels.php` — private channel authorization (`club.{clubId}`, `club.{clubId}.coach`, `swimmer.{userId}`)
 - `backend/database/seeders/DemoSeeder.php` — all seed data (club, users, coaches, swimmers, branches, sports, plans, schedules)
 - `backend/routes/api.php` — all API routes, middleware stacking, broadcasting auth
 - `backend/bootstrap/app.php` — app config (statefulApi commented out) + structured exception handler + Sentry capture
@@ -425,3 +433,24 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `config('database.connections.mysql.host')` may return an array (read/write split) — use `env('DB_HOST')` or extract string before interpolation; same applies to `write.host`
 - `league/flysystem-aws-s3-v3` must be in `require` (not `require-dev`) — needed by scheduler for B2 uploads; Dockerfile runs `composer install --no-dev`
 - Telescope is dev-only (`--dev`) — do NOT require it in production; tables exist in migration but package only loads in dev
+- `BuildsUserPayload` trait (`app/Http/Controllers/Api/Concerns/BuildsUserPayload.php`) is the single source of the enriched login/reactivate/`/me` user payload (id, name, role, club, `features`, `corporate`) — reuse it, don't hand-roll; mobile `hasFeature()` depends on `features` being present. It also provides `tokenExpiryForRequest()` (30d for `X-Platform` ios/android, else null).
+- `RecalculateSwimmerXp` job MUST be dispatched after any attendance/evaluation write (done in `CoachApiController::sessionComplete` + `toggleAttendance`) — it syncs `swimmer_profiles.xp_points` with the computed value. If not dispatched, stored XP stays 0 and the leaderboard shows 0 while other views compute 85 — the classic "XP contradiction" bug.
+- Registrations have an unguessable `reference_code` (`REG-XXXXXXXX`, migration 000070); the public status endpoint is `GET /registrations/{reference}` looked up by code, NOT the sequential id (prevents PII enumeration). `store()` returns both `registration_id` and `reference_code`.
+- `GET /account/deletion-status` returns only `pending_deletion` (with days/purge) or a generic `{status:'none'}` for active/missing/purged — it is deliberately NOT an account-existence oracle. Don't reintroduce `active`/`not_found` distinctions. `User::daysUntilPurge()` ceils fractional days (a fresh 30-day window reads 30, not 29).
+- Public `/coaches` + `/coaches/{id}` (unauthenticated registration wizard) must NOT return coach `email`/`phone` — name/photo/bio/specialization/rating only.
+- Sessions carry `branch_id` inherited from the group's coach (`SessionManagementController::branchIdForGroup()` and `SessionGeneratorService`) — groups have NO `branch_id` column; the chain is session → group.coach_user_id → coach_profiles.branch_id. Needed for branch session counts.
+- `registerPushToken` (NotificationService) transfers ownership explicitly when a token is submitted by a different authenticated user (device handover) — do NOT revert to blind `updateOrCreate(['token'])`, which lets any user rebind another's device.
+- Corporate swimmer counts use `SwimmerProfile`, not SWIMMER users: `total_swimmers` counts profiles; `/corporate/clubs` uses `withCount('swimmerProfiles')` → frontend reads `swimmer_profiles_count`. SWIMMER-user counts undercount (many swimmers have no login).
+- Real-time session events for mobile: `SessionStarted` / `SessionCompleted` events broadcast on `private-swimmer.{userId}` (channel auth in `routes/channels.php` as `swimmer.{userId}`), fired from `CoachApiController` start/complete. `broadcast()` wrapped in try/catch for graceful degradation when Reverb is offline.
+- Web 401 interceptor (`frontend/src/api/axios.js`): ignores 401s from `/auth/login` + `/account/reactivate` (so login-error UI renders) and treats a single-segment `/:clubSlug` path as a login page (so it doesn't redirect-wipe the error). Mobile interceptor (`src/api/client.ts`) mirrors this — excludes login/reactivate from the `clearAll()`+logout cascade.
+- Mobile axios client sets a default `X-Platform: Platform.OS` header (→ 30-day tokens) and login sends the resolved `club_slug` (→ backend enforces club membership on branded builds).
+- Version check response is `store_url` (single platform-resolved string) — mobile `ForceUpdateScreen` uses that string with a null guard; there is NO `update_url: {ios,android}` object.
+- Mobile `ClubEntryScreen` is wired into `RootNavigator` for shared builds (`!isAuthenticated && !isResolved`) — not dead code; branded builds skip it (`isResolved` starts true when a slug is baked in).
+- Swimmer `monthly_ratings` (SwimmerApiController) groups evaluations by the SESSION's date (`session.date`), not `created_at` — a March session rated in April counts as March.
+- The 6 trait-only index methods (coach/swimmer/group/session/plan/skill) have explicit `where('club_id', app('current_club_id'))` on top of the `BelongsToClub` global scope (defense-in-depth) — keep it; the global scope is a no-op for null-`club_id`/unauthenticated callers.
+- Login forms submit on Enter via an explicit `onKeyDown` handler on the inputs (native implicit submit was unreliable here) — both `ClubLogin.jsx` and `Login.jsx`.
+- Frontend `MiniChart` bar mode: each bar's column wrapper needs `height:100%` + `justifyContent:flex-end` or bars compute to 0px (percentage height of a zero-height parent).
+- Sport module `icon` is a RemixIcon name (e.g. `drop-fill`) but the web has no RemixIcon font — `SportCard` maps known names to emoji with a sport-name-initial fallback (do NOT render `icon.charAt(0)`, which shows the wrong letter like "D" for Swimming).
+- `WeekdayPicker` (ScheduleBuilderPage) array is ordered Sun→Sat; RTL flips it visually via the container's `dir` — don't hardcode the reverse order.
+- All mobile API config points at the live Railway backend; `api.craveclubs.com` was removed from `eas.json` + code fallbacks (it's NXDOMAIN). When the custom domain is configured in Railway, flip `eas.json` base profile + `config/club.ts` + `branding.service.ts` fallbacks to it.
+- Demo corporate admin is `admin@craveclubs.com` (seeder, `.com`); production admin is `admin@craveclubs.co` (deploy command `admin:create`, `.co`) — intentionally different (demo vs prod). Seeded club manager is a real name ("Mahmoud Sami") so the greeting isn't "Good …, Club".
