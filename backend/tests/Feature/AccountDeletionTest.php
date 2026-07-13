@@ -173,12 +173,22 @@ class AccountDeletionTest extends TestCase
             ->assertJsonStructure(['days_remaining', 'scheduled_purge_at']);
     }
 
-    public function test_deletion_status_returns_active_for_normal_user(): void
+    public function test_deletion_status_returns_none_for_normal_user(): void
     {
+        // Privacy: a non-pending account returns a generic `none` (indistinguishable
+        // from a non-existent email) so the endpoint isn't an account-existence oracle.
         $response = $this->getJson('/api/v1/account/deletion-status?email='.$this->swimmer->email);
 
         $response->assertOk()
-            ->assertJson(['status' => 'active']);
+            ->assertJson(['status' => 'none']);
+    }
+
+    public function test_deletion_status_returns_none_for_unknown_email(): void
+    {
+        $response = $this->getJson('/api/v1/account/deletion-status?email=nobody@example.com');
+
+        $response->assertOk()
+            ->assertJson(['status' => 'none']);
     }
 
     public function test_purge_command_deletes_expired_accounts(): void

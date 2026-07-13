@@ -113,7 +113,8 @@ class RegistrationController extends Controller
                     'guardian_name' => $registration->guardian_name,
                     'guardian_phone' => $registration->guardian_phone ?? $registration->phone,
                     'guardian_email' => $registration->guardian_email,
-                    'level' => $registration->experience_level ?? 'beginner',
+                    // Normalize case so filters don't split into "Beginner"/"beginner" buckets
+                    'level' => ucfirst(strtolower($registration->experience_level ?? 'beginner')),
                 ]);
 
                 // 6. Auto-assign to coach's group
@@ -200,11 +201,19 @@ class RegistrationController extends Controller
                 'swimmer_name' => $registration->full_name,
             ]);
 
-            // Notify swimmer user if they have an existing account (from a prior registration)
+            // Notify swimmer user if they have an existing account (from a prior registration).
+            // Match on the deterministic phone-derived email, NOT the display name —
+            // two same-named members would otherwise notify the wrong person.
             $clubId = app('current_club_id');
-            $swimmerUser = User::where('club_id', $clubId)
-                ->where('name', $registration->full_name)
-                ->first();
+            $phoneDigits = preg_replace('/[^0-9]/', '', (string) $registration->phone);
+            $swimmerUser = $phoneDigits
+                ? User::where('club_id', $clubId)
+                    ->where(function ($q) use ($phoneDigits, $clubId) {
+                        $q->where('email', 'swimmer_'.$phoneDigits.'@club'.$clubId.'.craveclubs.local')
+                            ->orWhere('email', 'like', 'swimmer_'.$phoneDigits.'\_%@club'.$clubId.'.craveclubs.local');
+                    })
+                    ->first()
+                : null;
 
             if ($swimmerUser) {
                 app(NotificationService::class)->notify(

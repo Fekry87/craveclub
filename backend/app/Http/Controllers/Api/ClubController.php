@@ -27,7 +27,8 @@ class ClubController extends Controller
     // ── Training Plans ──
     public function planIndex(Request $request): JsonResponse
     {
-        $query = TrainingPlan::with(['items', 'coach'])->withCount('assignments', 'activeAssignments');
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = TrainingPlan::where('club_id', app('current_club_id'))->with(['items', 'coach'])->withCount('assignments', 'activeAssignments');
         if ($search = $request->input('search')) {
             $query->where('title', 'like', "%{$search}%");
         }
@@ -103,7 +104,8 @@ class ClubController extends Controller
     // ── Skills ──
     public function skillIndex(Request $request): JsonResponse
     {
-        $query = Skill::query();
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = Skill::where('club_id', app('current_club_id'));
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");
         }

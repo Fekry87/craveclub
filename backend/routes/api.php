@@ -192,7 +192,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/coaches/{coach}', [PublicRegistrationController::class, 'coachShow']);
         Route::get('/coaches/{coach}/schedule', [PublicRegistrationController::class, 'coachSchedule']);
         Route::post('/registrations', [PublicRegistrationController::class, 'store']);
-        Route::get('/registrations/{id}', [PublicRegistrationController::class, 'status']);
+        Route::get('/registrations/{reference}', [PublicRegistrationController::class, 'status']);
 
         // Public namespace aliases (for mobile registration wizard)
         Route::get('/public/sports', [PublicRegistrationController::class, 'sports']);

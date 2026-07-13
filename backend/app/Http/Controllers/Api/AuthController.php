@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\BuildsUserPayload;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
-use App\Models\ClubFeature;
-use App\Models\CorporateSetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
+    use BuildsUserPayload;
+
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -105,22 +106,4 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Build enriched user payload with club, features, and corporate branding.
-     */
-    private function buildUserPayload($user): array
-    {
-        $user->load('club');
-
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role->value,
-            'club_id' => $user->club_id,
-            'club' => $user->club,
-            'features' => $user->club_id ? ClubFeature::forClub($user->club_id) : null,
-            'corporate' => CorporateSetting::allSettings(),
-        ];
-    }
 }

@@ -54,7 +54,8 @@ class User extends Authenticatable
             return 0;
         }
 
-        return (int) now()->diffInDays($this->scheduled_purge_at, false);
+        // Ceil of fractional days: a freshly-set 30-day window reads 30, not 29.
+        return (int) ceil(now()->diffInSeconds($this->scheduled_purge_at, false) / 86400);
     }
 
     public function club()

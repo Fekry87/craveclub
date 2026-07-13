@@ -56,7 +56,8 @@ class SwimmerManagementController extends Controller
 
     public function swimmerIndex(Request $request): JsonResponse
     {
-        $query = SwimmerProfile::with('user');
+        // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
+        $query = SwimmerProfile::where('club_id', app('current_club_id'))->with('user');
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")

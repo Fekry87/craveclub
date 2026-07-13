@@ -48,10 +48,13 @@ class SwimmerApiController extends Controller
         $avgRating = DailyEvaluation::where('swimmer_id', $profile->id)->avg('rating');
         $bestRating = DailyEvaluation::where('swimmer_id', $profile->id)->max('rating');
 
+        // Group by the SESSION's date, not the evaluation's created_at, so a rating
+        // for a March session lands in March even if entered later.
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
-            ->orderBy('created_at', 'desc')
+            ->with('session:id,date')
             ->get()
-            ->groupBy(fn ($eval) => $eval->created_at->format('Y-m'))
+            ->sortByDesc(fn ($eval) => $eval->session?->date ?? $eval->created_at)
+            ->groupBy(fn ($eval) => \Carbon\Carbon::parse($eval->session?->date ?? $eval->created_at)->format('Y-m'))
             ->take(6)
             ->map(fn ($group, $month) => [
                 'month' => $month,
@@ -331,10 +334,13 @@ class SwimmerApiController extends Controller
         $avgRating = DailyEvaluation::where('swimmer_id', $profile->id)->avg('rating');
         $bestRating = DailyEvaluation::where('swimmer_id', $profile->id)->max('rating');
 
+        // Group by the SESSION's date, not the evaluation's created_at, so a rating
+        // for a March session lands in March even if entered later.
         $monthlyRatings = DailyEvaluation::where('swimmer_id', $profile->id)
-            ->orderBy('created_at', 'desc')
+            ->with('session:id,date')
             ->get()
-            ->groupBy(fn ($eval) => $eval->created_at->format('Y-m'))
+            ->sortByDesc(fn ($eval) => $eval->session?->date ?? $eval->created_at)
+            ->groupBy(fn ($eval) => \Carbon\Carbon::parse($eval->session?->date ?? $eval->created_at)->format('Y-m'))
             ->take(6)
             ->map(fn ($group, $month) => [
                 'month' => $month,

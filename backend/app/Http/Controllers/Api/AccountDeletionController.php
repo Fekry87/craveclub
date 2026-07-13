@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\BuildsUserPayload;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class AccountDeletionController extends Controller
 {
+    use BuildsUserPayload;
+
     /**
      * POST /api/v1/account/delete
      * Initiate soft delete — starts 30-day countdown.
@@ -50,7 +53,8 @@ class AccountDeletionController extends Controller
         return response()->json([
             'message' => 'Account deletion initiated. You have 30 days to reactivate.',
             'scheduled_purge_at' => $purgeAt->toIso8601String(),
-            'days_remaining' => 30,
+            // Computed the same way as the status endpoint so the two never disagree.
+            'days_remaining' => $user->daysUntilPurge(),
         ]);
     }
 
@@ -94,7 +98,8 @@ class AccountDeletionController extends Controller
             'scheduled_purge_at' => null,
         ]);
 
-        $token = $user->createToken('mobile')->plainTextToken;
+        // Honor mobile 30-day token expiry (X-Platform), matching login.
+        $token = $user->createToken('mobile', ['*'], $this->tokenExpiryForRequest($request))->plainTextToken;
 
         Log::channel('daily')->info('ACCOUNT_REACTIVATED', [
             'user_id' => $user->id,
@@ -105,7 +110,8 @@ class AccountDeletionController extends Controller
         return response()->json([
             'message' => 'Account reactivated successfully.',
             'token' => $token,
-            'user' => $user->load('club'),
+            // Same enriched shape as login so the app has `features` immediately.
+            'user' => $this->buildUserPayload($user),
         ]);
     }
 
@@ -121,11 +127,11 @@ class AccountDeletionController extends Controller
             ->where('email', $request->email)
             ->first();
 
-        if (! $user) {
-            return response()->json(['status' => 'not_found'], 404);
-        }
-
-        if ($user->isPendingDeletion()) {
+        // Only surface the actionable `pending_deletion` state (which the user
+        // themselves triggered). Every other case — active, non-existent, or already
+        // purged — returns an identical `none`/200 so this endpoint can't be used as
+        // a cross-tenant account-existence oracle.
+        if ($user && $user->isPendingDeletion()) {
             return response()->json([
                 'status' => 'pending_deletion',
                 'days_remaining' => $user->daysUntilPurge(),
@@ -133,10 +139,6 @@ class AccountDeletionController extends Controller
             ]);
         }
 
-        if ($user->trashed() && $user->scheduled_purge_at?->isPast()) {
-            return response()->json(['status' => 'permanently_deleted']);
-        }
-
-        return response()->json(['status' => 'active']);
+        return response()->json(['status' => 'none']);
     }
 }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\SessionCompleted;
+use App\Events\SessionStarted;
 use App\Http\Controllers\Controller;
+use App\Jobs\RecalculateSwimmerXp;
 use App\Jobs\SendGuardianSMSJob;
 use App\Models\Attendance;
 use App\Models\Club;
@@ -379,6 +382,16 @@ class CoachApiController extends Controller
             );
         }
 
+        // Notify swimmers' devices in real time — graceful when Reverb is offline
+        try {
+            $swimmerUserIds = $effectiveSwimmers->pluck('user_id')->filter()->map(fn ($id) => (int) $id)->values()->all();
+            if ($swimmerUserIds) {
+                broadcast(new SessionStarted($session, $swimmerUserIds));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('SessionStarted broadcast failed: '.$e->getMessage());
+        }
+
         return response()->json($session->load([
             'group.swimmers', 'plan.items',
             'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation',
@@ -528,6 +541,25 @@ class CoachApiController extends Controller
         Cache::forget("analytics_attendance_trend_{$clubId}");
         Cache::forget("analytics_full_{$clubId}");
 
+        // Keep stored xp_points in sync with attendance/evaluation changes
+        $affectedSwimmerIds = collect($request->input('attendance', []))->pluck('swimmer_id')
+            ->merge(collect($request->input('evaluations', []))->pluck('swimmer_id'))
+            ->unique()->values();
+        foreach ($affectedSwimmerIds as $swimmerId) {
+            RecalculateSwimmerXp::dispatch((int) $swimmerId, (int) $clubId);
+        }
+
+        // Notify swimmers' devices in real time — graceful when Reverb is offline
+        try {
+            $swimmerUserIds = SwimmerProfile::whereIn('id', $affectedSwimmerIds)
+                ->whereNotNull('user_id')->pluck('user_id')->map(fn ($id) => (int) $id)->values()->all();
+            if ($swimmerUserIds) {
+                broadcast(new SessionCompleted($session, $swimmerUserIds));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('SessionCompleted broadcast failed: '.$e->getMessage());
+        }
+
         return response()->json([
             'message' => 'Session completed',
             'session' => $session->load([
@@ -644,6 +676,8 @@ class CoachApiController extends Controller
                 ['club_id' => $clubId, 'rating' => $request->rating, 'notes' => $request->notes]
             );
         }
+
+        RecalculateSwimmerXp::dispatch((int) $swimmerId, (int) $clubId);
 
         $swimmer = SwimmerProfile::find($swimmerId);
         $att = Attendance::where('session_id', $sessionId)->where('swimmer_id', $swimmerId)->first();
