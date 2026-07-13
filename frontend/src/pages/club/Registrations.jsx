@@ -40,23 +40,27 @@ function Toast({ message }) {
 }
 
 /* ─────── Live Indicator ─────── */
-function LiveBadge({ isLive }) {
+function LiveBadge({ liveState }) {
+  const isLive = liveState === 'live';
+  const isOffline = liveState === 'offline';
+  const color = isLive ? '#34d399' : isOffline ? '#f59e0b' : '#64748b';
+  const label = isLive ? 'Live' : isOffline ? 'Offline \u2014 refresh for updates' : 'Connecting\u2026';
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
-      color: isLive ? '#34d399' : '#64748b',
+      color,
       textTransform: 'uppercase',
       padding: '4px 10px', borderRadius: 6,
-      background: isLive ? 'rgba(52,211,153,0.10)' : 'rgba(13,31,60,0.4)',
-      border: `1px solid ${isLive ? 'rgba(52,211,153,0.20)' : 'rgba(34,211,238,0.06)'}`,
+      background: isLive ? 'rgba(52,211,153,0.10)' : isOffline ? 'rgba(245,158,11,0.08)' : 'rgba(13,31,60,0.4)',
+      border: `1px solid ${isLive ? 'rgba(52,211,153,0.20)' : isOffline ? 'rgba(245,158,11,0.18)' : 'rgba(34,211,238,0.06)'}`,
     }}>
       <span style={{
         width: 7, height: 7, borderRadius: '50%',
-        backgroundColor: isLive ? '#34d399' : '#64748b',
+        backgroundColor: color,
         animation: isLive ? 'glowPulse 2s infinite' : 'none',
       }} />
-      {isLive ? 'Live' : 'Connecting\u2026'}
+      {label}
     </span>
   );
 }
@@ -75,7 +79,7 @@ export default function Registrations() {
   const { user } = useAuth();
   const [registrations, setRegistrations] = useState(null);
   const [error, setError] = useState(null);
-  const [isLive, setIsLive] = useState(false);
+  const [liveState, setLiveState] = useState('connecting'); // connecting | live | offline
   const [newIds, setNewIds] = useState(new Set());
   const [toast, setToast] = useState(null);
   const echoRef = useRef(null);
@@ -101,11 +105,10 @@ export default function Registrations() {
     const echo = createEcho();
     echoRef.current = echo;
 
-    echo.connector.pusher.connection.bind('connected', () => {
-      setIsLive(true);
-    });
-    echo.connector.pusher.connection.bind('disconnected', () => {
-      setIsLive(false);
+    echo.connector.pusher.connection.bind('state_change', ({ current }) => {
+      if (current === 'connected') setLiveState('live');
+      else if (current === 'connecting' || current === 'initialized') setLiveState('connecting');
+      else setLiveState('offline'); // unavailable, failed, disconnected
     });
 
     echo
@@ -283,7 +286,7 @@ export default function Registrations() {
 
       {/* ── Page Header ─────────────────────────────────── */}
       <PageHeader title="Registrations">
-        <LiveBadge isLive={isLive} />
+        <LiveBadge liveState={liveState} />
       </PageHeader>
 
       {/* ── Stat Cards ────────────────────────────────────── */}

@@ -191,6 +191,7 @@
     "plan": "Plan",
     "planOptional": "Plan (optional)",
     "date": "Date",
+    "time": "Time",
     "startTime": "Start Time",
     "endTime": "End Time",
     "location": "Location",

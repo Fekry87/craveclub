@@ -341,7 +341,7 @@ export default function ClubLogin() {
             opacity: mounted ? 1 : 0,
             transition: 'opacity 0.6s ease 0.6s',
           }}>
-            {club.support_email || club.contact_email && (
+            {(club.support_email || club.contact_email) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.4s ease-out 0.7s both' }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 9,
@@ -358,7 +358,7 @@ export default function ClubLogin() {
                 </div>
               </div>
             )}
-            {club.support_phone || club.contact_phone && (
+            {(club.support_phone || club.contact_phone) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.4s ease-out 0.8s both' }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 9,
@@ -461,6 +461,7 @@ export default function ClubLogin() {
               <input
                 type={field.key} value={field.key === 'email' ? email : password}
                 onChange={e => field.key === 'email' ? setEmail(e.target.value) : setPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSubmit(e); }}
                 required
                 onFocus={() => setFocusedField(field.key)}
                 onBlur={() => setFocusedField(null)}

@@ -17,14 +17,15 @@ import {
 
 // ── WeekdayPicker ──────────────────────────────────────────
 function WeekdayPicker({ selected = [], onChange }) {
+  // Natural Sun→Sat order; RTL layouts flip it visually via the container's dir.
   const days = [
-    { value: 6, label: 'Sa' },
-    { value: 5, label: 'Fr' },
-    { value: 4, label: 'Th' },
-    { value: 3, label: 'We' },
-    { value: 2, label: 'Tu' },
-    { value: 1, label: 'Mo' },
     { value: 0, label: 'Su' },
+    { value: 1, label: 'Mo' },
+    { value: 2, label: 'Tu' },
+    { value: 3, label: 'We' },
+    { value: 4, label: 'Th' },
+    { value: 5, label: 'Fr' },
+    { value: 6, label: 'Sa' },
   ];
 
   const toggle = (val) => {

@@ -78,7 +78,9 @@ function ClubCard({ club, index, onClick }) {
   const ac = getAvatarColor(club.name);
   const initials = club.name?.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || '?';
   const features = club.features;
-  const enabledCount = features ? Object.values(features).filter(v => v === true).length : 0;
+  const featureKeys = features ? Object.keys(features).filter(k => k.endsWith('_enabled')) : [];
+  const enabledCount = featureKeys.filter(k => features[k] === true).length;
+  const featureTotal = featureKeys.length || 8;
 
   return (
     <div
@@ -94,7 +96,7 @@ function ClubCard({ club, index, onClick }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ padding: '4px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.1)', color: '#a78bfa', fontSize: 12, fontWeight: 500 }}>
-          {enabledCount}/7 features
+          {enabledCount}/{featureTotal} features
         </span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
       </div>

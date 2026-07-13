@@ -47,6 +47,7 @@ function SwimmerChip({ swimmer, removable, onRemove, small }) {
 
 /* ───── Group Card ───── */
 function GroupCard({ group, index, onEdit, onDelete, navigate }) {
+  const { t } = useTranslation();
   const swimmerCount = group.swimmers_count || group.swimmers?.length || 0;
 
   return (
