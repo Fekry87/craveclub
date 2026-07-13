@@ -187,7 +187,7 @@ class BackupDatabase extends Command
     private function exportDatabase(PDO $pdo, string $database): string
     {
         $lines = [];
-        $lines[] = "-- CraveClubs Database Backup";
+        $lines[] = '-- CraveClubs Database Backup';
         $lines[] = '-- Generated: '.now()->toIso8601String();
         $lines[] = "-- Database: {$database}";
         $lines[] = '';
@@ -214,7 +214,7 @@ class BackupDatabase extends Command
             $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn();
 
             if ($count === 0) {
-                $this->output->writeln(" 0 rows");
+                $this->output->writeln(' 0 rows');
 
                 continue;
             }
