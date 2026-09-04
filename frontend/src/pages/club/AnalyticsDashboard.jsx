@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAnalytics } from '../../api/analytics';
+import { dateLocale } from '../../lib/dates';
 import { PageHeader, useIsMobile } from '../../components/CrudTable';
 import { StatCard } from '../../components/ui/Cards';
 import { Badge } from '../../components/ui/Badge';
@@ -48,12 +49,13 @@ function Section({ title, icon, children, delay = 0 }) {
 
 /* ─────── Funnel ─────── */
 function FunnelChart({ data }) {
-  if (!data) return <EmptyState title="No data" description="No registration funnel data available yet." />;
+  const { t } = useTranslation();
+  if (!data) return <EmptyState title={t('empty.noData')} description={t('analytics.noFunnelData')} />;
   const steps = [
-    { label: 'Submitted', value: data.submitted_30d ?? 0, color: '#22d3ee', colorText: '#22d3ee' },
-    { label: 'Approved',  value: data.approved_30d ?? 0,  color: '#34d399', colorText: '#34d399' },
-    { label: 'Rejected',  value: data.rejected_30d ?? 0,  color: '#f43f5e', colorText: '#f43f5e' },
-    { label: 'Pending',   value: data.pending_now ?? 0,   color: '#fbbf24', colorText: '#fbbf24' },
+    { label: t('analytics.submitted'), value: data.submitted_30d ?? 0, color: '#22d3ee', colorText: '#22d3ee' },
+    { label: t('status.approved'),     value: data.approved_30d ?? 0,  color: '#34d399', colorText: '#34d399' },
+    { label: t('status.rejected'),     value: data.rejected_30d ?? 0,  color: '#f43f5e', colorText: '#f43f5e' },
+    { label: t('status.pending'),      value: data.pending_now ?? 0,   color: '#fbbf24', colorText: '#fbbf24' },
   ];
   const max = Math.max(...steps.map(s => s.value), 1);
 
@@ -90,11 +92,12 @@ function FunnelChart({ data }) {
 
 /* ─────── Coach Performance Table ─────── */
 function CoachTable({ data, isMobile }) {
+  const { t } = useTranslation();
   if (!data?.length) {
     return (
       <EmptyState
-        title="No coach data"
-        description="Coach performance data will appear here once sessions are recorded."
+        title={t('analytics.noCoachData')}
+        description={t('analytics.noCoachDataHint')}
         icon={
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -105,7 +108,7 @@ function CoachTable({ data, isMobile }) {
   }
 
   const thStyle = {
-    textAlign: 'left', padding: '10px 14px',
+    textAlign: 'start', padding: '10px 14px',
     color: '#64748b', fontSize: 11,
     textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600,
     borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -131,15 +134,15 @@ function CoachTable({ data, isMobile }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: '#22d3ee', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.sessions_30d}</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>Sessions</div>
+                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.sessions')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: '#34d399', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.avg_attendance}%</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>Attendance</div>
+                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.attendance')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: '#fbbf24', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.avg_rating}</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>Avg Rating</div>
+                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.avgRating')}</div>
               </div>
             </div>
           </div>
@@ -153,7 +156,7 @@ function CoachTable({ data, isMobile }) {
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            {['Coach', 'Sessions', 'Avg Attendance', 'Avg Rating'].map(h => (
+            {[t('analytics.coach'), t('analytics.sessions'), t('analytics.avgAttendance'), t('analytics.avgRating')].map(h => (
               <th key={h} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -193,7 +196,8 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     getAnalytics()
       .then(setData)
-      .catch(() => setError('Failed to load analytics'));
+      .catch(() => setError(t('analytics.loadFailed')));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) {
@@ -204,14 +208,14 @@ export default function AnalyticsDashboard() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
       }}>
         <EmptyState
-          title="Failed to load analytics"
+          title={t('analytics.loadFailed')}
           description={error}
           action={
             <button onClick={() => window.location.reload()} style={{
               background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.15)',
               color: '#22d3ee', padding: '8px 20px', borderRadius: 10,
               cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
-            }}>Retry</button>
+            }}>{t('actions.retry')}</button>
           }
         />
       </div>
@@ -229,7 +233,7 @@ export default function AnalyticsDashboard() {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 12px',
           }} />
-          <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>Loading analytics...</div>
+          <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{t('analytics.loading')}</div>
         </div>
       </div>
     );
@@ -256,14 +260,14 @@ export default function AnalyticsDashboard() {
 
   return (
     <div>
-      <PageHeader title="Analytics">
+      <PageHeader title={t('analytics.title')}>
         {data.generated_at && (
           <div style={{
             color: '#64748b', fontSize: 11,
             background: 'rgba(13,31,60,0.4)', padding: '4px 10px',
             borderRadius: 6, border: '1px solid rgba(34,211,238,0.06)',
           }}>
-            Updated {new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {t('analytics.updated', { time: new Date(data.generated_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}
           </div>
         )}
       </PageHeader>
@@ -276,9 +280,9 @@ export default function AnalyticsDashboard() {
         animation: 'fadeInUp 0.4s ease-out both',
       }}>
         <StatCard
-          label="Total Members"
+          label={t('analytics.totalMembers')}
           value={latestMembers}
-          delta={memberGrowth !== 0 ? `${memberGrowth > 0 ? '+' : ''}${memberGrowth}% vs last month` : undefined}
+          delta={memberGrowth !== 0 ? t('analytics.vsLastMonth', { delta: `${memberGrowth > 0 ? '+' : ''}${memberGrowth}` }) : undefined}
           deltaType={memberGrowth > 0 ? 'up' : memberGrowth < 0 ? 'down' : undefined}
           accentColor="#22d3ee"
           icon={
@@ -289,7 +293,7 @@ export default function AnalyticsDashboard() {
           }
         />
         <StatCard
-          label="Retention Rate"
+          label={t('analytics.retentionRate')}
           value={`${retentionRate}%`}
           accentColor="#06b6d4"
           icon={
@@ -299,9 +303,9 @@ export default function AnalyticsDashboard() {
           }
         />
         <StatCard
-          label="Avg Attendance"
+          label={t('analytics.avgAttendance')}
           value={`${latestAttendance}%`}
-          delta="Latest week"
+          delta={t('analytics.latestWeek')}
           accentColor="#34d399"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -310,9 +314,9 @@ export default function AnalyticsDashboard() {
           }
         />
         <StatCard
-          label="Registrations"
+          label={t('analytics.registrations')}
           value={totalRegistrations}
-          delta={`${funnel.pending_now ?? 0} pending review`}
+          delta={t('analytics.pendingReview', { count: funnel.pending_now ?? 0 })}
           accentColor="#a78bfa"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -330,20 +334,20 @@ export default function AnalyticsDashboard() {
         gap: 16, marginBottom: 16,
       }}>
         {/* Membership Growth */}
-        <Section title="Membership Growth" delay={0.1}
+        <Section title={t('analytics.membershipGrowth')} delay={0.1}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6" /></svg>}>
           {growthChartData.length > 0
             ? <MiniChart data={growthChartData} type="bar" color="#22d3ee" height={180} />
-            : <EmptyState title="No data" description="Membership growth data will appear here." />
+            : <EmptyState title={t('empty.noData')} description={t('analytics.noGrowthData')} />
           }
         </Section>
 
         {/* Attendance Trend */}
-        <Section title="Attendance Trend" delay={0.15}
+        <Section title={t('analytics.attendanceTrend')} delay={0.15}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}>
           {trendChartData.length > 0
             ? <MiniChart data={trendChartData} type="line" color="#34d399" height={180} />
-            : <EmptyState title="No data" description="Attendance trend data will appear here." />
+            : <EmptyState title={t('empty.noData')} description={t('analytics.noTrendData')} />
           }
         </Section>
       </div>
@@ -355,13 +359,13 @@ export default function AnalyticsDashboard() {
         gap: 16,
       }}>
         {/* Registration Funnel */}
-        <Section title="Registration Funnel" delay={0.2}
+        <Section title={t('analytics.registrationFunnel')} delay={0.2}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>}>
           <FunnelChart data={funnel} />
         </Section>
 
         {/* Coach Performance */}
-        <Section title="Coach Performance" delay={0.25}
+        <Section title={t('analytics.coachPerformance')} delay={0.25}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}>
           <CoachTable data={coaches} isMobile={isMobile} />
         </Section>

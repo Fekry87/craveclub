@@ -200,7 +200,13 @@ class PublicRegistrationController extends Controller
             'payment_method' => 'required|in:cash',
             'avatar_url' => 'nullable|string',
             'medical_notes' => 'nullable|string|max:500',
+            // PDPL: explicit data-processing consent. Optional at the API level so
+            // older mobile builds keep working; the portal wizard always sends it.
+            'consent_given' => 'sometimes|boolean',
         ]);
+
+        $consentGivenAt = ! empty($validated['consent_given']) ? now() : null;
+        unset($validated['consent_given']);
 
         $clubId = app('current_club_id');
 
@@ -230,13 +236,14 @@ class PublicRegistrationController extends Controller
             ->value('sport_module_id');
 
         try {
-            $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId) {
+            $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId, $consentGivenAt) {
                 return Registration::create(array_merge($validated, [
                     'reference_code' => 'REG-'.strtoupper(\Illuminate\Support\Str::random(8)),
                     'club_id' => $clubId,
                     'sport_module_id' => $sportModuleId,
                     'total_amount' => $plan->price,
                     'status' => 'pending',
+                    'consent_given_at' => $consentGivenAt,
                 ]));
             });
         } catch (\Exception $e) {

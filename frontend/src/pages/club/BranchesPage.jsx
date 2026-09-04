@@ -187,7 +187,7 @@ export default function BranchesPage() {
             <Input value={form.city} onChange={e => updateField('city', e.target.value)} placeholder="Cairo" />
           </FormField>
           <FormField label="Phone">
-            <Input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+20-100-1234567" />
+            <Input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder={t('forms.phonePlaceholder', { defaultValue: '+966 5x xxx xxxx' })} />
           </FormField>
         </div>
         <FormField label="Address *">
@@ -658,7 +658,7 @@ function ToggleSwitch({ checked, disabled, onChange }) {
       }}
     >
       <span style={{
-        position: 'absolute', top: 2, left: checked ? 22 : 2,
+        position: 'absolute', top: 2, insetInlineStart: checked ? 22 : 2,
         width: 18, height: 18, borderRadius: '50%',
         background: '#fff',
         boxShadow: '0 1px 3px rgba(0,0,0,0.3)',

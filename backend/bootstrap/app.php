@@ -20,6 +20,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Railway terminates TLS at its edge proxy and forwards plain HTTP with
+        // X-Forwarded-* headers. Without trusting them, $request->secure() is
+        // always false in production, so HSTS never fires and generated URLs
+        // come out as http://. The app is only ever reachable through that proxy.
+        $middleware->trustProxies(
+            at: '*',
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         // Health check stays accessible during maintenance mode
         $middleware->preventRequestsDuringMaintenance(except: [
             'api/v1/health',

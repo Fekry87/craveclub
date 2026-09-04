@@ -214,7 +214,7 @@ function ToggleSwitch({ checked, onChange }) {
     <label style={{ position: 'relative', display: 'inline-block', width: 44, height: 24, cursor: 'pointer', flexShrink: 0 }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
       <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: checked ? '#58CC02' : '#CBD5E0', transition: 'background 200ms ease' }} />
-      <span style={{ position: 'absolute', top: 3, left: checked ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#FFFFFF', transition: 'left 200ms ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+      <span style={{ position: 'absolute', top: 3, insetInlineStart: checked ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#FFFFFF', transition: 'inset-inline-start 200ms ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
     </label>
   );
 }
@@ -433,7 +433,7 @@ export default function ClubBrandingPage() {
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <FormField label="Support Email"><Input type="email" value={form.support_email} onChange={e => updateForm('support_email', e.target.value)} placeholder="support@club.com" /></FormField>
-              <FormField label="Support Phone"><Input value={form.support_phone} onChange={e => updateForm('support_phone', e.target.value)} placeholder="+20 123 456 7890" /></FormField>
+              <FormField label="Support Phone"><Input value={form.support_phone} onChange={e => updateForm('support_phone', e.target.value)} placeholder={t('forms.phonePlaceholder', { defaultValue: '+966 5x xxx xxxx' })} /></FormField>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
               <FormField label="Instagram"><Input value={form.social_instagram} onChange={e => updateForm('social_instagram', e.target.value)} placeholder="@clubname" /></FormField>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
+import { dateLocale } from '../../lib/dates';
 
 export default function Sessions() {
   const { t } = useTranslation();
@@ -79,9 +80,9 @@ export default function Sessions() {
       <DataTable columns={columns} data={sessions} onEdit={handleEdit} onDelete={handleDelete}
         mobileCard={(row, i, { onEdit: e, onDelete: d }) => {
           const date = row.date?.split('T')[0];
-          const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }) : '';
+          const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString(dateLocale(), { weekday: 'short' }) : '';
           const dayNum = date ? new Date(date + 'T00:00:00').getDate() : '';
-          const month = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' }) : '';
+          const month = date ? new Date(date + 'T00:00:00').toLocaleDateString(dateLocale(), { month: 'short' }) : '';
           return (
             <MobileCardWrapper key={row.id} index={i} accentColor="#22d3ee">
               {/* Header: date block + group name */}

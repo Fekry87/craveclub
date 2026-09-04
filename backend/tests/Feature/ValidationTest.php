@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
+use App\Models\Registration;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -247,5 +248,41 @@ class ValidationTest extends TestCase
         // Verify role was NOT changed
         $swimmerUser->refresh();
         $this->assertEquals(UserRole::SWIMMER, $swimmerUser->role);
+    }
+
+    // ── Test 9: PDPL consent is recorded with a timestamp ──
+
+    public function test_registration_records_consent_timestamp_when_given(): void
+    {
+        $response = $this->withHeaders($this->clubHeader())
+            ->postJson('/api/v1/registrations', $this->validRegistration([
+                'consent_given' => true,
+            ]));
+
+        $response->assertStatus(201);
+
+        $registration = Registration::withoutGlobalScopes()
+            ->where('reference_code', $response->json('reference_code'))
+            ->firstOrFail();
+
+        $this->assertNotNull($registration->consent_given_at);
+        // consent_given is a request flag, never a stored column
+        $this->assertArrayNotHasKey('consent_given', $registration->getAttributes());
+    }
+
+    // ── Test 10: Older clients that don't send consent still register (nullable) ──
+
+    public function test_registration_without_consent_flag_leaves_timestamp_null(): void
+    {
+        $response = $this->withHeaders($this->clubHeader())
+            ->postJson('/api/v1/registrations', $this->validRegistration());
+
+        $response->assertStatus(201);
+
+        $registration = Registration::withoutGlobalScopes()
+            ->where('reference_code', $response->json('reference_code'))
+            ->firstOrFail();
+
+        $this->assertNull($registration->consent_given_at);
     }
 }

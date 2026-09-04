@@ -120,7 +120,7 @@
 - CI Pint lint gate: run `cd backend && vendor/bin/pint` before pushing — CI fails the whole lint step on ANY style issue across all 253 files (incl. pre-existing debt), not just changed files.
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (242 tests)
+- `cd backend && php artisan test` — run all tests (244 tests)
 - `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
 - `cd frontend && npx vitest run` — run all frontend tests (22 tests)
 - `cd backend && php artisan serve` — start API server (port 8000)
@@ -454,3 +454,10 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - `WeekdayPicker` (ScheduleBuilderPage) array is ordered Sun→Sat; RTL flips it visually via the container's `dir` — don't hardcode the reverse order.
 - All mobile API config points at the live Railway backend; `api.craveclubs.com` was removed from `eas.json` + code fallbacks (it's NXDOMAIN). When the custom domain is configured in Railway, flip `eas.json` base profile + `config/club.ts` + `branding.service.ts` fallbacks to it.
 - Demo corporate admin is `admin@craveclubs.com` (seeder, `.com`); production admin is `admin@craveclubs.co` (deploy command `admin:create`, `.co`) — intentionally different (demo vs prod). Seeded club manager is a real name ("Mahmoud Sami") so the greeting isn't "Good …, Club".
+- Target market is **Saudi Arabia (KSA)**: currency is SAR via the i18n key `common.currency` ("SAR" / "ر.س") — never hardcode `EGP`; phone placeholders use `forms.phonePlaceholder` (`+966 5x xxx xxxx`).
+- Locale-aware dates: use `formatDate()` / `dateLocale()` from `frontend/src/lib/dates.js` instead of `toLocaleDateString('en-US', …)`. Arabic is pinned to `ar-SA-u-ca-gregory-nu-latn` — bare `ar-SA` defaults to the Hijri calendar + Arabic-Indic digits in most browsers.
+- RTL inline styles: use logical properties (`insetInlineStart`, `paddingInlineStart`, `textAlign: 'start'`) — inline `left:`/`textAlign:'left'` overrides the `html[dir="rtl"]` CSS rules and breaks Arabic layout (toggle knobs, search icons, table headers).
+- PDPL (Saudi data-protection) consent: registrations carry `consent_given_at` (migration 000071). The API accepts an optional `consent_given` boolean (`sometimes|boolean` — optional so older mobile builds keep working) and stores `now()` when true; the portal wizard (Step8) requires the checkbox and always sends `true`. `consent_given` is a request flag, never a column — it is `unset()` before `Registration::create()`.
+- Railway terminates TLS at its proxy: `bootstrap/app.php` has `trustProxies(at: '*', headers: X_FORWARDED_*)`. Without it `$request->secure()` is always false in production → HSTS never fires and generated URLs are `http://`. Do NOT remove it.
+- Dockerfile hardening: `expose_php = Off` (no `X-Powered-By: PHP/x.y`) and nginx `server_tokens off` — keep both when editing the image.
+- Dependency hygiene: `cd backend && composer audit` must report zero advisories before a release; the AWS SDK pulls in `mtdowling/jmespath.php`, which had a critical code-injection CVE below 2.9.1.

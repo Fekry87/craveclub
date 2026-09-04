@@ -123,7 +123,7 @@ export default function BranchDetail() {
         {/* Search */}
         <div style={{ position: 'relative', marginBottom: 14 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"
-            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+            style={{ position: 'absolute', insetInlineStart: 12, top: '50%', transform: 'translateY(-50%)' }}>
             <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
           </svg>
           <input
@@ -132,7 +132,7 @@ export default function BranchDetail() {
             onChange={e => setSearch(e.target.value)}
             placeholder={`Search ${assignModal}...`}
             style={{
-              width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
+              width: '100%', padding: '10px 12px', paddingInlineStart: 36, borderRadius: 10,
               background: 'rgba(6,13,31,0.5)', border: '1px solid rgba(51,65,85,0.3)',
               color: '#e2e8f0', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
               outline: 'none', boxSizing: 'border-box',
@@ -200,7 +200,7 @@ export default function BranchDetail() {
                   }}>
                     {itemInitials}
                   </div>
-                  <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                  <div style={{ flex: 1, textAlign: 'start', minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>{name}</div>
                     <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{sub}</div>
                   </div>

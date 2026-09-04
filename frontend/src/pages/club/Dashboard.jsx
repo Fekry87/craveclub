@@ -6,13 +6,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../components/CrudTable';
 import { StatCard } from '../../components/ui/Cards';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { dateLocale } from '../../lib/dates';
 
 /* ─────── Session Row ─────── */
 function SessionRow({ session, index, t }) {
   const date = session.date?.split('T')[0];
-  const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }) : '';
+  const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString(dateLocale(), { weekday: 'short' }) : '';
   const dayNum  = date ? new Date(date + 'T00:00:00').getDate() : '';
-  const month   = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' }) : '';
+  const month   = date ? new Date(date + 'T00:00:00').toLocaleDateString(dateLocale(), { month: 'short' }) : '';
 
   return (
     <div
