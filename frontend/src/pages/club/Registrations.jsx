@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { createEcho } from '../../lib/echo';
+import { formatDate } from '../../lib/dates';
 import api from '../../api/axios';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/FormControls';
@@ -41,10 +42,11 @@ function Toast({ message }) {
 
 /* ─────── Live Indicator ─────── */
 function LiveBadge({ liveState }) {
+  const { t } = useTranslation();
   const isLive = liveState === 'live';
   const isOffline = liveState === 'offline';
   const color = isLive ? '#34d399' : isOffline ? '#f59e0b' : '#64748b';
-  const label = isLive ? 'Live' : isOffline ? 'Offline \u2014 refresh for updates' : 'Connecting\u2026';
+  const label = isLive ? t('registrations.live') : isOffline ? t('registrations.offline') : t('registrations.connecting');
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -95,7 +97,8 @@ export default function Registrations() {
   useEffect(() => {
     api.get('/club/registrations')
       .then(res => setRegistrations(res.data.data))
-      .catch(err => setError(err.response?.data?.message ?? 'Failed to load registrations'));
+      .catch(err => setError(err.response?.data?.message ?? t('registrations.loadFailed')));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Reverb subscription ───────────────────────────────
@@ -125,11 +128,11 @@ export default function Registrations() {
           });
         }, 4000);
 
-        setToast(`${payload.swimmer_name} just registered`);
+        setToast(t('registrations.justRegistered', { name: payload.swimmer_name }));
         setTimeout(() => setToast(null), 5000);
 
         if (document.hidden && Notification.permission === 'granted') {
-          new Notification('New Registration', {
+          new Notification(t('registrations.newRegistration'), {
             body: `${payload.swimmer_name} \u2014 ${payload.plan_name}`,
           });
         }
@@ -139,6 +142,7 @@ export default function Registrations() {
       echo.leave(`club.${user.club_id}`);
       echo.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.club_id]);
 
   // ── Request browser notification permission ───────────
@@ -161,12 +165,12 @@ export default function Registrations() {
         prev.map(r => r.id === approveTarget.id ? res.data.registration : r)
       );
       setApproveResult(res.data.swimmer);
-      setToast(`${approveTarget.full_name} approved successfully`);
+      setToast(t('registrations.approvedSuccess', { name: approveTarget.full_name }));
       setTimeout(() => setToast(null), 5000);
     } catch (err) {
       const msg = err.response?.data?.errors
         ? Object.values(err.response.data.errors).map(a => a[0]).join(', ')
-        : err.response?.data?.message ?? 'Failed to approve registration';
+        : err.response?.data?.message ?? t('registrations.approveFailed');
       setActionError(msg);
     } finally {
       setActionSaving(false);
@@ -185,12 +189,12 @@ export default function Registrations() {
         prev.map(r => r.id === rejectTarget.id ? res.data.registration : r)
       );
       setRejectTarget(null);
-      setToast(`${rejectTarget.full_name} registration rejected`);
+      setToast(t('registrations.rejectedSuccess', { name: rejectTarget.full_name }));
       setTimeout(() => setToast(null), 5000);
     } catch (err) {
       const msg = err.response?.data?.errors
         ? Object.values(err.response.data.errors).map(a => a[0]).join(', ')
-        : err.response?.data?.message ?? 'Failed to reject registration';
+        : err.response?.data?.message ?? t('registrations.rejectFailed');
       setActionError(msg);
     } finally {
       setActionSaving(false);
@@ -223,7 +227,7 @@ export default function Registrations() {
             borderTopColor: '#22d3ee',
             animation: 'spin 0.8s linear infinite',
           }} />
-          Loading registrations...
+          {t('registrations.loading')}
         </div>
       </div>
     );
@@ -246,7 +250,7 @@ export default function Registrations() {
             cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
           }}
         >
-          Retry
+          {t('actions.retry')}
         </button>
       </div>
     );
@@ -259,7 +263,7 @@ export default function Registrations() {
   const totalCount = registrations.length;
 
   const thStyle = {
-    padding: '12px 16px', textAlign: 'left', fontSize: 11,
+    padding: '12px 16px', textAlign: 'start', fontSize: 11,
     fontWeight: 600, color: '#64748b', textTransform: 'uppercase',
     letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.04)',
     fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap',
@@ -285,7 +289,7 @@ export default function Registrations() {
       <Toast message={toast} />
 
       {/* ── Page Header ─────────────────────────────────── */}
-      <PageHeader title="Registrations">
+      <PageHeader title={t('registrations.title')}>
         <LiveBadge liveState={liveState} />
       </PageHeader>
 
@@ -296,7 +300,7 @@ export default function Registrations() {
         animation: 'fadeInUp 0.4s ease-out both',
       }}>
         <StatCard
-          label="Pending"
+          label={t('status.pending')}
           value={
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               {pendingCount}
@@ -318,7 +322,7 @@ export default function Registrations() {
           }
         />
         <StatCard
-          label="Approved"
+          label={t('status.approved')}
           value={approvedCount}
           accentColor="#34d399"
           icon={
@@ -328,7 +332,7 @@ export default function Registrations() {
           }
         />
         <StatCard
-          label="Rejected"
+          label={t('status.rejected')}
           value={rejectedCount}
           accentColor="#f43f5e"
           icon={
@@ -338,7 +342,7 @@ export default function Registrations() {
           }
         />
         <StatCard
-          label="Total"
+          label={t('registrations.total')}
           value={totalCount}
           accentColor="#22d3ee"
           icon={
@@ -360,8 +364,8 @@ export default function Registrations() {
           animation: 'fadeInUp 0.4s ease-out 0.1s both',
         }}>
           <EmptyState
-            title="No pending registrations"
-            description="Share your registration link to start receiving applications."
+            title={t('registrations.noPending')}
+            description={t('registrations.noPendingHint')}
             icon={
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -388,15 +392,15 @@ export default function Registrations() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Phone</th>
-                  <th style={thStyle}>Branch</th>
-                  <th style={thStyle}>Coach</th>
-                  <th style={thStyle}>Plan</th>
-                  <th style={thStyle}>Amount</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={thStyle}>Date</th>
-                  <th style={thStyle}>Actions</th>
+                  <th style={thStyle}>{t('registrations.columns.name')}</th>
+                  <th style={thStyle}>{t('registrations.columns.phone')}</th>
+                  <th style={thStyle}>{t('registrations.columns.branch')}</th>
+                  <th style={thStyle}>{t('registrations.columns.coach')}</th>
+                  <th style={thStyle}>{t('registrations.columns.plan')}</th>
+                  <th style={thStyle}>{t('registrations.columns.amount')}</th>
+                  <th style={thStyle}>{t('registrations.columns.status')}</th>
+                  <th style={thStyle}>{t('registrations.columns.date')}</th>
+                  <th style={thStyle}>{t('registrations.columns.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -418,16 +422,16 @@ export default function Registrations() {
                     <td style={tdStyle}>{reg.coach_name ?? reg.coach?.user?.name ?? '\u2014'}</td>
                     <td style={tdStyle}>{reg.plan_name ?? reg.plan?.name ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, fontWeight: 600, color: '#22d3ee' }}>
-                      {reg.total_amount} EGP
+                      {reg.total_amount} {t('common.currency')}
                     </td>
                     <td style={tdStyle}>
                       <Badge
-                        label={reg.status === 'cancelled' ? 'rejected' : reg.status}
+                        label={t(`status.${reg.status === 'cancelled' ? 'rejected' : reg.status}`, { defaultValue: reg.status })}
                         variant={STATUS_VARIANT[reg.status] || 'neutral'}
                       />
                     </td>
                     <td style={{ ...tdStyle, color: '#64748b', fontSize: 11 }}>
-                      {new Date(reg.created_at).toLocaleDateString()}
+                      {formatDate(reg.created_at)}
                     </td>
                     <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
                       {reg.status === 'pending' ? (
@@ -445,7 +449,7 @@ export default function Registrations() {
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
-                            Approve
+                            {t('registrations.approve')}
                           </button>
                           <button
                             type="button"
@@ -461,7 +465,7 @@ export default function Registrations() {
                               <line x1="18" y1="6" x2="6" y2="18" />
                               <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
-                            Reject
+                            {t('registrations.reject')}
                           </button>
                         </div>
                       ) : (
@@ -479,7 +483,7 @@ export default function Registrations() {
       {/* ── Approve Confirmation Modal ────────────────────── */}
       {approveTarget && (
         <Modal
-          title="Approve Registration"
+          title={t('registrations.approveTitle')}
           onClose={closeApproveModal}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -508,10 +512,10 @@ export default function Registrations() {
                   </div>
                   <div>
                     <div style={{ color: 'var(--color-success-text)', fontWeight: 600, fontSize: 'var(--text-md)', fontFamily: 'var(--font-sans)' }}>
-                      Registration Approved
+                      {t('registrations.approvedTitle')}
                     </div>
                     <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginTop: 2 }}>
-                      Swimmer account created successfully
+                      {t('registrations.accountCreated')}
                     </div>
                   </div>
                 </div>
@@ -521,21 +525,21 @@ export default function Registrations() {
                   border: '1px solid var(--color-border)',
                 }}>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
-                    Account Credentials
+                    {t('registrations.accountCredentials')}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Email</span>
+                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.email')}</span>
                       <span style={{ color: 'var(--color-text)', fontWeight: 500, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.email}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Temp Password</span>
+                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.tempPassword')}</span>
                       <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.temp_password}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Group Assigned</span>
+                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.groupAssigned')}</span>
                       <span style={{ color: approveResult.group_assigned ? 'var(--color-success-text)' : 'var(--color-warning-text)', fontWeight: 500 }}>
-                        {approveResult.group_assigned ? 'Yes' : 'No group found'}
+                        {approveResult.group_assigned ? t('common.yes') : t('registrations.noGroupFound')}
                       </span>
                     </div>
                   </div>
@@ -543,14 +547,18 @@ export default function Registrations() {
               </div>
 
               <ModalActions>
-                <Button variant="primary" onClick={closeApproveModal}>Done</Button>
+                <Button variant="primary" onClick={closeApproveModal}>{t('actions.done')}</Button>
               </ModalActions>
             </div>
           ) : (
             /* ── Confirmation view ── */
             <div>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
-                Are you sure you want to approve <strong style={{ color: 'var(--color-text)' }}>{approveTarget.full_name}</strong>?
+                <Trans
+                  i18nKey="registrations.confirmApprove"
+                  values={{ name: approveTarget.full_name }}
+                  components={{ b: <strong style={{ color: 'var(--color-text)' }} /> }}
+                />
               </p>
 
               <div style={{
@@ -558,12 +566,26 @@ export default function Registrations() {
                 border: '1px solid var(--color-border)', marginBottom: 8,
               }}>
                 <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
-                  This will automatically
+                  {t('registrations.willAutomatically')}
                 </div>
-                <ul style={{ margin: 0, padding: '0 0 0 18px', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
-                  <li>Create a <span style={{ color: 'var(--color-text)' }}>swimmer account</span> with login credentials</li>
-                  <li>Assign to <span style={{ color: 'var(--color-primary)' }}>{approveTarget.branch?.name ?? 'selected branch'}</span></li>
-                  <li>Place under <span style={{ color: 'var(--color-primary)' }}>{approveTarget.coach?.user?.name ?? 'selected coach'}</span>{'\u2019'}s group</li>
+                <ul style={{ margin: 0, paddingBlock: 0, paddingInline: '18px 0', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
+                  <li>
+                    <Trans i18nKey="registrations.bulletAccount" components={{ b: <span style={{ color: 'var(--color-text)' }} /> }} />
+                  </li>
+                  <li>
+                    <Trans
+                      i18nKey="registrations.bulletBranch"
+                      values={{ branch: approveTarget.branch?.name ?? t('registrations.selectedBranch') }}
+                      components={{ b: <span style={{ color: 'var(--color-primary)' }} /> }}
+                    />
+                  </li>
+                  <li>
+                    <Trans
+                      i18nKey="registrations.bulletGroup"
+                      values={{ coach: approveTarget.coach?.user?.name ?? t('registrations.selectedCoach') }}
+                      components={{ b: <span style={{ color: 'var(--color-primary)' }} /> }}
+                    />
+                  </li>
                 </ul>
               </div>
 
@@ -592,14 +614,14 @@ export default function Registrations() {
                         borderTopColor: 'var(--color-primary)',
                         animation: 'spin 0.8s linear infinite',
                       }} />
-                      Approving...
+                      {t('registrations.approving')}
                     </>
                   ) : (
                     <>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
-                      Approve Registration
+                      {t('registrations.approveTitle')}
                     </>
                   )}
                 </Button>
@@ -612,7 +634,7 @@ export default function Registrations() {
       {/* ── Reject Confirmation Modal ─────────────────────── */}
       {rejectTarget && (
         <Modal
-          title="Reject Registration"
+          title={t('registrations.rejectTitle')}
           onClose={closeRejectModal}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -623,7 +645,11 @@ export default function Registrations() {
           }
         >
           <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
-            Are you sure you want to reject <strong style={{ color: 'var(--color-text)' }}>{rejectTarget.full_name}</strong>{'\u2019'}s registration?
+            <Trans
+              i18nKey="registrations.confirmReject"
+              values={{ name: rejectTarget.full_name }}
+              components={{ b: <strong style={{ color: 'var(--color-text)' }} /> }}
+            />
           </p>
 
           <div style={{
@@ -637,7 +663,7 @@ export default function Registrations() {
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            This action cannot be undone. The swimmer will not be created and the registration will be marked as rejected.
+            {t('registrations.rejectWarning')}
           </div>
 
           {actionError && (
@@ -665,7 +691,7 @@ export default function Registrations() {
                     borderTopColor: 'var(--color-danger-text)',
                     animation: 'spin 0.8s linear infinite',
                   }} />
-                  Rejecting...
+                  {t('registrations.rejecting')}
                 </>
               ) : (
                 <>
@@ -673,7 +699,7 @@ export default function Registrations() {
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
-                  Reject Registration
+                  {t('registrations.rejectTitle')}
                 </>
               )}
             </Button>

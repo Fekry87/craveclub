@@ -229,14 +229,14 @@ export default function Step6_SubscriptionPlan() {
                   color: isSelected ? '#58CC02' : '#e2e8f0',
                   fontFamily: "'DM Sans', sans-serif",
                 }}>
-                  {Number(plan.price).toLocaleString()} EGP
+                  {Number(plan.price).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
                 </div>
                 {plan.duration_months > 1 && (
                   <div style={{
                     fontSize: 12, color: '#94a3b8',
                     fontFamily: "'DM Sans', sans-serif",
                   }}>
-                    = {Math.round(plan.price / plan.duration_months)} EGP/mo
+                    = {Math.round(plan.price / plan.duration_months)} {t('common.currency', { defaultValue: 'SAR' })}{t('subscriptions.perMonthShort', { defaultValue: '/mo' })}
                   </div>
                 )}
               </div>
@@ -302,7 +302,7 @@ export default function Step6_SubscriptionPlan() {
             color: '#1CB0F6', fontSize: 20, fontWeight: 800,
             fontFamily: "'DM Sans', sans-serif",
           }}>
-            {Number(selectedPlanPrice).toLocaleString()} EGP
+            {Number(selectedPlanPrice).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
           </span>
         </div>
       )}

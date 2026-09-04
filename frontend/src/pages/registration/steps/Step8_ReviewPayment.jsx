@@ -76,6 +76,8 @@ export default function Step8_ReviewPayment() {
 
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [consent, setConsent] = useState(false);
+  const currency = t('common.currency', { defaultValue: 'SAR' });
 
   // ── Submit handler ──────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -92,6 +94,14 @@ export default function Step8_ReviewPayment() {
         'Some required information is missing. '
         + 'Please go back and complete all steps.'
       );
+      return;
+    }
+
+    // PDPL: an explicit data-processing consent must be recorded with the registration
+    if (!consent) {
+      setSubmitError(t('registration.consentRequired', {
+        defaultValue: 'Consent is required to submit the registration.',
+      }));
       return;
     }
 
@@ -121,6 +131,7 @@ export default function Step8_ReviewPayment() {
         coach_id:         coachId,
         preferred_time:   preferredTime,
         payment_method:   'cash',
+        consent_given:    true,
       };
 
       await submitRegistration(payload);
@@ -224,7 +235,7 @@ export default function Step8_ReviewPayment() {
         rows={[
           { label: 'Plan', value: planName ?? `#${planId}` },
           { label: 'Price', value: planPrice
-            ? Number(planPrice).toLocaleString() + ' EGP' : null },
+            ? Number(planPrice).toLocaleString() + ' ' + currency : null },
         ]}
       />
 
@@ -283,11 +294,43 @@ export default function Step8_ReviewPayment() {
           fontFamily: "'DM Sans', sans-serif",
         }}>
           {planPrice
-            ? Number(planPrice).toLocaleString() + ' EGP'
+            ? Number(planPrice).toLocaleString() + ' ' + currency
             : '\u2014'
           }
         </span>
       </div>
+
+      {/* ── Data-processing consent (PDPL) ───────────────────────── */}
+      <label style={{
+        display: 'flex', gap: 10, alignItems: 'flex-start',
+        marginBottom: 8, cursor: 'pointer',
+      }}>
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={e => {
+            setConsent(e.target.checked);
+            if (e.target.checked) setSubmitError(null);
+          }}
+          style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: '#58CC02' }}
+        />
+        <span style={{
+          fontSize: 13, color: '#e2e8f0', lineHeight: 1.5,
+          fontFamily: "'DM Sans', sans-serif",
+        }}>
+          {t('registration.consentLabel', {
+            defaultValue: "The swimmer's guardian (or the swimmer, if an adult) has consented to CraveClubs and the club processing this personal data to manage membership and training.",
+          })}
+        </span>
+      </label>
+      <p style={{
+        fontSize: 12, color: '#94a3b8', lineHeight: 1.5,
+        margin: '0 0 12px', fontFamily: "'DM Sans', sans-serif",
+      }}>
+        {t('registration.privacyNotice', {
+          defaultValue: 'Personal data is stored securely on servers outside Saudi Arabia and is used only to run the club. Data can be deleted on request within 30 days.',
+        })}
+      </p>
 
       {/* ── Error Box ────────────────────────────────────────────── */}
       {submitError && (

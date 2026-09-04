@@ -57,6 +57,9 @@ RUN composer dump-autoload --optimize --no-dev \
 RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
     && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini
 
+# Don't advertise the PHP version (X-Powered-By) to clients
+RUN echo "expose_php = Off" >> /usr/local/etc/php/conf.d/hardening.ini
+
 # php-fpm: capture worker output
 RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "decorate_workers_output = no" >> /usr/local/etc/php-fpm.d/www.conf
@@ -75,6 +78,7 @@ RUN printf 'worker_processes 1;\n\
 events { worker_connections 1024; }\n\
 http {\n\
     include mime.types;\n\
+    server_tokens off;\n\
     server {\n\
         listen PORT_PLACEHOLDER;\n\
         root /var/www/public;\n\

@@ -8,6 +8,7 @@ import {
 } from '../../api/trainingPlans';
 import api from '../../api/axios';
 import { getSkills } from '../../api/skills';
+import { formatDate } from '../../lib/dates';
 import { PageHeader, Button, FormField, Input, Select, TextArea } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
@@ -952,8 +953,8 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
 
             {/* Dates */}
             <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#64748b', marginBottom: 10 }}>
-              <span>Start: {startDate.toLocaleDateString()}</span>
-              <span>End: {endDate.toLocaleDateString()}</span>
+              <span>Start: {formatDate(startDate)}</span>
+              <span>End: {formatDate(endDate)}</span>
             </div>
 
             {/* Progress bar */}
@@ -1012,9 +1013,9 @@ function ToggleSwitch({ checked, onChange, color }) {
       cursor: 'pointer', transition: 'all 0.25s ease', padding: 0, flexShrink: 0,
     }}>
       <span style={{
-        position: 'absolute', top: 2, left: checked ? 22 : 2,
+        position: 'absolute', top: 2, insetInlineStart: checked ? 22 : 2,
         width: 18, height: 18, borderRadius: '50%', background: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'left 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'inset-inline-start 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }} />
     </button>
   );

@@ -34,7 +34,7 @@ export default function SubscriptionPlansPage() {
         if (err.response?.status === 403) {
           setLoadError('feature_disabled');
         } else {
-          setLoadError('Failed to load subscription plans.');
+          setLoadError(t('subscriptions.loadFailed'));
         }
       });
   };
@@ -97,10 +97,10 @@ export default function SubscriptionPlansPage() {
         if (data.errors) {
           setError(Object.values(data.errors).map(a => a[0]).join('. '));
         } else {
-          setError(data.message || 'Validation failed.');
+          setError(data.message || t('subscriptions.validationFailed'));
         }
       } else {
-        setError(err.response?.data?.message || 'Failed to save plan.');
+        setError(err.response?.data?.message || t('subscriptions.saveFailed'));
       }
     } finally {
       setSaving(false);
@@ -115,7 +115,7 @@ export default function SubscriptionPlansPage() {
       setPlans(prev => prev.filter(p => p.id !== editPlan.id));
       closeModal();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete plan.');
+      setError(err.response?.data?.message || t('subscriptions.deleteFailed'));
     } finally {
       setSaving(false);
     }
@@ -174,12 +174,12 @@ export default function SubscriptionPlansPage() {
           </svg>
         }
       >
-        <FormField label="Plan Name *">
-          <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder="e.g. Monthly, Quarterly" />
+        <FormField label={t('subscriptions.planName')}>
+          <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder={t('subscriptions.planNamePlaceholder')} />
         </FormField>
 
         {/* Duration stepper */}
-        <FormField label="Duration (months) *">
+        <FormField label={t('subscriptions.duration')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button type="button" onClick={() => updateField('duration_months', Math.max(1, form.duration_months - 1))}
               style={stepperBtnStyle}>
@@ -198,15 +198,15 @@ export default function SubscriptionPlansPage() {
             </button>
           </div>
           <div style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 4 }}>
-            {form.duration_months === 1 ? '1 month' : `${form.duration_months} months`}
+            {t('subscriptions.monthCount', { count: form.duration_months })}
           </div>
         </FormField>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FormField label="Price *">
+          <FormField label={t('subscriptions.price')}>
             <Input type="number" min="0" step="0.01" value={form.price} onChange={e => updateField('price', e.target.value)} placeholder="0.00" />
           </FormField>
-          <FormField label="Discount %">
+          <FormField label={t('subscriptions.discount')}>
             <Input type="number" min="0" max="100" value={form.discount_percent} onChange={e => updateField('discount_percent', e.target.value)} placeholder="0" />
           </FormField>
         </div>
@@ -219,13 +219,13 @@ export default function SubscriptionPlansPage() {
             border: '1px solid rgba(34,211,238,0.12)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: 13, color: '#94a3b8' }}>After discount:</span>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>{t('subscriptions.afterDiscount')}</span>
             <div>
-              <span style={{ fontSize: 13, color: '#64748b', textDecoration: 'line-through', marginRight: 8 }}>
-                {Number(form.price).toLocaleString()}
+              <span style={{ fontSize: 13, color: '#64748b', textDecoration: 'line-through', marginInlineEnd: 8 }}>
+                {Number(form.price).toLocaleString()} {t('common.currency')}
               </span>
               <span style={{ fontSize: 18, fontWeight: 800, color: '#2dd4bf', fontFamily: "'Outfit', sans-serif" }}>
-                {Number(computedPrice).toLocaleString()}
+                {Number(computedPrice).toLocaleString()} {t('common.currency')}
               </span>
             </div>
           </div>
@@ -241,10 +241,10 @@ export default function SubscriptionPlansPage() {
         }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>&#11088;</span> Most Popular
+              <span style={{ fontSize: 16 }}>&#11088;</span> {t('subscriptions.mostPopular')}
             </div>
             <div style={{ fontSize: 12, color: form.is_popular ? '#fbbf24' : '#64748b', marginTop: 2 }}>
-              {form.is_popular ? 'This plan will be highlighted. Only one plan can be popular.' : 'Highlight this plan for new members.'}
+              {form.is_popular ? t('subscriptions.popularOnHint') : t('subscriptions.popularOffHint')}
             </div>
           </div>
           <ToggleSwitch checked={form.is_popular} onChange={() => updateField('is_popular', !form.is_popular)} color="#fbbf24" />
@@ -259,9 +259,9 @@ export default function SubscriptionPlansPage() {
           marginBottom: 4,
         }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>{t('subscriptions.activeStatus')}</div>
             <div style={{ fontSize: 12, color: '#64748b' }}>
-              {form.is_active ? 'Plan is visible to new members' : 'Plan is hidden from registration'}
+              {form.is_active ? t('subscriptions.activeOnHint') : t('subscriptions.activeOffHint')}
             </div>
           </div>
           <ToggleSwitch checked={form.is_active} onChange={() => updateField('is_active', !form.is_active)} />
@@ -290,9 +290,9 @@ export default function SubscriptionPlansPage() {
           borderRadius: 18, border: '1px solid rgba(139,92,246,0.15)',
         }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>&#128274;</div>
-          <p style={{ color: '#a78bfa', fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>Feature Disabled</p>
+          <p style={{ color: '#a78bfa', fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>{t('subscriptions.featureDisabled')}</p>
           <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
-            Subscription Plans are disabled for your club. Contact your platform admin to enable this feature.
+            {t('subscriptions.featureDisabledHint')}
           </p>
         </div>
       </>
@@ -332,7 +332,7 @@ export default function SubscriptionPlansPage() {
             <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
           </svg>
           <p style={{ color: '#fda4af', fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>{loadError}</p>
-          <Button type="button" variant="secondary" onClick={loadPlans}>Retry</Button>
+          <Button type="button" variant="secondary" onClick={loadPlans}>{t('actions.retry')}</Button>
         </div>
       </>
     );
@@ -346,7 +346,7 @@ export default function SubscriptionPlansPage() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Add Plan
+          {t('subscriptions.addPlan')}
         </Button>
       </PageHeader>
 
@@ -357,9 +357,9 @@ export default function SubscriptionPlansPage() {
           borderRadius: 18, border: '1px solid rgba(34,211,238,0.06)',
         }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>&#128179;</div>
-          <p style={{ color: '#94a3b8', fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>No plans yet</p>
-          <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 20px' }}>Create subscription plans for your club members.</p>
-          <Button type="button" onClick={openCreate}>Create your first plan</Button>
+          <p style={{ color: '#94a3b8', fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>{t('subscriptions.noPlans')}</p>
+          <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 20px' }}>{t('subscriptions.noPlansHint')}</p>
+          <Button type="button" onClick={openCreate}>{t('subscriptions.createFirst')}</Button>
         </div>
       ) : (
         <div style={{
@@ -386,7 +386,7 @@ export default function SubscriptionPlansPage() {
       {/* ── Delete Confirmation ─────────────────────────── */}
       {modal === 'delete' && editPlan && (
         <Modal
-          title={`Delete ${editPlan.name}?`}
+          title={t('subscriptions.deleteTitle', { name: editPlan.name })}
           onClose={closeModal}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeLinecap="round">
@@ -405,7 +405,7 @@ export default function SubscriptionPlansPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" />
                 </svg>
-                This plan has {editPlan.registrations_count} registration{editPlan.registrations_count > 1 ? 's' : ''}. Consider deactivating instead.
+                {t('subscriptions.hasRegistrations', { count: editPlan.registrations_count })}
               </p>
             </div>
           )}
@@ -417,7 +417,7 @@ export default function SubscriptionPlansPage() {
             borderRadius: 12, marginBottom: 4,
           }}>
             <p style={{ color: '#fda4af', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
-              This action cannot be undone. The plan will be permanently removed.
+              {t('subscriptions.deleteWarning')}
             </p>
           </div>
 
@@ -437,6 +437,7 @@ export default function SubscriptionPlansPage() {
 
 /* ── Plan Card ──────────────────────────────────────── */
 function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, onMoveDown }) {
+  const { t } = useTranslation();
   const discountedPrice = plan.discount_percent > 0
     ? (plan.price * (1 - plan.discount_percent / 100)).toFixed(2)
     : null;
@@ -477,7 +478,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
           textTransform: 'uppercase',
           boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
         }}>
-          Popular
+          {t('subscriptions.popular')}
         </div>
       )}
 
@@ -489,7 +490,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
           background: 'rgba(244,63,94,0.12)', color: '#fda4af',
           fontSize: 11, fontWeight: 600, border: '1px solid rgba(244,63,94,0.2)',
         }}>
-          Inactive
+          {t('status.inactive')}
         </div>
       )}
 
@@ -507,7 +508,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round">
           <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
         </svg>
-        {plan.duration_months} month{plan.duration_months > 1 ? 's' : ''}
+        {t('subscriptions.monthCount', { count: plan.duration_months })}
       </div>
 
       {/* Price */}
@@ -518,10 +519,10 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
               fontSize: 28, fontWeight: 800, color: '#2dd4bf',
               fontFamily: "'Outfit', sans-serif", lineHeight: 1,
             }}>
-              {Number(discountedPrice).toLocaleString()}
+              {Number(discountedPrice).toLocaleString()} {t('common.currency')}
             </span>
             <span style={{ fontSize: 14, color: '#526280', textDecoration: 'line-through' }}>
-              {Number(plan.price).toLocaleString()}
+              {Number(plan.price).toLocaleString()} {t('common.currency')}
             </span>
             <span style={{
               padding: '2px 8px', borderRadius: 20,
@@ -536,7 +537,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
             fontSize: 28, fontWeight: 800, color: '#22d3ee',
             fontFamily: "'Outfit', sans-serif", lineHeight: 1,
           }}>
-            {Number(plan.price).toLocaleString()}
+            {Number(plan.price).toLocaleString()} {t('common.currency')}
           </span>
         )}
       </div>
@@ -551,7 +552,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
           <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" />
         </svg>
         <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>
-          {plan.registrations_count ?? 0} registration{(plan.registrations_count ?? 0) !== 1 ? 's' : ''}
+          {t('subscriptions.registrationCount', { count: plan.registrations_count ?? 0 })}
         </span>
       </div>
 
@@ -562,14 +563,14 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
         flexWrap: 'wrap',
       }}>
         {/* Reorder arrows */}
-        <div style={{ display: 'flex', gap: 2, marginRight: 'auto' }}>
+        <div style={{ display: 'flex', gap: 2, marginInlineEnd: 'auto' }}>
           <button type="button" disabled={index === 0} onClick={onMoveUp}
-            title="Move up"
+            title={t('subscriptions.moveUp')}
             style={iconBtnStyle(index === 0)}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 15l-6-6-6 6" /></svg>
           </button>
           <button type="button" disabled={index === total - 1} onClick={onMoveDown}
-            title="Move down"
+            title={t('subscriptions.moveDown')}
             style={iconBtnStyle(index === total - 1)}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6" /></svg>
           </button>
@@ -577,7 +578,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
 
         {/* Toggle active */}
         <button type="button" onClick={onToggle}
-          title={plan.is_active ? 'Deactivate' : 'Activate'}
+          title={plan.is_active ? t('subscriptions.deactivate') : t('subscriptions.activate')}
           onMouseEnter={e => { e.currentTarget.style.background = plan.is_active ? 'rgba(244,63,94,0.15)' : 'rgba(45,212,191,0.15)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
           style={{
@@ -596,7 +597,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
 
         {/* Edit */}
         <button type="button" onClick={onEdit}
-          title="Edit"
+          title={t('actions.edit')}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
           style={{
@@ -612,7 +613,7 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
 
         {/* Delete */}
         <button type="button" onClick={onDelete}
-          title="Delete"
+          title={t('actions.delete')}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.15)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
           style={{
@@ -652,11 +653,11 @@ function ToggleSwitch({ checked, onChange, color }) {
       }}
     >
       <span style={{
-        position: 'absolute', top: 2, left: checked ? 22 : 2,
+        position: 'absolute', top: 2, insetInlineStart: checked ? 22 : 2,
         width: 18, height: 18, borderRadius: '50%',
         background: '#fff',
         boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-        transition: 'left 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'inset-inline-start 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }} />
     </button>
   );

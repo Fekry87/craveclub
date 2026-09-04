@@ -4,6 +4,7 @@ import { getOwnBranding, updateOwnBranding, uploadOwnBrandingFile } from '../../
 import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
 
 const COLOR_PRESETS = ['1A6FB5', 'C0392B', '27AE60', '7D3C98', 'E67E22', '148F77', 'B7950B', '2C3E50'];
+const ASSET_LABEL_KEY = { logo: 'branding.logo', favicon: 'branding.favicon', cover: 'branding.coverImage' };
 
 const sectionCardStyle = (delay = '0.1s') => ({
   padding: '26px 28px 10px', borderRadius: 18,
@@ -13,6 +14,7 @@ const sectionCardStyle = (delay = '0.1s') => ({
 });
 
 function BrandingColorPicker({ label, value, onChange }) {
+  const { t } = useTranslation();
   const isValid = /^[0-9A-Fa-f]{6}$/.test(value || '');
   return (
     <FormField label={label}>
@@ -42,7 +44,7 @@ function BrandingColorPicker({ label, value, onChange }) {
         </div>
         <input
           type="text" value={value || ''} onChange={e => onChange(e.target.value.replace('#', ''))}
-          placeholder="e.g. 1A6FB5"
+          placeholder={t('branding.hexPlaceholder')}
           style={{
             flex: 1, minWidth: 0, padding: '0 14px', height: 44,
             background: 'transparent', border: 'none',
@@ -66,7 +68,7 @@ function BrandingColorPicker({ label, value, onChange }) {
       </div>
       {value && !isValid && (
         <div style={{ color: '#f43f5e', fontSize: 11, marginTop: 4 }}>
-          Invalid hex — use 6 characters (e.g. 1A6FB5)
+          {t('branding.invalidHex')}
         </div>
       )}
     </FormField>
@@ -74,6 +76,7 @@ function BrandingColorPicker({ label, value, onChange }) {
 }
 
 function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, uploading }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -81,7 +84,7 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
   const handleFile = (file) => {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert('File must be under 2MB');
+      alert(t('branding.fileTooLarge'));
       return;
     }
     setPreviewUrl(URL.createObjectURL(file));
@@ -111,11 +114,11 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 6, display: 'block', margin: '0 auto 6px' }}>
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
-            <div>Drop file or click to upload</div>
-            <div style={{ fontSize: 11, marginTop: 4, color: '#64748b' }}>PNG, JPG, SVG — max 2MB</div>
+            <div>{t('branding.dropFile')}</div>
+            <div style={{ fontSize: 11, marginTop: 4, color: '#64748b' }}>{t('branding.fileTypes')}</div>
           </div>
         )}
-        {uploading && <div style={{ color: '#22d3ee', fontSize: 12, marginTop: 8 }}>Uploading...</div>}
+        {uploading && <div style={{ color: '#22d3ee', fontSize: 12, marginTop: 8 }}>{t('branding.uploading')}</div>}
         <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/svg+xml'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
       </div>
     </FormField>
@@ -123,13 +126,19 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
 }
 
 function PhonePreview({ form }) {
+  const { t } = useTranslation();
   const primary = /^[0-9A-Fa-f]{6}$/.test(form.primary_color || '') ? `#${form.primary_color}` : '#1A6FB5';
   const secondary = /^[0-9A-Fa-f]{6}$/.test(form.secondary_color || '') ? `#${form.secondary_color}` : '#27AE60';
+  const previewTabs = [
+    { key: 'home', label: t('nav.home') },
+    { key: 'sessions', label: t('nav.sessions') },
+    { key: 'profile', label: t('branding.profile') },
+  ];
 
   return (
     <div style={{ position: 'sticky', top: 24 }}>
       <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, textAlign: 'center' }}>
-        Live Preview
+        {t('branding.livePreview')}
       </div>
       <div style={{
         width: 280, height: 560, borderRadius: 40,
@@ -155,7 +164,7 @@ function PhonePreview({ form }) {
               </div>
             )}
             <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.3)', textAlign: 'center', padding: '0 16px' }}>
-              {form.display_name || form.club_name || 'Club Name'}
+              {form.display_name || form.club_name || t('branding.clubNameFallback')}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, background: i === 0 ? '#fff' : 'rgba(255,255,255,0.4)' }} />)}
@@ -165,15 +174,15 @@ function PhonePreview({ form }) {
         <div style={{ height: 48, background: primary, display: 'flex', alignItems: 'center', paddingLeft: 16, gap: 10 }}>
           <div style={{ width: 6, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.6)' }} />
           <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
-            {form.app_name || 'Club App'}
+            {form.app_name || t('branding.appNameFallback')}
           </div>
         </div>
         <div style={{ padding: '16px 20px', display: 'flex', gap: 10 }}>
           <div style={{ flex: 1, height: 40, borderRadius: 10, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Primary</span>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('branding.primary')}</span>
           </div>
           <div style={{ flex: 1, height: 40, borderRadius: 10, background: secondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Secondary</span>
+            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('branding.secondary')}</span>
           </div>
         </div>
         <div style={{ padding: '8px 20px' }}>
@@ -182,10 +191,10 @@ function PhonePreview({ form }) {
           ))}
         </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 56, background: 'rgba(15,23,42,0.95)', borderTop: '1px solid rgba(51,65,85,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 8px' }}>
-          {['Home', 'Sessions', 'Profile'].map(tab => (
-            <div key={tab} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 18, height: 18, borderRadius: 4, background: tab === 'Home' ? `${primary}30` : 'rgba(51,65,85,0.3)' }} />
-              <span style={{ fontSize: 9, color: tab === 'Home' ? primary : '#475569', fontWeight: 500 }}>{tab}</span>
+          {previewTabs.map(tab => (
+            <div key={tab.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 18, height: 18, borderRadius: 4, background: tab.key === 'home' ? `${primary}30` : 'rgba(51,65,85,0.3)' }} />
+              <span style={{ fontSize: 9, color: tab.key === 'home' ? primary : '#475569', fontWeight: 500 }}>{tab.label}</span>
             </div>
           ))}
         </div>
@@ -257,9 +266,9 @@ export default function ClubBrandingPage() {
       setUploading(prev => ({ ...prev, [type]: true }));
       const result = await uploadOwnBrandingFile(file, type);
       updateForm(`${type}_url`, result.url);
-      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded`);
-    } catch (err) {
-      setError(`Failed to upload ${type}`);
+      showToast(t('branding.uploaded', { name: t(ASSET_LABEL_KEY[type] || 'branding.logo') }));
+    } catch {
+      setError(t('branding.uploadFailed', { name: t(ASSET_LABEL_KEY[type] || 'branding.logo') }));
     } finally {
       setUploading(prev => ({ ...prev, [type]: false }));
     }
@@ -271,12 +280,12 @@ export default function ClubBrandingPage() {
       setError(null);
 
       if (form.primary_color && !/^[0-9A-Fa-f]{6}$/.test(form.primary_color)) {
-        setError('Primary color must be a valid 6-character hex (e.g. 1A6FB5)');
+        setError(t('branding.primaryColorInvalid'));
         setSaving(false);
         return;
       }
       if (form.secondary_color && !/^[0-9A-Fa-f]{6}$/.test(form.secondary_color)) {
-        setError('Secondary color must be a valid 6-character hex (e.g. 27AE60)');
+        setError(t('branding.secondaryColorInvalid'));
         setSaving(false);
         return;
       }
@@ -296,10 +305,10 @@ export default function ClubBrandingPage() {
       };
 
       await updateOwnBranding(payload);
-      showToast('Branding saved and live');
+      showToast(t('branding.saved'));
     } catch (err) {
       const msgs = err.response?.data?.errors;
-      setError(msgs ? Object.values(msgs).map(a => a[0]).join(', ') : (err.response?.data?.message || 'Failed to save'));
+      setError(msgs ? Object.values(msgs).map(a => a[0]).join(', ') : (err.response?.data?.message || t('branding.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -312,14 +321,14 @@ export default function ClubBrandingPage() {
           <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(34,211,238,0.2)" strokeWidth="3" />
           <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>Loading branding...</div>
+        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{t('branding.loading')}</div>
       </div>
     </div>
   );
 
   return (
     <div>
-      <PageHeader title="Branding">
+      <PageHeader title={t('branding.title')}>
         <Button onClick={handleSave} disabled={saving}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
@@ -334,16 +343,16 @@ export default function ClubBrandingPage() {
         <div>
           {/* Identity Section */}
           <div style={sectionCardStyle('0.1s')}>
-            <SectionHeader color="#22d3ee" title="Identity"
+            <SectionHeader color="#22d3ee" title={t('branding.identity')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FormField label="Display Name"><Input value={form.display_name} onChange={e => updateForm('display_name', e.target.value)} placeholder="Public-facing name" /></FormField>
-              <FormField label="App Name"><Input value={form.app_name} onChange={e => updateForm('app_name', e.target.value)} placeholder="Shown in app header" /></FormField>
+              <FormField label={t('branding.displayName')}><Input value={form.display_name} onChange={e => updateForm('display_name', e.target.value)} placeholder={t('branding.displayNamePlaceholder')} /></FormField>
+              <FormField label={t('branding.appName')}><Input value={form.app_name} onChange={e => updateForm('app_name', e.target.value)} placeholder={t('branding.appNamePlaceholder')} /></FormField>
             </div>
 
             {/* Branding Tier — read-only for club managers */}
-            <FormField label="Branding Tier">
+            <FormField label={t('branding.brandingTier')}>
               <div style={{
                 padding: '10px 14px', borderRadius: 10,
                 background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)',
@@ -356,10 +365,10 @@ export default function ClubBrandingPage() {
                   color: form.branding_tier === 'branded' ? '#22d3ee' : '#94a3b8',
                   border: `1px solid ${form.branding_tier === 'branded' ? 'rgba(34,211,238,0.25)' : 'rgba(100,116,139,0.2)'}`,
                 }}>
-                  {form.branding_tier || 'shared'}
+                  {form.branding_tier === 'branded' ? t('branding.tierBranded') : t('branding.tierShared')}
                 </div>
                 <span style={{ color: '#64748b', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
-                  Managed by platform admin
+                  {t('branding.managedByAdmin')}
                 </span>
               </div>
             </FormField>
@@ -367,52 +376,52 @@ export default function ClubBrandingPage() {
 
           {/* Colors Section */}
           <div style={sectionCardStyle('0.15s')}>
-            <SectionHeader color="#a78bfa" title="Colors"
+            <SectionHeader color="#a78bfa" title={t('branding.colors')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
-              subtitle="Choose your brand colors — preview updates live"
+              subtitle={t('branding.colorsHint')}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <BrandingColorPicker label="Primary Color" value={form.primary_color} onChange={v => updateForm('primary_color', v)} />
-              <BrandingColorPicker label="Secondary Color" value={form.secondary_color} onChange={v => updateForm('secondary_color', v)} />
+              <BrandingColorPicker label={t('branding.primaryColor')} value={form.primary_color} onChange={v => updateForm('primary_color', v)} />
+              <BrandingColorPicker label={t('branding.secondaryColor')} value={form.secondary_color} onChange={v => updateForm('secondary_color', v)} />
             </div>
           </div>
 
           {/* Assets Section */}
           <div style={sectionCardStyle('0.2s')}>
-            <SectionHeader color="#fbbf24" title="Assets"
+            <SectionHeader color="#fbbf24" title={t('branding.assets')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>}
-              subtitle="Upload logo, cover image, and favicon"
+              subtitle={t('branding.assetsHint')}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FileUploadZone label="Logo" currentUrl={form.logo_url} uploading={uploading.logo}
+              <FileUploadZone label={t('branding.logo')} currentUrl={form.logo_url} uploading={uploading.logo}
                 previewStyle={{ maxHeight: 60 }} onUpload={f => handleUpload(f, 'logo')} />
-              <FileUploadZone label="Favicon" currentUrl={form.favicon_url} uploading={uploading.favicon}
+              <FileUploadZone label={t('branding.favicon')} currentUrl={form.favicon_url} uploading={uploading.favicon}
                 previewStyle={{ maxHeight: 32, maxWidth: 32 }} onUpload={f => handleUpload(f, 'favicon')} />
             </div>
-            <FileUploadZone label="Cover Image" currentUrl={form.cover_url} uploading={uploading.cover}
+            <FileUploadZone label={t('branding.coverImage')} currentUrl={form.cover_url} uploading={uploading.cover}
               previewStyle={{ maxHeight: 120, width: '100%', objectFit: 'cover' }} onUpload={f => handleUpload(f, 'cover')} />
           </div>
 
           {/* Contact & Social Section */}
           <div style={sectionCardStyle('0.25s')}>
-            <SectionHeader color="#2dd4bf" title="Contact & Social"
+            <SectionHeader color="#2dd4bf" title={t('branding.contactSocial')}
               icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 6l-10 7L2 6" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <FormField label="Support Email"><Input type="email" value={form.support_email} onChange={e => updateForm('support_email', e.target.value)} placeholder="support@club.com" /></FormField>
-              <FormField label="Support Phone"><Input value={form.support_phone} onChange={e => updateForm('support_phone', e.target.value)} placeholder="+20 123 456 7890" /></FormField>
+              <FormField label={t('branding.supportEmail')}><Input type="email" value={form.support_email} onChange={e => updateForm('support_email', e.target.value)} placeholder="support@club.com" /></FormField>
+              <FormField label={t('branding.supportPhone')}><Input value={form.support_phone} onChange={e => updateForm('support_phone', e.target.value)} placeholder={t('forms.phonePlaceholder')} /></FormField>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-              <FormField label="Instagram"><Input value={form.social_instagram} onChange={e => updateForm('social_instagram', e.target.value)} placeholder="@clubname" /></FormField>
-              <FormField label="Twitter / X"><Input value={form.social_twitter} onChange={e => updateForm('social_twitter', e.target.value)} placeholder="@clubname" /></FormField>
-              <FormField label="Facebook"><Input value={form.social_facebook} onChange={e => updateForm('social_facebook', e.target.value)} placeholder="facebook.com/club" /></FormField>
+              <FormField label={t('branding.instagram')}><Input value={form.social_instagram} onChange={e => updateForm('social_instagram', e.target.value)} placeholder="@clubname" /></FormField>
+              <FormField label={t('branding.twitter')}><Input value={form.social_twitter} onChange={e => updateForm('social_twitter', e.target.value)} placeholder="@clubname" /></FormField>
+              <FormField label={t('branding.facebook')}><Input value={form.social_facebook} onChange={e => updateForm('social_facebook', e.target.value)} placeholder="facebook.com/club" /></FormField>
             </div>
           </div>
 
           {/* Custom Domain Section — read-only for club managers */}
           {form.custom_domain && (
             <div style={sectionCardStyle('0.3s')}>
-              <SectionHeader color="#818cf8" title="Custom Domain"
+              <SectionHeader color="#818cf8" title={t('branding.customDomain')}
                 icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>}
               />
               <div style={{
@@ -428,8 +437,8 @@ export default function ClubBrandingPage() {
                 <span style={{ color: '#f1f5f9', fontSize: 13, fontFamily: "'DM Mono', monospace" }}>
                   {form.custom_domain}
                 </span>
-                <span style={{ color: '#64748b', fontSize: 11, marginLeft: 'auto', fontFamily: "'DM Sans', sans-serif" }}>
-                  {form.is_domain_active ? 'Active' : 'Inactive'} — managed by platform admin
+                <span style={{ color: '#64748b', fontSize: 11, marginInlineStart: 'auto', fontFamily: "'DM Sans', sans-serif" }}>
+                  {t('branding.domainManaged', { status: form.is_domain_active ? t('status.active') : t('status.inactive') })}
                 </span>
               </div>
             </div>

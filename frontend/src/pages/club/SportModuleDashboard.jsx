@@ -28,7 +28,8 @@ export default function SportModuleDashboard() {
           navigate('/club/dashboard', { replace: true });
         }
       })
-      .catch(() => setError('Failed to load sport modules'));
+      .catch(() => setError(t('sportModules.loadFailed')));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Loading
@@ -55,8 +56,8 @@ export default function SportModuleDashboard() {
             <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
           </svg>
         }
-        title="No active sport modules for this club"
-        description={error || 'Contact management to activate sport modules'}
+        title={t('sportModules.noActive')}
+        description={error || t('sportModules.contactManagement')}
       />
     );
   }
@@ -80,7 +81,7 @@ export default function SportModuleDashboard() {
           {clubName}
         </h1>
         <div style={{ color: 'var(--color-text-muted)', fontSize: 15, marginTop: 6, fontWeight: 500 }}>
-          Select a sport module
+          {t('sportModules.selectModule')}
         </div>
       </div>
 
@@ -108,6 +109,7 @@ function sportGlyph(module) {
 }
 
 export function SportCard({ module, onEnter }) {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   const color = module.color || '#8b5cf6';
   const stats = module.stats || {};
@@ -157,9 +159,9 @@ export function SportCard({ module, onEnter }) {
       {/* Stats */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
         {[
-          { label: 'Branches', value: stats.branches_count || 0 },
-          { label: 'New Registrations', value: stats.new_registrations_count || 0 },
-          { label: 'Active Swimmers', value: stats.active_swimmers_count || 0 },
+          { label: t('sportModules.branches'), value: stats.branches_count || 0 },
+          { label: t('sportModules.newRegistrations'), value: stats.new_registrations_count || 0 },
+          { label: t('sportModules.activeSwimmers'), value: stats.active_swimmers_count || 0 },
         ].map((stat) => (
           <div key={stat.label} style={{ flex: 1, textAlign: 'center' }}>
             <div style={{
@@ -191,7 +193,7 @@ export function SportCard({ module, onEnter }) {
         onMouseEnter={e => { e.currentTarget.style.background = `${color}22`; }}
         onMouseLeave={e => { e.currentTarget.style.background = `${color}12`; }}
       >
-        Manage Activity →
+        {t('sportModules.manageActivity')}
       </button>
     </div>
   );

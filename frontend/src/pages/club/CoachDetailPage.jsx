@@ -177,7 +177,7 @@ function AtRiskSwimmers({ swimmers, isMobile }) {
           <tr>
             {['Name', 'Attendance', 'Last Seen'].map(h => (
               <th key={h} style={{
-                textAlign: 'left', padding: '8px 14px', color: '#64748b', fontSize: 10,
+                textAlign: 'start', padding: '8px 14px', color: '#64748b', fontSize: 10,
                 textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600,
                 borderBottom: '1px solid rgba(51,65,85,0.2)', background: 'rgba(6,13,31,0.4)',
               }}>{h}</th>

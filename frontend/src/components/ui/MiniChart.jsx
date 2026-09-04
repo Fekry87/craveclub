@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 export function MiniChart({ data = [], type = 'bar', color = '#22d3ee', height = 120 }) {
+  const { t } = useTranslation();
   if (!data.length) return null;
 
   const allZero = data.every(d => d.value === 0);
@@ -72,7 +75,7 @@ export function MiniChart({ data = [], type = 'bar', color = '#22d3ee', height =
             fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
             pointerEvents: 'none',
           }}>
-            No attendance data yet
+            {t('empty.noData')}
           </div>
         )}
 

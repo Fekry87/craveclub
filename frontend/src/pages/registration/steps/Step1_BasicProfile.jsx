@@ -61,7 +61,7 @@ export default function Step1_BasicProfile() {
     if (!fullName.trim() || fullName.trim().length < 2)
       errs.fullName = 'Full name is required (min 2 characters)';
     if (phone.replace(/\D/g, '').length < 10)
-      errs.phone = 'Valid phone number is required';
+      errs.phone = t('forms.phoneInvalid', { defaultValue: 'Valid phone number is required' });
     if (!gender)
       errs.gender = 'Please select gender';
     if (!birthDate)
@@ -174,7 +174,7 @@ export default function Step1_BasicProfile() {
       {/* ── Phone ──────────────────────────────────────────────── */}
       <FormField label="Phone">
         <Input
-          placeholder="+20 1xx xxxx xxxx"
+          placeholder={t('forms.phonePlaceholder', { defaultValue: '+966 5x xxx xxxx' })}
           type="tel"
           value={phone}
           onChange={e => { setPhone(e.target.value); clearError('phone'); }}
