@@ -12,34 +12,25 @@ import { EmptyState } from '../../components/ui/EmptyState';
 function Section({ title, icon, children, delay = 0 }) {
   return (
     <div
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.15)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(34,211,238,0.04)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.06)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)';
-      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        borderRadius: 18,
+        background: '#FFFFFF',
         padding: '22px 24px',
-        border: '1px solid rgba(34,211,238,0.06)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        border: '1px solid #E5E5EA',
+        transition: 'border-color 0.15s ease',
         animation: `fadeInUp 0.4s ease-out ${delay}s both`,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 10,
-          background: 'rgba(34,211,238,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#94a3b8',
-        }}>{icon}</div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid #E5E5EA',
+      }}>
+        {icon && <span style={{ display: 'inline-flex', color: '#1D1D1F' }}>{icon}</span>}
         <h3 style={{
-          margin: 0, color: '#f1f5f9', fontSize: 15,
-          fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+          margin: 0, color: '#1D1D1F', fontSize: 16,
+          fontFamily: 'var(--font-display)', fontWeight: 600,
+          letterSpacing: '-0.02em', lineHeight: 1,
         }}>{title}</h3>
       </div>
       {children}
@@ -52,10 +43,10 @@ function FunnelChart({ data }) {
   const { t } = useTranslation();
   if (!data) return <EmptyState title={t('empty.noData')} description={t('analytics.noFunnelData')} />;
   const steps = [
-    { label: t('analytics.submitted'), value: data.submitted_30d ?? 0, color: '#22d3ee', colorText: '#22d3ee' },
-    { label: t('status.approved'),     value: data.approved_30d ?? 0,  color: '#34d399', colorText: '#34d399' },
-    { label: t('status.rejected'),     value: data.rejected_30d ?? 0,  color: '#f43f5e', colorText: '#f43f5e' },
-    { label: t('status.pending'),      value: data.pending_now ?? 0,   color: '#fbbf24', colorText: '#fbbf24' },
+    { label: t('analytics.submitted'), value: data.submitted_30d ?? 0, color: '#1D1D1F', colorText: '#1D1D1F' },
+    { label: t('status.approved'),     value: data.approved_30d ?? 0,  color: '#34C759', colorText: '#34C759' },
+    { label: t('status.rejected'),     value: data.rejected_30d ?? 0,  color: '#FF3B30', colorText: '#FF3B30' },
+    { label: t('status.pending'),      value: data.pending_now ?? 0,   color: '#FF9500', colorText: '#FF9500' },
   ];
   const max = Math.max(...steps.map(s => s.value), 1);
 
@@ -65,20 +56,22 @@ function FunnelChart({ data }) {
         const pct = (step.value / max) * 100;
         return (
           <div key={i}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>{step.label}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, gap: 10 }}>
               <span style={{
-                fontSize: 13, fontWeight: 700, fontFamily: "'DM Sans', sans-serif",
-                color: step.colorText,
+                fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+              }}>
+                {step.label}
+              </span>
+              <span style={{
+                fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 600,
+                letterSpacing: '-0.02em', lineHeight: 1, color: step.colorText,
               }}>{step.value}</span>
             </div>
             <div style={{
-              height: 8, borderRadius: 6,
-              background: 'rgba(255,255,255,0.04)', overflow: 'hidden',
+              height: 6, background: '#EDEDF0', overflow: 'hidden',
             }}>
               <div style={{
-                height: '100%', borderRadius: 6,
-                width: `${Math.max(pct, 2)}%`,
+                height: '100%', width: `${Math.max(pct, 2)}%`,
                 background: step.color,
                 transition: 'width 0.8s ease-out',
               }} />
@@ -109,40 +102,44 @@ function CoachTable({ data, isMobile }) {
 
   const thStyle = {
     textAlign: 'start', padding: '10px 14px',
-    color: '#64748b', fontSize: 11,
-    textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600,
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-    background: 'rgba(13,31,60,0.4)',
-    fontFamily: "'DM Sans', sans-serif",
+    color: '#6E6E73', fontSize: 11, fontWeight: 500,
+    borderBottom: '1px solid #E5E5EA',
+    background: '#FFFFFF',
+    fontFamily: 'var(--font-body)',
   };
 
   const tdBase = {
     padding: '10px 14px', fontSize: 13,
-    fontFamily: "'DM Sans', sans-serif",
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
+    fontFamily: 'var(--font-body)',
+    borderBottom: '1px solid #E5E5EA',
   };
 
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {data.map((coach, i) => (
-          <div key={i} style={{
-            background: 'rgba(13,31,60,0.4)', borderRadius: 12, padding: '14px 16px',
-            border: '1px solid rgba(34,211,238,0.06)',
+          <div key={i} style={{ borderRadius: 16,
+            background: '#FFFFFF', padding: '14px 16px',
+            border: '1px solid #E5E5EA',
           }}>
-            <div style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{coach.coach_name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{
+                color: '#1D1D1F', fontSize: 16, fontFamily: 'var(--font-display)', fontWeight: 600,
+                letterSpacing: '-0.02em', lineHeight: 1,
+              }}>{coach.coach_name}</span>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#22d3ee', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.sessions_30d}</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.sessions')}</div>
+                <div style={{ color: '#1D1D1F', fontSize: 22, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1 }}>{coach.sessions_30d}</div>
+                <div style={{ color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)', marginTop: 4 }}>{t('analytics.sessions')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#34d399', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.avg_attendance}%</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.attendance')}</div>
+                <div style={{ color: '#34C759', fontSize: 22, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1 }}>{coach.avg_attendance}%</div>
+                <div style={{ color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)', marginTop: 4 }}>{t('analytics.attendance')}</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#fbbf24', fontSize: 15, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>{coach.avg_rating}</div>
-                <div style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase' }}>{t('analytics.avgRating')}</div>
+                <div style={{ color: '#FF9500', fontSize: 22, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1 }}>{coach.avg_rating}</div>
+                <div style={{ color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)', marginTop: 4 }}>{t('analytics.avgRating')}</div>
               </div>
             </div>
           </div>
@@ -152,7 +149,7 @@ function CoachTable({ data, isMobile }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid #E5E5EA' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
@@ -164,8 +161,8 @@ function CoachTable({ data, isMobile }) {
         <tbody>
           {data.map((coach, i) => (
             <tr key={i} className="data-table-row">
-              <td style={{ ...tdBase, color: '#f1f5f9', fontWeight: 500 }}>{coach.coach_name}</td>
-              <td style={{ ...tdBase, color: '#94a3b8' }}>{coach.sessions_30d}</td>
+              <td style={{ ...tdBase, color: '#1D1D1F', fontWeight: 500 }}>{coach.coach_name}</td>
+              <td style={{ ...tdBase, color: '#515154' }}>{coach.sessions_30d}</td>
               <td style={tdBase}>
                 <Badge
                   variant={coach.avg_attendance >= 80 ? 'success' : coach.avg_attendance >= 60 ? 'warning' : 'danger'}
@@ -174,8 +171,8 @@ function CoachTable({ data, isMobile }) {
               </td>
               <td style={tdBase}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ color: '#fbbf24', fontSize: 11 }}>&#9733;</span>
-                  <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600 }}>{coach.avg_rating}</span>
+                  <span style={{ color: '#FF9500', fontSize: 11 }}>&#9733;</span>
+                  <span style={{ color: '#1D1D1F', fontSize: 13, fontWeight: 600 }}>{coach.avg_rating}</span>
                 </span>
               </td>
             </tr>
@@ -202,20 +199,15 @@ export default function AnalyticsDashboard() {
 
   if (error) {
     return (
-      <div style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        borderRadius: 18, border: '1px solid rgba(34,211,238,0.06)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-      }}>
+      <div style={{ borderRadius: 16,
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        }}>
         <EmptyState
           title={t('analytics.loadFailed')}
           description={error}
           action={
-            <button onClick={() => window.location.reload()} style={{
-              background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.15)',
-              color: '#22d3ee', padding: '8px 20px', borderRadius: 10,
-              cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
-            }}>{t('actions.retry')}</button>
+            <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" onClick={() => window.location.reload()}>{t('actions.retry')}</button>
           }
         />
       </div>
@@ -225,15 +217,16 @@ export default function AnalyticsDashboard() {
   if (!data) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', color: '#515154' }}>
           <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            border: '3px solid rgba(255,255,255,0.08)',
-            borderTopColor: '#22d3ee',
+            width: 32, height: 32, border: '2px solid #E5E5EA',
+            borderTopColor: '#1D1D1F',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 12px',
           }} />
-          <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{t('analytics.loading')}</div>
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+          }}>{t('analytics.loading')}</div>
         </div>
       </div>
     );
@@ -263,9 +256,8 @@ export default function AnalyticsDashboard() {
       <PageHeader title={t('analytics.title')}>
         {data.generated_at && (
           <div style={{
-            color: '#64748b', fontSize: 11,
-            background: 'rgba(13,31,60,0.4)', padding: '4px 10px',
-            borderRadius: 6, border: '1px solid rgba(34,211,238,0.06)',
+            color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)',
+            padding: '4px 10px', border: '1px solid #E5E5EA',
           }}>
             {t('analytics.updated', { time: new Date(data.generated_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}
           </div>
@@ -284,7 +276,7 @@ export default function AnalyticsDashboard() {
           value={latestMembers}
           delta={memberGrowth !== 0 ? t('analytics.vsLastMonth', { delta: `${memberGrowth > 0 ? '+' : ''}${memberGrowth}` }) : undefined}
           deltaType={memberGrowth > 0 ? 'up' : memberGrowth < 0 ? 'down' : undefined}
-          accentColor="#22d3ee"
+          accentColor="#0071E3"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
@@ -295,7 +287,7 @@ export default function AnalyticsDashboard() {
         <StatCard
           label={t('analytics.retentionRate')}
           value={`${retentionRate}%`}
-          accentColor="#06b6d4"
+          accentColor="#0071E3"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -306,7 +298,7 @@ export default function AnalyticsDashboard() {
           label={t('analytics.avgAttendance')}
           value={`${latestAttendance}%`}
           delta={t('analytics.latestWeek')}
-          accentColor="#34d399"
+          accentColor="#34C759"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
@@ -317,7 +309,7 @@ export default function AnalyticsDashboard() {
           label={t('analytics.registrations')}
           value={totalRegistrations}
           delta={t('analytics.pendingReview', { count: funnel.pending_now ?? 0 })}
-          accentColor="#a78bfa"
+          accentColor="#0071E3"
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -337,7 +329,7 @@ export default function AnalyticsDashboard() {
         <Section title={t('analytics.membershipGrowth')} delay={0.1}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6" /></svg>}>
           {growthChartData.length > 0
-            ? <MiniChart data={growthChartData} type="bar" color="#22d3ee" height={180} />
+            ? <MiniChart data={growthChartData} type="bar" color="#1D1D1F" height={180} />
             : <EmptyState title={t('empty.noData')} description={t('analytics.noGrowthData')} />
           }
         </Section>
@@ -346,7 +338,7 @@ export default function AnalyticsDashboard() {
         <Section title={t('analytics.attendanceTrend')} delay={0.15}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}>
           {trendChartData.length > 0
-            ? <MiniChart data={trendChartData} type="line" color="#34d399" height={180} />
+            ? <MiniChart data={trendChartData} type="line" color="#0071E3" height={180} />
             : <EmptyState title={t('empty.noData')} description={t('analytics.noTrendData')} />
           }
         </Section>

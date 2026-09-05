@@ -5,19 +5,28 @@ import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextAr
 import { useTranslation } from 'react-i18next';
 
 const STATUS_CONFIG = {
-  Scheduled: { bg: 'rgba(56,189,248,0.08)', border: 'rgba(56,189,248,0.15)', color: '#38bdf8', gradient: 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.03) 100%)' },
-  Live:      { bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.15)', color: '#fb923c', gradient: 'linear-gradient(135deg, rgba(251,146,60,0.12) 0%, rgba(251,146,60,0.03) 100%)' },
-  Completed: { bg: 'rgba(74,222,128,0.08)', border: 'rgba(74,222,128,0.15)', color: '#4ade80', gradient: 'linear-gradient(135deg, rgba(74,222,128,0.12) 0%, rgba(74,222,128,0.03) 100%)' },
-  Cancelled: { bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.15)', color: '#94a3b8', gradient: 'linear-gradient(135deg, rgba(148,163,184,0.12) 0%, rgba(148,163,184,0.03) 100%)' },
+  Scheduled: { color: '#515154' },
+  Live:      { color: '#FF9500' },
+  Completed: { color: '#34C759' },
+  Cancelled: { color: '#86868B' },
 };
 
 const TYPE_CONFIG = {
-  General: '#94a3b8', Technique: '#a78bfa', Endurance: '#f472b6',
-  Speed: '#fbbf24', Test: '#f87171', Recovery: '#2dd4bf', Custom: '#64748b',
+  General: '#6E6E73', Technique: '#1D1D1F', Endurance: '#1D1D1F',
+  Speed: '#FF9500', Test: '#FF3B30', Recovery: '#34C759', Custom: '#6E6E73',
 };
 
 const SESSION_TYPES = ['General','Technique','Endurance','Speed','Test','Recovery','Custom'];
 const DAY_LABELS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+const labelMono = {
+  fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+};
+
+const pillBase = {
+  background: 'transparent', display: 'inline-flex', alignItems: 'center',
+  fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '-0.02em', whiteSpace: 'nowrap',
+};
 
 /* ─── Reusable Badges ─────────────────────────────────────────── */
 function StatusBadge({ status, size = 'default' }) {
@@ -25,30 +34,27 @@ function StatusBadge({ status, size = 'default' }) {
   const isSmall = size === 'small';
   return (
     <span style={{
-      padding: isSmall ? '2px 7px' : '3px 10px', borderRadius: 6, fontSize: isSmall ? 10 : 11, fontWeight: 600,
-      background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color,
-      display: 'inline-flex', alignItems: 'center', gap: 4, lineHeight: 1.3,
-      letterSpacing: '0.02em', whiteSpace: 'nowrap',
+      ...pillBase,
+      padding: isSmall ? '2px 7px' : '3px 8px',
+      fontSize: isSmall ? 10 : 10, lineHeight: '14px',
+      border: `1px solid ${cfg.color}`, color: cfg.color,
+      gap: 4,
     }}>
-      {status === 'Live' && (
-        <>
-          <style>{`@keyframes livePulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }`}</style>
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fb923c', animation: 'livePulse 1.5s ease-in-out infinite' }} />
-        </>
-      )}
+      {status === 'Live' && <span style={{ width: 5, height: 5, background: '#FF9500', display: 'inline-block' }} />}
       {status}
     </span>
   );
 }
 
 function TypeBadge({ type, size = 'default' }) {
-  const color = TYPE_CONFIG[type] || '#94a3b8';
+  const color = TYPE_CONFIG[type] || '#6E6E73';
   const isSmall = size === 'small';
   return (
     <span style={{
-      padding: isSmall ? '2px 7px' : '3px 10px', borderRadius: 6, fontSize: isSmall ? 10 : 11, fontWeight: 600,
-      background: `${color}12`, border: `1px solid ${color}22`, color,
-      lineHeight: 1.3, letterSpacing: '0.02em', whiteSpace: 'nowrap',
+      ...pillBase,
+      padding: isSmall ? '2px 7px' : '3px 8px',
+      fontSize: 10, lineHeight: '14px',
+      border: `1px solid ${color}`, color,
     }}>{type}</span>
   );
 }
@@ -59,33 +65,31 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
       {[
         { key: '', label: 'All', count: statusCounts.all },
-        { key: 'Scheduled', label: 'Scheduled', count: statusCounts.Scheduled, color: '#38bdf8' },
-        { key: 'Live', label: 'Live', count: statusCounts.Live, color: '#fb923c' },
-        { key: 'Completed', label: 'Done', count: statusCounts.Completed, color: '#4ade80' },
-        { key: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled, color: '#94a3b8' },
+        { key: 'Scheduled', label: 'Scheduled', count: statusCounts.Scheduled, color: '#0071E3' },
+        { key: 'Live', label: 'Live', count: statusCounts.Live, color: '#FF9500' },
+        { key: 'Completed', label: 'Done', count: statusCounts.Completed, color: '#34C759' },
+        { key: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled, color: '#515154' },
       ].map(f => {
         const active = statusFilter === f.key;
         return (
-          <button key={f.key} onClick={() => setStatusFilter(active && f.key ? '' : f.key)}
-            onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; }}
-            onMouseLeave={e => { if (!active) e.currentTarget.style.background = active ? 'rgba(45,212,191,0.1)' : 'rgba(13,31,60,0.3)'; }}
+          <button key={f.key} type="button" onClick={() => setStatusFilter(active && f.key ? '' : f.key)}
+            onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#D2D2D7'; }}
+            onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = '#E5E5EA'; }}
             style={{
-              padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-              background: active ? 'rgba(45,212,191,0.1)' : 'rgba(13,31,60,0.3)',
-              border: `1px solid ${active ? 'rgba(45,212,191,0.25)' : 'rgba(51,65,85,0.2)'}`,
-              color: active ? '#2dd4bf' : '#7a8ba8',
-              cursor: 'pointer', transition: 'all 0.15s ease',
-              display: 'flex', alignItems: 'center', gap: 5,
-              fontFamily: "'DM Sans', sans-serif",
+              padding: '0 10px', height: 30,
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
+              letterSpacing: '-0.02em',
+              background: active ? '#1D1D1F' : '#FFFFFF',
+              border: `1px solid ${active ? '#1D1D1F' : '#E5E5EA'}`,
+              color: active ? '#F5F5F7' : '#515154',
+              cursor: 'pointer',
+              transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+              display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
-            {f.color && <span style={{ width: 5, height: 5, borderRadius: '50%', background: f.color, opacity: active ? 1 : 0.5 }} />}
+            {f.color && <span style={{ width: 5, height: 5, background: f.color, display: 'inline-block' }} />}
             {f.label}
-            <span style={{
-              fontSize: 9, fontWeight: 700, color: active ? '#2dd4bf' : '#3e4a5e',
-              background: active ? 'rgba(45,212,191,0.12)' : 'rgba(51,65,85,0.2)',
-              padding: '1px 5px', borderRadius: 4, minWidth: 12, textAlign: 'center',
-            }}>{f.count}</span>
+            <span style={{ color: active ? '#AEAEB2' : '#86868B' }}>{f.count}</span>
           </button>
         );
       })}
@@ -103,27 +107,28 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
   /* ─── Desktop: always-open inline toolbar ─── */
   if (!isMobile) {
     return (
-      <div style={{
+      <div style={{ borderRadius: 16,
         marginBottom: 16, animation: 'fadeIn 0.3s ease-out',
-        padding: '12px 16px', borderRadius: 14,
-        background: 'rgba(13,31,60,0.35)',
-        border: '1px solid rgba(34,211,238,0.06)',
+        padding: '12px 16px', background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
       }}>
         {/* Row 1: Status pills + group select + count + view toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} />
 
           {/* Divider */}
-          <div style={{ width: 1, height: 22, background: 'rgba(51,65,85,0.2)', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 22, background: '#E5E5EA', flexShrink: 0 }} />
 
           {/* Group dropdown */}
           <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)}
             style={{
-              padding: '5px 28px 5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-              background: 'rgba(13,31,60,0.4)', border: `1px solid ${groupFilter ? 'rgba(45,212,191,0.25)' : 'rgba(51,65,85,0.2)'}`,
-              color: groupFilter ? '#2dd4bf' : '#7a8ba8', cursor: 'pointer', outline: 'none',
-              fontFamily: "'DM Sans', sans-serif", appearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+              padding: '0 28px 0 10px', height: 30,
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
+              letterSpacing: '-0.02em',
+              background: '#FFFFFF', border: `1px solid ${groupFilter ? '#1D1D1F' : '#E5E5EA'}`,
+              color: groupFilter ? '#1D1D1F' : '#515154', cursor: 'pointer', outline: 'none',
+              appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23171717' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
             }}>
             <option value="">All Groups</option>
@@ -132,9 +137,10 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
 
           {hasActiveFilter && (
             <button onClick={() => { setStatusFilter(''); setGroupFilter(''); }}
-              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-              onMouseLeave={e => e.currentTarget.style.color = '#526280'}
-              style={{ background: 'none', border: 'none', color: '#526280', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", padding: 0, transition: 'color 0.15s ease' }}>
+              onMouseEnter={e => e.currentTarget.style.color = '#FF3B30'}
+              onMouseLeave={e => e.currentTarget.style.color = '#86868B'}
+              type="button"
+              style={{ ...labelMono, background: 'none', border: 'none', color: '#86868B', cursor: 'pointer', padding: 0, transition: 'color 0.15s ease' }}>
               Clear
             </button>
           )}
@@ -142,32 +148,32 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
           <div style={{ flex: 1 }} />
 
           {/* Session count */}
-          <span style={{ color: '#475569', fontSize: 11, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>
+          <span style={{ ...labelMono, color: '#86868B' }}>
             {statusCounts.all} total
           </span>
 
           {/* Divider */}
-          <div style={{ width: 1, height: 22, background: 'rgba(51,65,85,0.2)' }} />
+          <div style={{ width: 1, height: 22, background: '#E5E5EA' }} />
 
           {/* View toggle */}
-          <div style={{
-            display: 'flex', borderRadius: 8, overflow: 'hidden',
-            background: 'rgba(6,13,31,0.4)', border: '1px solid rgba(51,65,85,0.15)',
+          <div style={{ borderRadius: 16,
+            display: 'flex',
+            background: '#FFFFFF', border: '1px solid #E5E5EA',
             padding: 2,
           }}>
             {[
               { key: 'list', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg> },
               { key: 'calendar', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg> },
             ].map(v => (
-              <button key={v.key} onClick={() => setViewMode(v.key)}
-                onMouseEnter={e => { if (viewMode !== v.key) e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; }}
-                onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.background = 'transparent'; }}
+              <button key={v.key} type="button" onClick={() => setViewMode(v.key)}
+                onMouseEnter={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#1D1D1F'; }}
+                onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#86868B'; }}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 30, height: 26, border: 'none', cursor: 'pointer', borderRadius: 6,
-                  background: viewMode === v.key ? 'rgba(45,212,191,0.15)' : 'transparent',
-                  color: viewMode === v.key ? '#2dd4bf' : '#475569',
-                  transition: 'all 0.15s ease',
+                  width: 30, height: 26, border: 'none', cursor: 'pointer',
+                  background: viewMode === v.key ? '#1D1D1F' : 'transparent',
+                  color: viewMode === v.key ? '#F5F5F7' : '#86868B',
+                  transition: 'background 0.15s ease, color 0.15s ease',
                 }}
               >
                 {v.icon}
@@ -183,34 +189,31 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
   return (
     <div style={{ marginBottom: 16, animation: 'fadeIn 0.3s ease-out' }}>
       {/* Main toolbar row */}
-      <div style={{
+      <div style={{ borderRadius: 16,
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '8px 12px', borderRadius: expanded ? '14px 14px 0 0' : 14,
-        background: 'rgba(13,31,60,0.35)',
-        border: '1px solid rgba(34,211,238,0.06)',
-        borderBottom: expanded ? '1px solid rgba(51,65,85,0.12)' : '1px solid rgba(34,211,238,0.06)',
-        transition: 'border-radius 0.2s ease',
+        padding: '8px 12px',
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        borderBottom: expanded ? 'none' : '1px solid #E5E5EA',
       }}>
         {/* Filter toggle button */}
-        <button onClick={() => setExpanded(!expanded)}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.08)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        <button type="button" onClick={() => setExpanded(!expanded)}
           style={{
+            ...labelMono,
             display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px',
-            borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: 'transparent', color: '#94a3b8', transition: 'all 0.2s ease',
-            fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600,
+            border: 'none', cursor: 'pointer',
+            background: 'transparent', color: '#515154',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasActiveFilter ? '#2dd4bf' : 'currentColor'} strokeWidth="2" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={hasActiveFilter ? '#1D1D1F' : 'currentColor'} strokeWidth="1.8" strokeLinecap="round">
             <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
           </svg>
-          <span style={{ color: hasActiveFilter ? '#2dd4bf' : '#94a3b8' }}>Filters</span>
+          <span style={{ color: hasActiveFilter ? '#1D1D1F' : '#515154' }}>Filters</span>
           {hasActiveFilter && (
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2dd4bf', flexShrink: 0 }} />
+            <span style={{ width: 6, height: 6, borderRadius: 3, background: '#0071E3', flexShrink: 0 }} />
           )}
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-            style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', marginLeft: 2 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            style={{ transition: 'transform 0.2s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', marginInlineStart: 2 }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
@@ -220,10 +223,10 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             {statusFilter && (
               <span style={{
-                padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                background: STATUS_CONFIG[statusFilter]?.bg, color: STATUS_CONFIG[statusFilter]?.color,
-                border: `1px solid ${STATUS_CONFIG[statusFilter]?.border}`,
-                display: 'flex', alignItems: 'center', gap: 4,
+                ...pillBase, padding: '3px 8px', fontSize: 10, lineHeight: '14px',
+                color: STATUS_CONFIG[statusFilter]?.color,
+                border: `1px solid ${STATUS_CONFIG[statusFilter]?.color}`,
+                gap: 4,
               }}>
                 {statusFilter}
                 <button onClick={(e) => { e.stopPropagation(); setStatusFilter(''); }}
@@ -232,10 +235,8 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
             )}
             {groupFilter && (
               <span style={{
-                padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                background: 'rgba(45,212,191,0.08)', color: '#2dd4bf',
-                border: '1px solid rgba(45,212,191,0.15)',
-                display: 'flex', alignItems: 'center', gap: 4,
+                ...pillBase, padding: '3px 8px', fontSize: 10, lineHeight: '14px',
+                color: '#1D1D1F', border: '1px solid #E5E5EA', gap: 4,
               }}>
                 {activeGroupLabel}
                 <button onClick={(e) => { e.stopPropagation(); setGroupFilter(''); }}
@@ -247,30 +248,30 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
 
         <div style={{ flex: 1 }} />
 
-        <span style={{ color: '#475569', fontSize: 11, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>
+        <span style={{ ...labelMono, color: '#86868B' }}>
           {statusCounts.all} total
         </span>
-        <div style={{ width: 1, height: 20, background: 'rgba(51,65,85,0.2)' }} />
+        <div style={{ width: 1, height: 20, background: '#E5E5EA' }} />
 
         {/* View toggle */}
-        <div style={{
-          display: 'flex', borderRadius: 8, overflow: 'hidden',
-          background: 'rgba(6,13,31,0.4)', border: '1px solid rgba(51,65,85,0.15)',
+        <div style={{ borderRadius: 16,
+          display: 'flex',
+          background: '#FFFFFF', border: '1px solid #E5E5EA',
           padding: 2,
         }}>
           {[
             { key: 'list', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg> },
             { key: 'calendar', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg> },
           ].map(v => (
-            <button key={v.key} onClick={() => setViewMode(v.key)}
-              onMouseEnter={e => { if (viewMode !== v.key) e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; }}
-              onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.background = 'transparent'; }}
+            <button key={v.key} type="button" onClick={() => setViewMode(v.key)}
+              onMouseEnter={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#1D1D1F'; }}
+              onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#86868B'; }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 26, border: 'none', cursor: 'pointer', borderRadius: 6,
-                background: viewMode === v.key ? 'rgba(45,212,191,0.15)' : 'transparent',
-                color: viewMode === v.key ? '#2dd4bf' : '#475569',
-                transition: 'all 0.15s ease',
+                width: 30, height: 26, border: 'none', cursor: 'pointer',
+                background: viewMode === v.key ? '#1D1D1F' : 'transparent',
+                color: viewMode === v.key ? '#F5F5F7' : '#86868B',
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
             >
               {v.icon}
@@ -281,27 +282,28 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
 
       {/* Expanded filter panel (mobile only) */}
       {expanded && (
-        <div style={{
+        <div style={{ borderRadius: 16,
           padding: '12px 14px',
-          background: 'rgba(10,22,40,0.4)',
-          borderRadius: '0 0 14px 14px',
-          border: '1px solid rgba(34,211,238,0.06)',
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
           borderTop: 'none',
           animation: 'fadeIn 0.2s ease-out',
         }}>
           <div style={{ marginBottom: 10 }}>
-            <div style={{ color: '#3e4a5e', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Status</div>
+            <div style={{ ...labelMono, color: '#86868B', marginBottom: 6 }}>Status</div>
             <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} />
           </div>
           <div>
-            <div style={{ color: '#3e4a5e', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Group</div>
+            <div style={{ ...labelMono, color: '#86868B', marginBottom: 6 }}>Group</div>
             <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)}
               style={{
-                padding: '6px 28px 6px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-                background: 'rgba(13,31,60,0.4)', border: `1px solid ${groupFilter ? 'rgba(45,212,191,0.25)' : 'rgba(51,65,85,0.2)'}`,
-                color: groupFilter ? '#2dd4bf' : '#7a8ba8', cursor: 'pointer', outline: 'none',
-                fontFamily: "'DM Sans', sans-serif", appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+                padding: '0 28px 0 10px', height: 32,
+                fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
+                letterSpacing: '-0.02em',
+                background: '#FFFFFF', border: `1px solid ${groupFilter ? '#1D1D1F' : '#E5E5EA'}`,
+                color: groupFilter ? '#1D1D1F' : '#515154', cursor: 'pointer', outline: 'none',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23171717' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
               }}>
               <option value="">All Groups</option>
@@ -310,9 +312,10 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
           </div>
           {hasActiveFilter && (
             <button onClick={() => { setStatusFilter(''); setGroupFilter(''); }}
-              onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-              onMouseLeave={e => e.currentTarget.style.color = '#526280'}
-              style={{ marginTop: 8, background: 'none', border: 'none', color: '#526280', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", padding: 0, transition: 'color 0.15s ease' }}>
+              onMouseEnter={e => e.currentTarget.style.color = '#FF3B30'}
+              onMouseLeave={e => e.currentTarget.style.color = '#86868B'}
+              type="button"
+              style={{ ...labelMono, marginTop: 8, background: 'none', border: 'none', color: '#86868B', cursor: 'pointer', padding: 0, transition: 'color 0.15s ease' }}>
               Clear all filters
             </button>
           )}
@@ -326,75 +329,41 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
 function SessionActions({ session, onStart, onContinue, onEdit, onDelete, layout = 'row' }) {
   const isCol = layout === 'column';
   return (
-    <div style={{ display: 'flex', flexDirection: isCol ? 'column' : 'row', alignItems: 'center', gap: 5 }}>
+    <div style={{ display: 'flex', flexDirection: isCol ? 'column' : 'row', alignItems: 'center', gap: 6 }}>
       {session.status === 'Scheduled' && (
-        <button onClick={() => onStart(session)}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.15)'; e.currentTarget.style.borderColor = 'rgba(45,212,191,0.3)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.06)'; e.currentTarget.style.borderColor = 'rgba(45,212,191,0.15)'; }}
-          style={{
-            padding: '6px 14px', height: 32, borderRadius: 8, fontSize: 11, fontWeight: 700,
-            background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.15)',
-            color: '#2dd4bf', cursor: 'pointer', transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap',
-            width: isCol ? '100%' : 'auto',
-          }}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="#2dd4bf" stroke="none"><polygon points="5,3 19,12 5,21" /></svg>
+        <button type="button" onClick={() => onStart(session)} className="pl-btn pl-btn-accent pl-btn-sm"
+          style={{ width: isCol ? '100%' : 'auto', justifyContent: 'center' }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5,3 19,12 5,21" /></svg>
           Start
         </button>
       )}
       {session.status === 'Live' && (
-        <button onClick={() => onContinue(session)}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(251,146,60,0.15)'; e.currentTarget.style.borderColor = 'rgba(251,146,60,0.3)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251,146,60,0.06)'; e.currentTarget.style.borderColor = 'rgba(251,146,60,0.15)'; }}
-          style={{
-            padding: '6px 14px', height: 32, borderRadius: 8, fontSize: 11, fontWeight: 700,
-            background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.15)',
-            color: '#fb923c', cursor: 'pointer', transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap',
-            width: isCol ? '100%' : 'auto',
-          }}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="#fb923c" stroke="none"><polygon points="5,3 19,12 5,21" /></svg>
+        <button type="button" onClick={() => onContinue(session)} className="pl-btn pl-btn-primary pl-btn-sm"
+          style={{ width: isCol ? '100%' : 'auto', justifyContent: 'center' }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5,3 19,12 5,21" /></svg>
           Continue
         </button>
       )}
       {session.status === 'Scheduled' && (
         <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={() => onEdit(session)} title="Edit"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(56,189,248,0.1)'; e.currentTarget.style.color = '#38bdf8'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.15)'; e.currentTarget.style.color = '#526280'; }}
-            style={{
-              height: 32, width: 32, borderRadius: 8, flexShrink: 0,
-              background: 'rgba(51,65,85,0.15)', border: '1px solid rgba(51,65,85,0.1)',
-              color: '#526280', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.15s ease',
-            }}>
+          <button type="button" onClick={() => onEdit(session)} title="Edit" className="pl-icon-btn">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
-          <button onClick={() => onDelete(session)} title="Delete"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#f87171'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.15)'; e.currentTarget.style.color = '#526280'; }}
-            style={{
-              height: 32, width: 32, borderRadius: 8, flexShrink: 0,
-              background: 'rgba(51,65,85,0.15)', border: '1px solid rgba(51,65,85,0.1)',
-              color: '#526280', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.15s ease',
-            }}>
+          <button type="button" onClick={() => onDelete(session)} title="Delete" className="pl-icon-btn"
+            onMouseEnter={e => { e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = '#FF3B30'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
           </button>
         </div>
       )}
       {session.status === 'Completed' && (
-        <span style={{ color: '#4ade80', fontSize: 10, fontWeight: 600, opacity: 0.6 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" style={{ marginRight: 3, verticalAlign: -1 }}><path d="M20 6L9 17l-5-5" /></svg>
+        <span style={{ ...labelMono, fontSize: 10, color: '#34C759', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
           Done
         </span>
       )}
       {session.status === 'Cancelled' && (
-        <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 600, opacity: 0.5 }}>Cancelled</span>
+        <span style={{ ...labelMono, fontSize: 10, color: '#86868B' }}>Cancelled</span>
       )}
     </div>
   );
@@ -405,26 +374,26 @@ function SessionMeta({ session, compact, dateLabel }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
       {!compact && dateLabel && (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 11, fontWeight: 500 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+        <span style={{ ...labelMono, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
           {dateLabel}
         </span>
       )}
       {session.group?.name && session.title && (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 11, fontWeight: 500 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <span style={{ ...labelMono, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.8" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           {session.group.name}
         </span>
       )}
       {session.location && (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 11, fontWeight: 500 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
+        <span style={{ ...labelMono, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.8" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
           {session.location}
         </span>
       )}
       {session.plan?.title && (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 11, fontWeight: 500 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
+        <span style={{ ...labelMono, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
           {session.plan.title}
         </span>
       )}
@@ -441,30 +410,28 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
 
   return (
     <div
-      onMouseEnter={e => { e.currentTarget.style.borderColor = statusCfg.border; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px ${statusCfg.border}`; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(51,65,85,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)'; }}
+      className="session-card"
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
-        background: 'rgba(13,31,60,0.35)',
-        borderRadius: 14, border: '1px solid rgba(51,65,85,0.08)',
-        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-        animation: `fadeInUp 0.3s ease-out ${0.02 + index * 0.03}s both`,
-        position: 'relative', overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-      }}
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        borderInlineStart: `3px solid ${statusCfg.color}`,
+        transition: 'border-color 0.15s ease',
+        animation: `fadeInUp 0.25s ease-out ${0.02 + index * 0.03}s both`,
+        position: 'relative',
+        }}
     >
-      {/* Left accent strip */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, bottom: 0, width: 3,
-        background: `linear-gradient(180deg, ${statusCfg.color} 0%, ${statusCfg.color}30 100%)`,
-        borderRadius: '14px 0 0 14px',
-      }} />
 
       {isMobile ? (
         /* ─── MOBILE: Vertical stacked layout ─── */
-        <div style={{ padding: '12px 14px 12px 16px' }}>
+        <div style={{ padding: '12px 14px' }}>
           {/* Title + Tags */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-            <span style={{ color: '#f1f5f9', fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+            <span style={{
+              color: '#1D1D1F', fontSize: 15, fontWeight: 500, fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.02em', lineHeight: 1,
+            }}>
               {session.title || session.group?.name || 'Session'}
             </span>
             <StatusBadge status={session.status} size="small" />
@@ -472,10 +439,10 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
           </div>
           {/* Time */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.8" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
             </svg>
-            <span style={{ color: '#2dd4bf', fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
+            <span style={{ ...labelMono, fontSize: 12, color: '#1D1D1F' }}>
               {session.start_time?.substring(0,5)} – {session.end_time?.substring(0,5)}
             </span>
           </div>
@@ -484,20 +451,20 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
             <SessionMeta session={session} compact={compact} dateLabel={dateLabel} />
           </div>
           {/* Actions — full width */}
-          <div style={{ paddingTop: 8, borderTop: '1px solid rgba(51,65,85,0.08)' }}>
+          <div style={{ paddingTop: 8, borderTop: '1px solid #E5E5EA' }}>
             <SessionActions session={session} onStart={onStart} onContinue={onContinue} onEdit={onEdit} onDelete={onDelete} layout="row" />
           </div>
         </div>
       ) : (
         /* ─── DESKTOP: Horizontal card — content left, actions right ─── */
-        <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px 12px 18px', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 16 }}>
           {/* Content area */}
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {/* Title + Tags */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{
-                color: '#f1f5f9', fontSize: 14, fontWeight: 700,
-                fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em',
+                color: '#1D1D1F', fontSize: 15, fontWeight: 500,
+                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
               }}>
                 {session.title || session.group?.name || 'Session'}
               </span>
@@ -506,8 +473,8 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
             </div>
             {/* Time + meta inline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#2dd4bf', fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round">
+              <span style={{ ...labelMono, fontSize: 12, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.8" strokeLinecap="round">
                   <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                 </svg>
                 {session.start_time?.substring(0,5)} – {session.end_time?.substring(0,5)}
@@ -570,52 +537,46 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 14 }}>
         {/* Month navigation — centered */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={prevMonth}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s ease' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+          <button type="button" onClick={prevMonth} className="pl-icon-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: 17, fontWeight: 700, fontFamily: "'Outfit', sans-serif", minWidth: 160, textAlign: 'center' }}>{monthLabel}</h3>
-          <button onClick={nextMonth}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s ease' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+          <h3 style={{
+            margin: 0, color: '#1D1D1F', fontSize: 20, fontWeight: 500,
+            fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+            minWidth: 180, textAlign: 'center',
+          }}>{monthLabel}</h3>
+          <button type="button" onClick={nextMonth} className="pl-icon-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
           </button>
         </div>
 
         {/* Legend + Today button — centered below month */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {[
-            { c: '#38bdf8', l: 'Scheduled' },
-            { c: '#fb923c', l: 'Live' },
-            { c: '#4ade80', l: 'Completed' },
-            { c: '#94a3b8', l: 'Cancelled' },
+            { c: '#515154', l: 'Scheduled' },
+            { c: '#FF9500', l: 'Live' },
+            { c: '#34C759', l: 'Completed' },
+            { c: '#86868B', l: 'Cancelled' },
           ].map(x => (
-            <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#526280', fontSize: 10, fontWeight: 600 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: x.c }} />{x.l}
+            <div key={x.l} style={{ ...labelMono, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4, color: '#86868B' }}>
+              <span style={{ width: 6, height: 6, borderRadius: 3, background: x.c }} />{x.l}
             </div>
           ))}
-          <div style={{ width: 1, height: 14, background: 'rgba(51,65,85,0.2)', margin: '0 2px' }} />
-          <button onClick={goToday}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(45,212,191,0.04)'}
-            style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(45,212,191,0.04)', border: '1px solid rgba(45,212,191,0.12)', color: '#2dd4bf', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s ease', letterSpacing: '0.03em' }}>
+          <div style={{ width: 1, height: 14, background: '#E5E5EA', margin: '0 2px' }} />
+          <button type="button" onClick={goToday} className="pl-btn pl-btn-secondary pl-btn-sm" style={{ height: 26, padding: '0 10px' }}>
             Today
           </button>
         </div>
       </div>
 
       {/* Calendar grid */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(51,65,85,0.1)' }}>
+      <div style={{ border: '1px solid #E5E5EA' }}>
         {/* Day headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'rgba(13,31,60,0.4)' }}>
-          {DAY_LABELS.map((d, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: '#F2F2F7' }}>
+          {DAY_LABELS.map(d => (
             <div key={d} style={{
-              textAlign: 'center', color: i === 0 || i === 6 ? '#475569' : '#526280',
-              fontSize: 9, fontWeight: 700, padding: '8px 0', letterSpacing: '0.1em',
-              borderBottom: '1px solid rgba(51,65,85,0.1)',
+              ...labelMono, fontSize: 10, textAlign: 'center', color: '#6E6E73',
+              padding: '8px 0', borderBottom: '1px solid #E5E5EA',
             }}>{d}</div>
           ))}
         </div>
@@ -628,11 +589,11 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
                 <div key={`out-${i}`} style={{
                   padding: '8px 4px', minHeight: 44,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 3,
-                  borderBottom: '1px solid rgba(51,65,85,0.06)',
-                  borderRight: (i + 1) % 7 !== 0 ? '1px solid rgba(51,65,85,0.06)' : 'none',
-                  background: 'rgba(6,13,31,0.15)',
+                  borderBottom: '1px solid #E5E5EA',
+                  borderInlineEnd: (i + 1) % 7 !== 0 ? '1px solid #E5E5EA' : 'none',
+                  background: '#FAFAFA',
                 }}>
-                  <span style={{ fontSize: 11, color: '#1e293b', fontWeight: 400, fontFamily: "'Outfit', sans-serif" }}>{cell.day}</span>
+                  <span style={{ fontSize: 11, color: '#E5E5EA', fontWeight: 400, fontFamily: 'var(--font-body)' }}>{cell.day}</span>
                 </div>
               );
             }
@@ -647,35 +608,34 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
             const count = daySessions.length;
 
             return (
-              <button key={dateStr} onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(45,212,191,0.04)'; }}
-                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isToday && !isSelected ? 'rgba(45,212,191,0.03)' : 'transparent'; }}
+              <button key={dateStr} type="button" onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#F2F2F7'; }}
+                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                 style={{
                   padding: '6px 4px', minHeight: 44,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 3,
                   border: 'none', cursor: 'pointer',
-                  borderBottom: '1px solid rgba(51,65,85,0.06)',
-                  borderRight: (i + 1) % 7 !== 0 ? '1px solid rgba(51,65,85,0.06)' : 'none',
-                  background: isSelected ? 'rgba(45,212,191,0.1)' : isToday ? 'rgba(45,212,191,0.03)' : 'transparent',
+                  borderBottom: '1px solid #E5E5EA',
+                  borderInlineEnd: (i + 1) % 7 !== 0 ? '1px solid #E5E5EA' : 'none',
+                  background: isSelected ? '#1D1D1F' : 'transparent',
                   transition: 'background 0.12s ease', position: 'relative',
                 }}
               >
-                {/* Today indicator ring or selected */}
-                <span style={{
-                  fontSize: 12, fontWeight: isToday ? 800 : count > 0 ? 600 : 400,
-                  fontFamily: "'Outfit', sans-serif", lineHeight: 1,
-                  width: 24, height: 24, borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: isToday ? '#2dd4bf' : isSelected ? 'rgba(45,212,191,0.2)' : 'transparent',
-                  color: isToday ? '#060d1f' : isSelected ? '#2dd4bf' : count > 0 ? '#cbd5e1' : '#334155',
+                {/* Today indicator or selected */}
+                <span style={{ borderRadius: 6,
+                  fontSize: 12, fontWeight: 500,
+                  fontFamily: 'var(--font-body)', lineHeight: 1,
+                  width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isToday ? '#0071E3' : 'transparent',
+                  color: isToday ? '#1D1D1F' : isSelected ? '#F5F5F7' : count > 0 ? '#1D1D1F' : '#AEAEB2',
                 }}>{cell.day}</span>
 
                 {/* Session dots */}
                 {count > 0 && (
                   <div style={{ display: 'flex', gap: 2 }}>
-                    {hasLive && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#fb923c' }} />}
-                    {hasScheduled && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#38bdf8' }} />}
-                    {hasCompleted && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80' }} />}
+                    {hasLive && <span style={{ width: 4, height: 4, background: '#FF9500' }} />}
+                    {hasScheduled && <span style={{ width: 4, height: 4, background: isSelected ? '#F5F5F7' : '#515154' }} />}
+                    {hasCompleted && <span style={{ width: 4, height: 4, background: '#34C759' }} />}
                   </div>
                 )}
               </button>
@@ -688,19 +648,18 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
       {selectedDate && (
         <div style={{ marginTop: 16, animation: 'fadeInUp 0.25s ease-out' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '0 2px' }}>
-            <h4 style={{ margin: 0, color: '#e2e8f0', fontSize: 13, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
+            <h4 style={{
+              margin: 0, color: '#1D1D1F', fontSize: 16, fontWeight: 500,
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+            }}>
               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </h4>
-            <span style={{
-              padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700,
-              background: selectedSessions.length > 0 ? 'rgba(45,212,191,0.1)' : 'rgba(51,65,85,0.15)',
-              color: selectedSessions.length > 0 ? '#2dd4bf' : '#475569',
-            }}>{selectedSessions.length}</span>
+            <span style={{ ...labelMono, color: selectedSessions.length > 0 ? '#1D1D1F' : '#86868B' }}>{selectedSessions.length}</span>
             <div style={{ flex: 1 }} />
-            <button onClick={() => setSelectedDate(null)}
-              onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
-              onMouseLeave={e => e.currentTarget.style.color = '#334155'}
-              style={{ background: 'none', border: 'none', color: '#334155', cursor: 'pointer', padding: 2, display: 'flex', transition: 'color 0.15s ease' }}>
+            <button type="button" onClick={() => setSelectedDate(null)}
+              onMouseEnter={e => e.currentTarget.style.color = '#1D1D1F'}
+              onMouseLeave={e => e.currentTarget.style.color = '#AEAEB2'}
+              style={{ background: 'none', border: 'none', color: '#6E6E73', cursor: 'pointer', padding: 2, display: 'flex', transition: 'color 0.15s ease' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
           </div>
@@ -712,7 +671,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px 16px', color: '#334155', fontSize: 12, fontWeight: 500 }}>
+            <div style={{ ...labelMono, textAlign: 'center', padding: '20px 16px', color: '#6E6E73' }}>
               No sessions scheduled
             </div>
           )}
@@ -823,7 +782,7 @@ export default function CoachSessions() {
       <FormPage
         title={editId ? t('sessions.editSession') : t('sessions.newSession')}
         onBack={closeForm}
-        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.8" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
       >
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           <FormField label={t('sessions.group')}><Select value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })} options={(Array.isArray(groups) ? groups : []).map(g => ({ value: g.id, label: g.name }))} /></FormField>
@@ -839,9 +798,9 @@ export default function CoachSessions() {
         <FormField label="Notes"><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
 
         {form.group_id && groupSwimmers.length > 0 && (
-          <div style={{ marginTop: 8, padding: '16px 16px 12px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
-            <h4 style={{ color: '#94a3b8', margin: '0 0 12px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <div style={{ borderRadius: 16, marginTop: 8, padding: '16px 16px 12px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+            <h4 style={{ ...labelMono, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="1.8" strokeLinecap="round"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               Group Swimmers ({groupSwimmers.length - form.excluded_swimmer_ids.filter(id => groupSwimmerIds.includes(id)).length} active)
             </h4>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -849,41 +808,56 @@ export default function CoachSessions() {
                 const excluded = form.excluded_swimmer_ids.includes(sw.id);
                 const ac = getAvatarColor(`${sw.first_name} ${sw.last_name}`);
                 return (
-                  <button key={sw.id} onClick={() => toggleExclusion(sw.id)}
-                    style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: excluded ? 'rgba(239,68,68,0.08)' : ac.bg, border: `1px solid ${excluded ? 'rgba(239,68,68,0.15)' : ac.accent + '30'}`, color: excluded ? '#f87171' : ac.text, cursor: 'pointer', transition: 'all 0.2s ease', textDecoration: excluded ? 'line-through' : 'none', opacity: excluded ? 0.6 : 1 }}
+                  <button key={sw.id} type="button" onClick={() => toggleExclusion(sw.id)}
+                    style={{
+                      padding: '4px 10px', fontSize: 12, fontWeight: 500,
+                      fontFamily: 'var(--font-body)',
+                      background: excluded ? '#FFFFFF' : ac.bg,
+                      border: `1px solid ${excluded ? '#FF3B30' : ac.bg}`,
+                      color: excluded ? '#FF3B30' : ac.text,
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                      textDecoration: excluded ? 'line-through' : 'none',
+                    }}
                   >{sw.first_name} {sw.last_name}</button>
                 );
               })}
             </div>
             {form.added_swimmer_ids.length > 0 && (
               <>
-                <div style={{ color: '#526280', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '8px 0 6px' }}>Extra Swimmers</div>
+                <div style={{ ...labelMono, color: '#86868B', margin: '8px 0 6px' }}>Extra Swimmers</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
                   {form.added_swimmer_ids.map(id => { const sw = allSwimmers.find(s => s.id === id); if (!sw) return null; return (
-                    <span key={id} style={{ padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)', color: '#2dd4bf', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span key={id} style={{ borderRadius: 16, padding: '4px 10px', fontSize: 12, fontWeight: 500, fontFamily: 'var(--font-body)', background: '#FFFFFF', border: '1px solid #E5E5EA', color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: 5 }}>
                       {sw.first_name} {sw.last_name}
-                      <button onClick={() => removeExtraSwimmer(id)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}>&times;</button>
+                      <button type="button" onClick={() => removeExtraSwimmer(id)} style={{ background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}>&times;</button>
                     </span>
                   ); })}
                 </div>
               </>
             )}
             <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowAddSwimmer(!showAddSwimmer)}
-                style={{ padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.2)', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>Add Swimmer
+              <button type="button" onClick={() => setShowAddSwimmer(!showAddSwimmer)}
+                style={{ borderRadius: 16,
+                  ...labelMono, height: 30, padding: '0 12px',
+                  background: '#FFFFFF', border: '1px dashed #E5E5EA', color: '#1D1D1F',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>Add Swimmer
               </button>
               {showAddSwimmer && (
-                <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, width: 260, maxHeight: 200, overflowY: 'auto', background: 'rgba(13,25,50,0.98)', border: '1px solid rgba(45,212,191,0.15)', borderRadius: 12, padding: 8, zIndex: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                <div style={{ borderRadius: 16, position: 'absolute', bottom: '100%', insetInlineStart: 0, marginBottom: 4, width: 260, maxHeight: 200, overflowY: 'auto', background: '#FFFFFF', border: '1px solid #E5E5EA', padding: 8, zIndex: 10 }}>
                   <input type="text" value={addSwimmerSearch} onChange={e => setAddSwimmerSearch(e.target.value)} placeholder="Search swimmers..."
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 8, fontSize: 12, background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.3)', color: '#e2e8f0', outline: 'none', marginBottom: 6, boxSizing: 'border-box' }} />
+                    style={{ borderRadius: 16, width: '100%', padding: '0 10px', height: 34, fontSize: 12, background: '#FFFFFF', border: '1px solid #AEAEB2', color: '#1D1D1F', outline: 'none', marginBottom: 6, boxSizing: 'border-box', fontFamily: 'var(--font-body)' }}
+                    onFocus={e => e.target.style.borderColor = '#D2D2D7'}
+                    onBlur={e => e.target.style.borderColor = '#AEAEB2'} />
                   {availableToAdd.slice(0, 10).map(sw => (
-                    <button key={sw.id} onClick={() => addExtraSwimmer(sw.id)}
-                      style={{ display: 'block', width: '100%', padding: '6px 10px', borderRadius: 6, background: 'transparent', border: 'none', textAlign: 'left', color: '#cbd5e1', fontSize: 12, cursor: 'pointer' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,212,191,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >{sw.first_name} {sw.last_name} <span style={{ color: '#64748b', fontSize: 10 }}>({sw.level})</span></button>
+                    <button key={sw.id} type="button" onClick={() => addExtraSwimmer(sw.id)}
+                      style={{ display: 'block', width: '100%', padding: '6px 10px', background: 'transparent', border: 'none', textAlign: 'start', color: '#1D1D1F', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F2F2F7'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >{sw.first_name} {sw.last_name} <span style={{ color: '#6E6E73', fontSize: 10 }}>({sw.level})</span></button>
                   ))}
-                  {availableToAdd.length === 0 && <div style={{ padding: 8, color: '#475569', fontSize: 12, textAlign: 'center' }}>No swimmers available</div>}
+                  {availableToAdd.length === 0 && <div style={{ ...labelMono, padding: 8, color: '#86868B', textAlign: 'center' }}>No swimmers available</div>}
                 </div>
               )}
             </div>
@@ -892,9 +866,8 @@ export default function CoachSessions() {
 
         {saveError && (
           <div style={{
-            marginTop: 14, padding: '10px 14px', borderRadius: 10,
-            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)',
-            color: '#f87171', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
+            marginTop: 14, padding: '10px 14px', background: '#FFFFFF', border: '1px solid #FF3B30',
+            color: '#FF3B30', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
             whiteSpace: 'pre-line',
           }}>
             {saveError}
@@ -915,8 +888,8 @@ export default function CoachSessions() {
     <div>
       {/* Page header */}
       <PageHeader title={t('sessions.title')}>
-        <Button onClick={() => { setEditId(null); resetForm(); setSaveError(''); setShowModal(true); }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        <Button variant="accent" onClick={() => { setEditId(null); resetForm(); setSaveError(''); setShowModal(true); }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           {t('sessions.newSession')}
         </Button>
       </PageHeader>
@@ -936,19 +909,19 @@ export default function CoachSessions() {
           {sessions.length > 0 ? sessions.map((s, i) => (
             <SessionCard key={s.id} session={s} index={i} onEdit={handleEdit} onDelete={handleDelete} onStart={handleStart} onContinue={handleContinue} isMobile={isMobile} />
           )) : (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#475569' }}>
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.08)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#86868B' }}>
+              <div style={{ borderRadius: 14, width: 56, height: 56, background: '#F2F2F7', border: '1px solid #E5E5EA', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
-              <div style={{ color: '#526280', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>No sessions found</div>
-              <div style={{ color: '#334155', fontSize: 12 }}>Create your first session to get started</div>
+              <div style={{ color: '#1D1D1F', fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8 }}>No sessions found</div>
+              <div style={labelMono}>Create your first session to get started</div>
             </div>
           )}
         </div>
       ) : (
-        <div style={{
-          background: 'rgba(13,31,60,0.3)',
-          borderRadius: 16, padding: '18px 18px', border: '1px solid rgba(34,211,238,0.05)',
+        <div style={{ borderRadius: 16,
+          background: '#FFFFFF',
+          padding: '18px', border: '1px solid #E5E5EA',
         }}>
           <CalendarView sessions={sessions} onStart={handleStart} onContinue={handleContinue} onEdit={handleEdit} onDelete={handleDelete} isMobile={isMobile} />
         </div>

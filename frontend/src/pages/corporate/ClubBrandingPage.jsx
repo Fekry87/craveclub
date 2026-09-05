@@ -5,12 +5,15 @@ import { getClubBranding, updateClubBranding, uploadBrandingFile } from '../../a
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 import { FormField, Input, Button } from '../../components/ui/FormControls';
 
-const COLOR_PRESETS = ['1A6FB5', 'C0392B', '27AE60', '7D3C98', 'E67E22', '148F77', 'B7950B', '2C3E50'];
+const COLOR_PRESETS = ['171717', 'FF350D', '4E4E4E', '727272', '979797', 'BBBBBB', '1F7A3F', 'C81E1E'];
+
+const labelStyle = {
+  fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+};
 
 const sectionCardStyle = (delay = '0.1s') => ({
-  padding: '26px 28px 10px', borderRadius: 18,
-  background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)',
-  border: '1px solid rgba(139,92,246,0.08)', marginBottom: 20,
+  padding: '24px 26px 10px', background: '#FFFFFF',
+  border: '1px solid #E5E5EA', marginBottom: 20,
   animation: `fadeInUp 0.5s ease-out ${delay} both`,
 });
 
@@ -19,57 +22,52 @@ function BrandingColorPicker({ label, value, onChange }) {
   return (
     <FormField label={label}>
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 0,
-        background: 'rgba(6,13,31,0.6)',
-        border: `1px solid ${value && !isValid ? '#f43f5e' : 'rgba(51,65,85,0.5)'}`,
-        borderRadius: 12, overflow: 'hidden',
+        display: 'flex', alignItems: 'center',
+        background: '#FFFFFF',
+        border: `1px solid ${value && !isValid ? '#FF3B30' : '#AEAEB2'}`,
       }}>
         <div style={{
-          width: 48, height: 44, flexShrink: 0, display: 'flex',
+          width: 46, height: 42, flexShrink: 0, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
-          borderRight: '1px solid rgba(51,65,85,0.4)', position: 'relative',
+          borderInlineEnd: '1px solid #E5E5EA', position: 'relative',
         }}>
           <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: isValid ? `#${value}` : 'rgba(51,65,85,0.5)',
-            boxShadow: isValid ? `0 0 12px #${value}40` : 'none',
-            border: '2px solid rgba(255,255,255,0.15)', transition: 'all 0.3s',
+            width: 24, height: 24, background: isValid ? `#${value}` : '#E5E5EA',
+            border: '1px solid #E5E5EA',
           }} />
           <input
             type="color"
-            value={isValid ? `#${value}` : '#8b5cf6'}
+            value={isValid ? `#${value}` : '#1D1D1F'}
             onChange={e => onChange(e.target.value.replace('#', ''))}
             style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
           />
         </div>
         <input
           type="text" value={value || ''} onChange={e => onChange(e.target.value.replace('#', ''))}
-          placeholder="e.g. 1A6FB5"
+          placeholder="e.g. 171717"
           onBlur={() => {}}
           style={{
-            flex: 1, minWidth: 0, padding: '0 14px', height: 44,
+            flex: 1, minWidth: 0, padding: '0 12px', height: 42,
             background: 'transparent', border: 'none',
-            color: '#e2e8f0', fontSize: '0.875rem',
-            fontFamily: "'DM Mono', 'DM Sans', monospace",
-            letterSpacing: '0.04em', outline: 'none',
+            color: '#1D1D1F', fontSize: 13,
+            fontFamily: 'var(--font-body)', outline: 'none',
           }}
         />
       </div>
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
         {COLOR_PRESETS.map(color => (
           <button key={color} type="button" onClick={() => onChange(color)}
             style={{
-              width: 22, height: 22, borderRadius: 6, background: `#${color}`,
-              border: (value || '').toLowerCase() === color.toLowerCase() ? '2px solid #fff' : '1px solid rgba(255,255,255,0.08)',
-              cursor: 'pointer', transition: 'all 0.2s',
-              transform: (value || '').toLowerCase() === color.toLowerCase() ? 'scale(1.1)' : 'scale(1)',
+              width: 22, height: 22, background: `#${color}`, padding: 0, cursor: 'pointer',
+              border: (value || '').toLowerCase() === color.toLowerCase() ? '2px solid #1D1D1F' : '1px solid #E5E5EA',
+              transition: 'border-color 0.15s ease',
             }}
           />
         ))}
       </div>
       {value && !isValid && (
-        <div style={{ color: '#f43f5e', fontSize: 11, marginTop: 4 }}>
-          Invalid hex — use 6 characters (e.g. 1A6FB5)
+        <div style={{ color: '#FF3B30', fontSize: 12, marginTop: 6 }}>
+          Invalid hex — use 6 characters (e.g. 171717)
         </div>
       )}
     </FormField>
@@ -101,24 +99,24 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
         style={{
-          border: `2px dashed ${dragOver ? '#a78bfa' : 'rgba(51,65,85,0.5)'}`,
-          borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer',
-          background: dragOver ? 'rgba(139,92,246,0.08)' : 'rgba(6,13,31,0.6)',
-          transition: 'all 0.2s',
+          border: `1px dashed ${dragOver ? '#1D1D1F' : '#AEAEB2'}`,
+          padding: 16, textAlign: 'center', cursor: 'pointer',
+          background: dragOver ? '#F2F2F7' : '#FFFFFF',
+          transition: 'border-color 0.15s ease, background 0.15s ease',
         }}
       >
         {displayUrl ? (
-          <img src={displayUrl} alt={label} style={{ maxWidth: '100%', objectFit: 'contain', borderRadius: 8, ...previewStyle }} />
+          <img src={displayUrl} alt={label} style={{ maxWidth: '100%', objectFit: 'contain', ...previewStyle }} />
         ) : (
-          <div style={{ color: '#94a3b8', fontSize: 13 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 6, display: 'block', margin: '0 auto 6px' }}>
+          <div style={{ color: '#515154', fontSize: 13 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="1.5" strokeLinecap="round" style={{ display: 'block', margin: '0 auto 8px' }}>
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
             <div>Drop file or click to upload</div>
-            <div style={{ fontSize: 11, marginTop: 4, color: '#64748b' }}>PNG, JPG, SVG — max 2MB</div>
+            <div style={{ ...labelStyle, marginTop: 6 }}>PNG, JPG, SVG — max 2MB</div>
           </div>
         )}
-        {uploading && <div style={{ color: '#a78bfa', fontSize: 12, marginTop: 8 }}>Uploading...</div>}
+        {uploading && <div style={{ ...labelStyle, color: '#0071E3', marginTop: 8 }}>Uploading...</div>}
         <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/svg+xml'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
       </div>
     </FormField>
@@ -126,24 +124,22 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
 }
 
 function PhonePreview({ form }) {
-  const primary = /^[0-9A-Fa-f]{6}$/.test(form.primary_color || '') ? `#${form.primary_color}` : '#1A6FB5';
-  const secondary = /^[0-9A-Fa-f]{6}$/.test(form.secondary_color || '') ? `#${form.secondary_color}` : '#27AE60';
+  const primary = /^[0-9A-Fa-f]{6}$/.test(form.primary_color || '') ? `#${form.primary_color}` : '#515154';
+  const secondary = /^[0-9A-Fa-f]{6}$/.test(form.secondary_color || '') ? `#${form.secondary_color}` : '#34C759';
 
   return (
     <div style={{ position: 'sticky', top: 24 }}>
-      <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, textAlign: 'center' }}>
+      <div style={{ ...labelStyle, marginBottom: 12, textAlign: 'center' }}>
         Live Preview
       </div>
-      {/* Phone Frame — intentionally dark, it's a device mockup */}
-      <div style={{
-        width: 280, height: 560, borderRadius: 40,
-        border: '3px solid rgba(51,65,85,0.4)',
-        background: '#0f172a', margin: '0 auto', overflow: 'hidden', position: 'relative',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05)',
-      }}>
+      {/* Phone Frame — a device mockup */}
+      <div style={{ borderRadius: 16,
+        width: 280, height: 560, border: '2px solid #0071E3',
+        background: '#FFFFFF', margin: '0 auto', overflow: 'hidden', position: 'relative',
+        }}>
         {/* Status Bar / Notch */}
-        <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}>
-          <div style={{ width: 80, height: 24, borderRadius: 12, background: '#000' }} />
+        <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}>
+          <div style={{ width: 80, height: 24, background: '#F2F2F7' }} />
         </div>
 
         {/* Splash Area */}
@@ -152,55 +148,55 @@ function PhonePreview({ form }) {
           background: form.cover_url ? `url(${form.cover_url}) center/cover` : primary,
           position: 'relative',
         }}>
-          {form.cover_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />}
+          {form.cover_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(29,29,31,0.45)' }} />}
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 14, background: 'rgba(255,255,255,0.1)', padding: 4 }} />
+              <img src={form.logo_url} alt="Logo" style={{ borderRadius: 14, width: 60, height: 60, objectFit: 'contain', background: 'rgba(255,255,255,0.15)', padding: 4 }} />
             ) : (
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+              <div style={{ borderRadius: 14, width: 60, height: 60, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.5"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
               </div>
             )}
-            <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.3)', textAlign: 'center', padding: '0 16px' }}>
+            <div style={{ color: '#1D1D1F', fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', textAlign: 'center', padding: '0 16px' }}>
               {form.display_name || form.club_name || 'Club Name'}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
-              {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, background: i === 0 ? '#fff' : 'rgba(255,255,255,0.4)' }} />)}
+              {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, background: i === 0 ? '#F5F5F7' : 'rgba(255,255,255,0.4)' }} />)}
             </div>
           </div>
         </div>
 
         {/* Header Bar */}
-        <div style={{ height: 48, background: primary, display: 'flex', alignItems: 'center', paddingLeft: 16, gap: 10 }}>
-          <div style={{ width: 6, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.6)' }} />
-          <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
+        <div style={{ height: 48, background: primary, display: 'flex', alignItems: 'center', paddingInlineStart: 16, gap: 10 }}>
+          <div style={{ width: 6, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.7)' }} />
+          <div style={{ color: '#1D1D1F', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',}}>
             {form.app_name || 'Club App'}
           </div>
         </div>
 
         {/* Color Chips */}
         <div style={{ padding: '16px 20px', display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, height: 40, borderRadius: 10, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Primary</span>
+          <div style={{ flex: 1, height: 40, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#1D1D1F', fontFamily: 'var(--font-body)', fontSize: 12,}}>Primary</span>
           </div>
-          <div style={{ flex: 1, height: 40, borderRadius: 10, background: secondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Secondary</span>
+          <div style={{ flex: 1, height: 40, background: secondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#1D1D1F', fontFamily: 'var(--font-body)', fontSize: 12,}}>Secondary</span>
           </div>
         </div>
 
         {/* Fake content lines */}
         <div style={{ padding: '8px 20px' }}>
           {[0.8, 0.6, 0.9, 0.5].map((w, i) => (
-            <div key={i} style={{ height: 10, borderRadius: 5, background: 'rgba(51,65,85,0.3)', marginBottom: 8, width: `${w * 100}%` }} />
+            <div key={i} style={{ height: 10, background: '#E5E5EA', marginBottom: 8, width: `${w * 100}%` }} />
           ))}
         </div>
 
         {/* Bottom Nav */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 56, background: 'rgba(15,23,42,0.95)', borderTop: '1px solid rgba(51,65,85,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 8px' }}>
+        <div style={{ borderRadius: 16, position: 'absolute', bottom: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 56, background: '#FFFFFF', borderTop: '1px solid #E5E5EA', display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 8px' }}>
           {['Home', 'Sessions', 'Profile'].map(tab => (
             <div key={tab} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 18, height: 18, borderRadius: 4, background: tab === 'Home' ? `${primary}30` : 'rgba(51,65,85,0.3)' }} />
-              <span style={{ fontSize: 9, color: tab === 'Home' ? primary : '#475569', fontWeight: 500 }}>{tab}</span>
+              <div style={{ width: 18, height: 18, background: tab === 'Home' ? primary : '#515154' }} />
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: tab === 'Home' ? '#F5F5F7' : '#86868B' }}>{tab}</span>
             </div>
           ))}
         </div>
@@ -213,24 +209,20 @@ function ToggleSwitch({ checked, onChange }) {
   return (
     <label style={{ position: 'relative', display: 'inline-block', width: 44, height: 24, cursor: 'pointer', flexShrink: 0 }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
-      <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: checked ? '#58CC02' : '#CBD5E0', transition: 'background 200ms ease' }} />
-      <span style={{ position: 'absolute', top: 3, insetInlineStart: checked ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#FFFFFF', transition: 'inset-inline-start 200ms ease', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+      <span style={{ position: 'absolute', inset: 0, background: checked ? '#1D1D1F' : '#AEAEB2', transition: 'background 200ms ease' }} />
+      <span style={{ position: 'absolute', top: 3, insetInlineStart: checked ? 23 : 3, width: 18, height: 18, background: '#F5F5F7', transition: 'inset-inline-start 200ms ease', }} />
     </label>
   );
 }
 
 function SectionHeader({ color, icon, title, subtitle }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <h4 style={{
-        color: '#f1f5f9', margin: '0 0 4px', fontSize: 11, fontWeight: 600,
-        letterSpacing: '0.06em', textTransform: 'uppercase',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>
+    <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #E5E5EA' }}>
+      <h4 style={{ ...labelStyle, margin: 0, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 8 }}>
         {icon}
-        <span style={{ color }}>{title}</span>
+        <span>{title}</span>
       </h4>
-      {subtitle && <div style={{ color: '#94a3b8', fontSize: 12 }}>{subtitle}</div>}
+      {subtitle && <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 6, fontFamily: 'var(--font-body)' }}>{subtitle}</div>}
     </div>
   );
 }
@@ -337,13 +329,13 @@ export default function ClubBrandingPage() {
   };
 
   if (!club) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#94a3b8' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#515154' }}>
       <div style={{ textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
-          <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" />
-          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="3" />
+          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#1D1D1F" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>Loading branding...</div>
+        <div style={labelStyle}>Loading branding...</div>
       </div>
     </div>
   );
@@ -353,25 +345,25 @@ export default function ClubBrandingPage() {
       title={`Branding — ${club.name}`}
       onBack={() => navigate(`/corporate/clubs/${id}`)}
       maxWidth={1200}
-      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
+      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
     >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
         {/* Left — Form */}
         <div>
           {/* Identity Section */}
           <div style={sectionCardStyle('0.1s')}>
-            <SectionHeader color="#a78bfa" title="Identity"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+            <SectionHeader color="#1D1D1F" title="Identity"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <FormField label="Display Name"><Input value={form.display_name} onChange={e => updateForm('display_name', e.target.value)} placeholder="Public-facing name" /></FormField>
               <FormField label="App Name"><Input value={form.app_name} onChange={e => updateForm('app_name', e.target.value)} placeholder="Shown in app header" /></FormField>
             </div>
             <FormField label="Slug (read-only)">
-              <div style={{
-                padding: '10px 14px', borderRadius: 10,
-                background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)',
-                color: '#94a3b8', fontSize: 14, fontFamily: "'DM Mono', monospace",
+              <div style={{ borderRadius: 16,
+                padding: '0 12px', height: 42, display: 'flex', alignItems: 'center',
+                background: '#F2F2F7', border: '1px solid #E5E5EA',
+                color: '#515154', fontSize: 13, fontFamily: 'var(--font-body)',
               }}>{form.slug}</div>
             </FormField>
 
@@ -381,18 +373,18 @@ export default function ClubBrandingPage() {
                 {['shared', 'branded'].map(tier => (
                   <button key={tier} type="button" onClick={() => updateForm('branding_tier', tier)}
                     style={{
-                      flex: 1, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                      textAlign: 'center', transition: 'all 0.2s',
-                      background: form.branding_tier === tier ? 'rgba(139,92,246,0.12)' : 'rgba(6,13,31,0.6)',
-                      border: form.branding_tier === tier ? '2px solid #a78bfa' : '2px solid rgba(51,65,85,0.5)',
-                      color: form.branding_tier === tier ? '#a78bfa' : '#94a3b8',
-                      fontWeight: 600, fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+                      flex: 1, height: 42, cursor: 'pointer', textAlign: 'center',
+                      transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                      background: form.branding_tier === tier ? '#1D1D1F' : '#FFFFFF',
+                      border: `1px solid ${form.branding_tier === tier ? '#1D1D1F' : '#AEAEB2'}`,
+                      color: form.branding_tier === tier ? '#F5F5F7' : '#6E6E73',
+                      fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em',
                     }}>
                     {tier === 'shared' ? 'Shared' : 'Branded'}
                   </button>
                 ))}
               </div>
-              <div style={{ color: '#64748b', fontSize: 11, marginTop: 6, fontFamily: "'DM Sans', sans-serif" }}>
+              <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 8, fontFamily: 'var(--font-body)' }}>
                 {form.branding_tier === 'branded' ? 'Full white-label with custom domain and branding' : 'Standard CraveClubs branding with club colors'}
               </div>
             </FormField>
@@ -400,8 +392,8 @@ export default function ClubBrandingPage() {
 
           {/* Colors Section */}
           <div style={sectionCardStyle('0.15s')}>
-            <SectionHeader color="#22d3ee" title="Colors"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
+            <SectionHeader color="#1D1D1F" title="Colors"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
               subtitle="Choose your brand colors — preview updates live"
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -412,8 +404,8 @@ export default function ClubBrandingPage() {
 
           {/* Assets Section */}
           <div style={sectionCardStyle('0.2s')}>
-            <SectionHeader color="#fbbf24" title="Assets"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>}
+            <SectionHeader color="#1D1D1F" title="Assets"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>}
               subtitle="Upload logo, cover image, and favicon"
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -428,8 +420,8 @@ export default function ClubBrandingPage() {
 
           {/* Contact & Social Section */}
           <div style={sectionCardStyle('0.25s')}>
-            <SectionHeader color="#2dd4bf" title="Contact & Social"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 6l-10 7L2 6" /></svg>}
+            <SectionHeader color="#1D1D1F" title="Contact & Social"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 6l-10 7L2 6" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <FormField label="Support Email"><Input type="email" value={form.support_email} onChange={e => updateForm('support_email', e.target.value)} placeholder="support@club.com" /></FormField>
@@ -444,8 +436,8 @@ export default function ClubBrandingPage() {
 
           {/* Custom Domain Section */}
           <div style={sectionCardStyle('0.3s')}>
-            <SectionHeader color="#818cf8" title="Custom Domain"
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>}
+            <SectionHeader color="#1D1D1F" title="Custom Domain"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>}
               subtitle="Map a custom domain for white-label experience"
             />
             <FormField label="Domain">
@@ -453,18 +445,17 @@ export default function ClubBrandingPage() {
             </FormField>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div>
-                <div style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Domain Active</div>
-                <div style={{ color: '#94a3b8', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>Enable after DNS is configured</div>
+                <div style={{ color: '#1D1D1F', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>Domain Active</div>
+                <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 3, fontFamily: 'var(--font-body)' }}>Enable after DNS is configured</div>
               </div>
               <ToggleSwitch checked={form.is_domain_active} onChange={v => updateForm('is_domain_active', v)} />
             </div>
             {form.custom_domain && (
-              <div style={{
-                padding: '10px 14px', borderRadius: 10,
-                background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)', marginBottom: 18,
+              <div style={{ borderRadius: 16,
+                padding: '12px 14px', background: '#F2F2F7', border: '1px solid #E5E5EA', marginBottom: 18,
               }}>
-                <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>DNS CONFIGURATION</div>
-                <div style={{ color: '#f1f5f9', fontSize: 12, fontFamily: "'DM Mono', monospace" }}>
+                <div style={{ ...labelStyle, marginBottom: 8 }}>DNS Configuration</div>
+                <div style={{ color: '#1D1D1F', fontSize: 12, fontFamily: 'var(--font-body)', wordBreak: 'break-all' }}>
                   CNAME {form.custom_domain} → clubs.craveclubs.com
                 </div>
               </div>
@@ -474,13 +465,12 @@ export default function ClubBrandingPage() {
           {/* Error */}
           {error && (
             <div style={{
-              padding: '12px 16px', borderRadius: 12,
-              background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.3)',
-              color: '#f43f5e', fontSize: 13, marginBottom: 12, fontFamily: "'DM Sans', sans-serif",
+              padding: '12px 16px', background: '#FFFFFF', border: '1px solid #FF3B30',
+              color: '#FF3B30', fontSize: 13, marginBottom: 12, fontFamily: 'var(--font-body)',
               display: 'flex', alignItems: 'center', gap: 8,
               animation: 'fadeInUp 0.3s ease-out',
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
               {error}
             </div>
           )}
@@ -500,16 +490,14 @@ export default function ClubBrandingPage() {
 
       {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed', bottom: 32, right: 32, padding: '14px 22px',
-          background: 'linear-gradient(135deg, rgba(5,46,22,0.95) 0%, rgba(6,78,59,0.9) 100%)',
-          color: '#34d399', borderRadius: 14, fontSize: 14, fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif",
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(52,211,153,0.15)',
+        <div style={{ borderRadius: 14, position: 'fixed', bottom: 32, insetInlineEnd: 32, padding: '14px 20px',
+          background: '#FFFFFF', border: '1px solid #E5E5EA',
+          color: '#1D1D1F',
+          fontFamily: 'var(--font-body)', fontSize: 12,
           animation: 'fadeInUp 0.3s ease-out', zIndex: 1000,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d39960' }} />
+          <div style={{ width: 6, height: 6, borderRadius: 3, background: '#0071E3', flexShrink: 0 }} />
           {toast}
         </div>
       )}

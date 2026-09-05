@@ -17,44 +17,40 @@ const calculateAge = (birthDate) => {
 // ── Reusable summary section ───────────────────────────────────
 const SummarySection = ({ title, emoji, rows }) => (
   <div style={{
-    background: 'rgba(6,13,31,0.6)',
-    border: '1px solid rgba(51,65,85,0.3)',
-    borderRadius: 10,
-    padding: '14px 16px',
-    marginBottom: 10,
+    borderTop: '1px solid #F2F2F7',
+    padding: '14px 0',
   }}>
     <div style={{
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 10,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      color: '#e2e8f0',
-      fontFamily: "'DM Sans', sans-serif",
+      display: 'flex', alignItems: 'center', gap: 8,
+      fontSize: 12, fontWeight: 500,
+      color: '#6E6E73', marginBottom: 10,
     }}>
-      <span>{emoji}</span>
+      <span style={{
+        width: 24, height: 24, borderRadius: 8,
+        background: '#F2F2F7',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13,
+      }}>{emoji}</span>
       {title}
     </div>
     {rows.map((row, i) => row.value ? (
       <div key={i} style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: i < rows.length - 1 ? 6 : 0,
+        alignItems: 'baseline',
+        marginBottom: i < rows.length - 1 ? 8 : 0,
         gap: 12,
       }}>
         <span style={{
-          fontSize: 13, color: '#94a3b8',
-          flexShrink: 0,
-          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 12, fontWeight: 500,
+          color: '#86868B', flexShrink: 0,
         }}>
           {row.label}
         </span>
         <span style={{
-          fontSize: 13, color: '#e2e8f0',
-          fontWeight: 500, textAlign: 'right',
-          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 14, color: '#1D1D1F',
+          fontWeight: 500, textAlign: 'end',
+          fontFamily: 'var(--font-body)',
         }}>
           {row.value}
         </span>
@@ -249,49 +245,44 @@ export default function Step8_ReviewPayment() {
 
       {/* ── Payment Method Badge ─────────────────────────────────── */}
       <div style={{
-        background: 'rgba(255,200,0,0.08)',
-        border: '1px solid rgba(255,200,0,0.3)',
-        borderRadius: 10,
+        borderRadius: 14,
+        background: '#F2F2F7',
         padding: '12px 16px',
+        marginTop: 6,
         marginBottom: 10,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
+        gap: 10,
       }}>
-        <span style={{ fontSize: 20 }}>{'\u{1F4B5}'}</span>
         <span style={{
-          fontWeight: 700,
-          color: '#FFC800',
+          width: 28, height: 28, borderRadius: 10,
+          background: '#FFFFFF',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 15,
-          fontFamily: "'DM Sans', sans-serif",
-        }}>
+        }}>{'\u{1F4B5}'}</span>
+        <span style={{ fontSize: 14, fontWeight: 500, color: '#1D1D1F' }}>
           Cash on Arrival
         </span>
       </div>
 
       {/* ── Total Price Box ──────────────────────────────────────── */}
       <div style={{
-        background: 'rgba(28,176,246,0.08)',
-        border: '1px solid rgba(28,176,246,0.3)',
-        borderRadius: 10,
-        padding: '14px 16px',
-        marginBottom: 16,
+        borderRadius: 14,
+        background: 'rgba(0,113,227,0.06)',
+        border: '1px solid rgba(0,113,227,0.22)',
+        padding: '16px',
+        marginBottom: 20,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <span style={{
-          color: '#94a3b8', fontSize: 14,
-          fontFamily: "'DM Sans', sans-serif",
-        }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: '#515154' }}>
           Total Amount
         </span>
         <span style={{
-          color: '#1CB0F6',
-          fontSize: 22,
-          fontWeight: 800,
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700,
+          letterSpacing: '-0.02em', lineHeight: 1.1,
+          color: '#0071E3',
         }}>
           {planPrice
             ? Number(planPrice).toLocaleString() + ' ' + currency
@@ -312,11 +303,11 @@ export default function Step8_ReviewPayment() {
             setConsent(e.target.checked);
             if (e.target.checked) setSubmitError(null);
           }}
-          style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: '#58CC02' }}
+          style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: '#0071E3' }}
         />
         <span style={{
-          fontSize: 13, color: '#e2e8f0', lineHeight: 1.5,
-          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13, color: '#515154', lineHeight: 1.5,
+          fontFamily: 'var(--font-body)',
         }}>
           {t('registration.consentLabel', {
             defaultValue: "The swimmer's guardian (or the swimmer, if an adult) has consented to CraveClubs and the club processing this personal data to manage membership and training.",
@@ -324,8 +315,8 @@ export default function Step8_ReviewPayment() {
         </span>
       </label>
       <p style={{
-        fontSize: 12, color: '#94a3b8', lineHeight: 1.5,
-        margin: '0 0 12px', fontFamily: "'DM Sans', sans-serif",
+        fontSize: 12, color: '#6E6E73', lineHeight: 1.5,
+        margin: '0 0 16px', fontFamily: 'var(--font-body)',
       }}>
         {t('registration.privacyNotice', {
           defaultValue: 'Personal data is stored securely on servers outside Saudi Arabia and is used only to run the club. Data can be deleted on request within 30 days.',
@@ -335,18 +326,19 @@ export default function Step8_ReviewPayment() {
       {/* ── Error Box ────────────────────────────────────────────── */}
       {submitError && (
         <div style={{
-          background: 'rgba(248,113,113,0.08)',
-          border: '1px solid rgba(248,113,113,0.3)',
-          borderRadius: 8,
+          background: 'rgba(255,59,48,0.08)',
+          border: '1px solid rgba(255,59,48,0.24)',
+          borderRadius: 12,
           padding: '12px 14px',
-          marginBottom: 12,
-          color: '#f87171',
+          marginBottom: 14,
+          color: '#B12A20',
           fontSize: 13,
           display: 'flex',
-          gap: 8,
-          fontFamily: "'DM Sans', sans-serif",
+          alignItems: 'center',
+          gap: 10,
+          fontFamily: 'var(--font-body)',
         }}>
-          <span>{'\u26A0\uFE0F'}</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF3B30', flexShrink: 0 }} />
           {submitError}
         </div>
       )}
@@ -357,39 +349,13 @@ export default function Step8_ReviewPayment() {
           type="button"
           onClick={handleSubmit}
           disabled={saving}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-            background: saving
-              ? 'rgba(51,65,85,0.3)'
-              : 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)',
-            color: saving ? '#64748b' : '#FFFFFF',
-            fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: saving ? 'none' : '0 2px 8px rgba(88,204,2,0.2)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: saving ? 0.5 : 1,
-          }}
-          onMouseEnter={e => {
-            if (!saving) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #46A302 0%, #58CC02 100%)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(88,204,2,0.3)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }
-          }}
-          onMouseLeave={e => {
-            if (!saving) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(88,204,2,0.2)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {saving ? t('loading.saving') : t('actions.confirm')}
           {!saving && (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}

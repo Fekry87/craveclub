@@ -12,20 +12,24 @@ import { formatDate } from '../../lib/dates';
 import { PageHeader, Button, FormField, Input, Select, TextArea } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
+import { Badge } from '../../components/ui/Badge';
+import { cardStyle, labelStyle } from '../../components/ui/styles';
 import SkillPicker from '../../components/ui/SkillPicker';
 
-const DIFFICULTY_COLORS = {
-  beginner: { bg: 'rgba(45,212,191,0.1)', border: 'rgba(45,212,191,0.2)', text: '#2dd4bf' },
-  intermediate: { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', text: '#fbbf24' },
-  advanced: { bg: 'rgba(244,63,94,0.1)', border: 'rgba(244,63,94,0.2)', text: '#f43f5e' },
+const DIFFICULTY_VARIANTS = {
+  beginner: 'success',
+  intermediate: 'info',
+  advanced: 'warning',
 };
 
-const STATUS_COLORS = {
-  active: { bg: 'rgba(45,212,191,0.1)', border: 'rgba(45,212,191,0.2)', text: '#2dd4bf' },
-  paused: { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', text: '#fbbf24' },
-  completed: { bg: 'rgba(34,211,238,0.1)', border: 'rgba(34,211,238,0.2)', text: '#22d3ee' },
-  cancelled: { bg: 'rgba(244,63,94,0.1)', border: 'rgba(244,63,94,0.2)', text: '#f43f5e' },
+const STATUS_VARIANTS = {
+  active: 'success',
+  paused: 'warning',
+  completed: 'neutral',
+  cancelled: 'danger',
 };
+
+const captionStyle = { ...labelStyle };
 
 const DURATION_OPTIONS = [1, 2, 4, 8, 12, 16, 24, 52];
 
@@ -362,7 +366,7 @@ export default function TrainingPlansPage() {
       <FormPage
         title={modal === 'create' ? 'New Training Plan' : `Edit \u2014 ${editPlan?.title}`}
         onBack={closeModal}
-        icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+        icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
       >
         <FormField label="Plan Name *">
           <Input value={form.title} onChange={e => updateField('title', e.target.value)} placeholder="e.g. Sprint Training, Endurance Plan" />
@@ -390,30 +394,33 @@ export default function TrainingPlansPage() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {DURATION_OPTIONS.map(w => (
               <button key={w} type="button" onClick={() => updateField('duration_weeks', w)} style={{
-                padding: '8px 14px', borderRadius: 10,
-                border: form.duration_weeks === w ? '1px solid rgba(34,211,238,0.4)' : '1px solid rgba(51,65,85,0.3)',
-                background: form.duration_weeks === w ? 'rgba(34,211,238,0.12)' : 'rgba(6,13,31,0.4)',
-                color: form.duration_weeks === w ? '#22d3ee' : '#94a3b8',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                minWidth: 46, height: 36, padding: '0 14px', borderRadius: 980, border: 'none',
+                background: form.duration_weeks === w ? '#0071E3' : '#F2F2F7',
+                color: form.duration_weeks === w ? '#FFFFFF' : '#515154',
+                fontSize: 13, fontWeight: 500,
+                cursor: 'pointer', transition: 'background 0.15s ease, color 0.15s ease',
               }}>
                 {w}
               </button>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{durationHelper(form.duration_weeks)}</div>
+          <div style={{ ...captionStyle, marginTop: 8 }}>{durationHelper(form.duration_weeks)}</div>
         </FormField>
 
         {/* Sessions per week */}
         <FormField label="Sessions per Week *">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button type="button" onClick={() => updateField('sessions_per_week', Math.max(1, form.sessions_per_week - 1))} style={stepperBtn}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14" /></svg>
+            <button type="button" className="pl-icon-btn" onClick={() => updateField('sessions_per_week', Math.max(1, form.sessions_per_week - 1))} style={{ width: 42, height: 42, flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /></svg>
             </button>
-            <div style={{ flex: 1, textAlign: 'center', fontSize: 28, fontWeight: 800, color: '#22d3ee', fontFamily: "'Outfit', sans-serif" }}>
+            <div style={{
+              flex: 1, textAlign: 'center', fontSize: 34, fontWeight: 700, color: '#1D1D1F',
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+            }}>
               {form.sessions_per_week}
             </div>
-            <button type="button" onClick={() => updateField('sessions_per_week', Math.min(7, form.sessions_per_week + 1))} style={stepperBtn}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            <button type="button" className="pl-icon-btn" onClick={() => updateField('sessions_per_week', Math.min(7, form.sessions_per_week + 1))} style={{ width: 42, height: 42, flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             </button>
           </div>
         </FormField>
@@ -421,45 +428,50 @@ export default function TrainingPlansPage() {
         {/* Template toggle (Manager only) */}
         {isManager && (
           <div style={{
+            ...cardStyle,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 14px', borderRadius: 12,
-            background: form.is_template ? 'rgba(251,191,36,0.06)' : 'rgba(6,13,31,0.4)',
-            border: form.is_template ? '1px solid rgba(251,191,36,0.2)' : '1px solid rgba(51,65,85,0.3)',
-            marginBottom: 12, transition: 'all 0.25s ease',
+            padding: '14px 16px',
+            marginBottom: 12, gap: 16,
           }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 16 }}>&#128218;</span> Template Plan
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: '#1D1D1F',
+                lineHeight: 1.3,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: form.is_template ? '#0071E3' : '#AEAEB2', display: 'inline-block', flexShrink: 0 }} />
+                Template plan
               </div>
-              <div style={{ fontSize: 12, color: form.is_template ? '#fbbf24' : '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 6 }}>
                 {form.is_template ? 'Visible to all coaches in this club.' : 'Make this plan available to all coaches.'}
               </div>
             </div>
-            <ToggleSwitch checked={form.is_template} onChange={() => updateField('is_template', !form.is_template)} color="#fbbf24" />
+            <ToggleSwitch checked={form.is_template} onChange={() => updateField('is_template', !form.is_template)} />
           </div>
         )}
 
         {/* Phases editor */}
         <div style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h4 style={{ color: '#94a3b8', margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <h4 style={{ ...captionStyle, margin: 0 }}>
               Phases ({(form.phases || []).length})
             </h4>
-            <Button type="button" variant="secondary" onClick={addPhase}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            <Button type="button" variant="secondary" size="sm" onClick={addPhase}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
               Add Phase
             </Button>
           </div>
 
           {(form.phases || []).map((phase, pi) => (
             <div key={pi} style={{
-              background: 'rgba(6,13,31,0.5)', padding: 14, borderRadius: 12, marginBottom: 10,
-              border: '1px solid rgba(51,65,85,0.3)',
+              ...cardStyle, padding: 14, marginBottom: 10,
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#22d3ee' }}>Phase {pi + 1}</span>
-                <button type="button" onClick={() => removePhase(pi)} style={iconBtn}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fda4af" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ ...captionStyle, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Phase
+                </span>
+                <button type="button" onClick={() => removePhase(pi)} style={iconBtn} aria-label="Remove phase">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 8, marginBottom: 8 }}>
@@ -479,16 +491,18 @@ export default function TrainingPlansPage() {
                   />
                   <Input placeholder="Sets" value={ex.sets} onChange={e => updateExercise(pi, ei, 'sets', e.target.value)} />
                   <Input placeholder="Reps" value={ex.reps} onChange={e => updateExercise(pi, ei, 'reps', e.target.value)} />
-                  <button type="button" onClick={() => removeExercise(pi, ei)} style={iconBtn}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fda4af" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  <button type="button" onClick={() => removeExercise(pi, ei)} style={iconBtn} aria-label="Remove exercise">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
                   </button>
                 </div>
               ))}
               <button type="button" onClick={() => addExercise(pi)} style={{
-                background: 'none', border: '1px dashed rgba(51,65,85,0.4)', borderRadius: 8,
-                color: '#64748b', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%',
+                background: '#F2F2F7', border: 'none', borderRadius: 10, color: '#0071E3',
+                fontSize: 13, fontWeight: 500,
+                padding: '9px 12px', cursor: 'pointer', width: '100%',
+                transition: 'background 0.15s ease',
               }}>
-                + Add Exercise
+                + Add exercise
               </button>
             </div>
           ))}
@@ -512,9 +526,11 @@ export default function TrainingPlansPage() {
       <>
         <PageHeader title="Training Plans" />
         <div style={emptyBoxStyle}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>&#128274;</div>
-          <p style={{ color: '#a78bfa', fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>Feature Disabled</p>
-          <p style={{ color: '#64748b', fontSize: 14, margin: 0, maxWidth: 360, marginInline: 'auto' }}>
+          <p style={{
+            color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600,
+            letterSpacing: '-0.015em', lineHeight: 1.2, margin: '0 0 10px',
+          }}>Feature Disabled</p>
+          <p style={{ color: '#6E6E73', fontSize: 14, margin: 0, maxWidth: 360, marginInline: 'auto' }}>
             Training Plans are disabled for your club. Contact your platform admin to enable this feature.
           </p>
         </div>
@@ -530,10 +546,9 @@ export default function TrainingPlansPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
-              height: 240, borderRadius: 18,
-              background: 'linear-gradient(145deg, rgba(13,31,60,0.5) 0%, rgba(10,22,40,0.3) 100%)',
-              border: '1px solid rgba(34,211,238,0.06)',
-              animation: `pulse 1.5s ease-in-out ${i * 0.2}s infinite`,
+              height: 240, background: '#FFFFFF',
+              border: '1px solid #E5E5EA',
+              animation: `fadeIn 0.3s ease-out ${i * 0.08}s both`,
             }} />
           ))}
         </div>
@@ -546,8 +561,8 @@ export default function TrainingPlansPage() {
     return (
       <>
         <PageHeader title="Training Plans" />
-        <div style={{ ...emptyBoxStyle, borderColor: 'rgba(244,63,94,0.15)' }}>
-          <p style={{ color: '#fda4af', fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>{loadError}</p>
+        <div style={{ ...emptyBoxStyle, borderColor: '#FF3B30' }}>
+          <p style={{ color: '#FF3B30', fontSize: 14, margin: '0 0 16px' }}>{loadError}</p>
           <Button type="button" variant="secondary" onClick={loadData}>Retry</Button>
         </div>
       </>
@@ -567,14 +582,15 @@ export default function TrainingPlansPage() {
 
       {/* ── Tab bar (plans | assignments) ── */}
       {(isCoach || isManager) && (
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: 4, background: 'rgba(6,13,31,0.5)', borderRadius: 12, border: '1px solid rgba(51,65,85,0.2)' }}>
+        <div style={{ display: 'flex', gap: 24, marginBottom: 20, borderBottom: '1px solid #E5E5EA' }}>
           {['plans', 'assignments'].map(t => (
             <button key={t} type="button" onClick={() => setTab(t)} style={{
-              flex: 1, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: tab === t ? 'linear-gradient(135deg, rgba(34,211,238,0.15), rgba(6,182,212,0.08))' : 'transparent',
-              color: tab === t ? '#22d3ee' : '#64748b',
-              fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
-              fontFamily: "'DM Sans', sans-serif",
+              padding: '10px 0', background: 'transparent', cursor: 'pointer',
+              border: 'none', borderBottom: `2px solid ${tab === t ? '#1D1D1F' : 'transparent'}`,
+              marginBottom: -1,
+              color: tab === t ? '#1D1D1F' : '#6E6E73',
+              fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em',
+              transition: 'color 0.15s ease, border-color 0.15s ease',
             }}>
               {t === 'plans' ? 'My Plans' : 'Assignments'}
             </button>
@@ -592,12 +608,13 @@ export default function TrainingPlansPage() {
             { key: 'templates', label: 'Templates' },
           ].map(f => (
             <button key={f.key} type="button" onClick={() => setFilter(f.key)} style={{
-              padding: '7px 16px', borderRadius: 20, border: '1px solid',
-              borderColor: filter === f.key ? 'rgba(34,211,238,0.3)' : 'rgba(51,65,85,0.3)',
-              background: filter === f.key ? 'rgba(34,211,238,0.08)' : 'transparent',
-              color: filter === f.key ? '#22d3ee' : '#94a3b8',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              transition: 'all 0.2s', fontFamily: "'DM Sans', sans-serif",
+              padding: '8px 16px', border: '1px solid',
+              borderColor: filter === f.key ? '#1D1D1F' : '#E5E5EA',
+              background: filter === f.key ? '#1D1D1F' : '#FFFFFF',
+              color: filter === f.key ? '#F5F5F7' : '#6E6E73',
+              cursor: 'pointer',
+              transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+              fontFamily: 'var(--font-body)', fontSize: 12,
             }}>
               {f.label}
             </button>
@@ -609,9 +626,11 @@ export default function TrainingPlansPage() {
       {tab === 'plans' && (
         filteredPlans.length === 0 ? (
           <div style={emptyBoxStyle}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>&#128203;</div>
-            <p style={{ color: '#94a3b8', fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>No plans found</p>
-            <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 20px' }}>
+            <p style={{
+              color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600,
+              letterSpacing: '-0.02em', lineHeight: 1, margin: '0 0 10px',
+            }}>No plans found</p>
+            <p style={{ color: '#6E6E73', fontSize: 14, margin: '0 0 20px' }}>
               {isManager ? 'Create training plans for your coaches.' : 'No training plans available yet.'}
             </p>
             {isManager && <Button type="button" onClick={openCreate}>Create your first plan</Button>}
@@ -649,18 +668,18 @@ export default function TrainingPlansPage() {
         <Modal
           title={`Delete ${editPlan.title}?`}
           onClose={closeModal}
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>}
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>}
         >
           {(editPlan.assignments_count ?? 0) > 0 && (
-            <div style={{ padding: '12px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 12, marginBottom: 12 }}>
-              <p style={{ color: '#fbbf24', fontSize: 14, margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" /></svg>
+            <div style={{ padding: '12px 14px', background: '#FFFFFF', border: '1px solid #FF9500', marginBottom: 12 }}>
+              <p style={{ color: '#FF9500', fontSize: 13, margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" /></svg>
                 This plan has {editPlan.assignments_count} active assignment{editPlan.assignments_count > 1 ? 's' : ''}.
               </p>
             </div>
           )}
-          <div style={{ padding: '16px', background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.15)', borderRadius: 12, marginBottom: 4 }}>
-            <p style={{ color: '#fda4af', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+          <div style={{ padding: '16px', background: '#FFFFFF', border: '1px solid #FF3B30', marginBottom: 4 }}>
+            <p style={{ color: '#FF3B30', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
               This action cannot be undone. The plan and all its data will be permanently removed.
             </p>
           </div>
@@ -679,10 +698,10 @@ export default function TrainingPlansPage() {
         <Modal
           title={`Assign Coach \u2014 ${assignCoachPlan.title}`}
           onClose={closeModal}
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>}
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>}
         >
           {assignCoachPlan.coach_user_id && (
-            <div style={{ padding: '10px 14px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 12, marginBottom: 16, fontSize: 13, color: '#fbbf24' }}>
+            <div style={{ padding: '12px 14px', background: '#FFFFFF', border: '1px solid #FF9500', marginBottom: 16, fontSize: 13, color: '#FF9500', lineHeight: 1.6 }}>
               Currently assigned to: <strong>{assignCoachPlan.coach?.name || `Coach #${assignCoachPlan.coach_user_id}`}</strong>.
               Changing coach will not affect existing assignments.
             </div>
@@ -710,16 +729,17 @@ export default function TrainingPlansPage() {
         <Modal
           title="Assign Plan"
           onClose={closeModal}
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>}
+          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>}
         >
           {/* Step 1: Toggle group vs individual */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 16, padding: 4, background: 'rgba(6,13,31,0.5)', borderRadius: 12, border: '1px solid rgba(51,65,85,0.2)' }}>
+          <div style={{ display: 'flex', marginBottom: 16, border: '1px solid #E5E5EA' }}>
             {['group', 'swimmer'].map(t => (
               <button key={t} type="button" onClick={() => { setAssignType(t); setAssigneeId(''); }} style={{
-                flex: 1, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: assignType === t ? 'linear-gradient(135deg, rgba(34,211,238,0.15), rgba(6,182,212,0.08))' : 'transparent',
-                color: assignType === t ? '#22d3ee' : '#64748b',
-                fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
+                flex: 1, padding: '11px 16px', border: 'none', cursor: 'pointer',
+                background: assignType === t ? '#1D1D1F' : 'transparent',
+                color: assignType === t ? '#F5F5F7' : '#6E6E73',
+                fontFamily: 'var(--font-body)', fontSize: 12,
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}>
                 {t === 'group' ? 'Group' : 'Individual Swimmer'}
               </button>
@@ -753,8 +773,9 @@ export default function TrainingPlansPage() {
             <Input type="date" value={assignStartDate} onChange={e => setAssignStartDate(e.target.value)} />
           </FormField>
           {assignStartDate && (
-            <div style={{ padding: '10px 14px', background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.12)', borderRadius: 12, marginBottom: 12, fontSize: 13, color: '#94a3b8' }}>
-              End date: <strong style={{ color: '#22d3ee' }}>{computedEndDate()}</strong>
+            <div style={{ borderRadius: 16, padding: '12px 14px', background: '#F2F2F7', border: '1px solid #E5E5EA', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <span style={captionStyle}>End date</span>
+              <strong style={{ color: '#1D1D1F', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500 }}>{computedEndDate()}</strong>
             </div>
           )}
 
@@ -778,65 +799,57 @@ export default function TrainingPlansPage() {
 
 /* ── Plan Card ── */
 function PlanCard({ plan, index, isManager, isCoach, coaches, onEdit, onDelete, onAssignCoach, onAssignPlan }) {
-  const dc = DIFFICULTY_COLORS[plan.difficulty_level] || DIFFICULTY_COLORS.beginner;
   const coachName = plan.coach?.name || (coaches || []).find(c => c.user_id === plan.coach_user_id || c.id === plan.coach_user_id)?.name;
 
   return (
     <div
-      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = plan.is_template ? 'rgba(251,191,36,0.15)' : 'rgba(34,211,238,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        border: plan.is_template ? '1px solid rgba(251,191,36,0.15)' : '1px solid rgba(34,211,238,0.06)',
-        borderRadius: 18, padding: 20, position: 'relative', overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        animation: `fadeInUp 0.4s ease-out ${0.05 + index * 0.06}s both`,
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA', borderRadius: 16,
+        padding: 20, position: 'relative',
+        transition: 'border-color 0.15s ease',
+        animation: `fadeInUp 0.3s ease-out ${0.04 + index * 0.04}s both`,
       }}
     >
-      {/* Template badge */}
-      {plan.is_template && (
-        <div style={{
-          position: 'absolute', top: 14, right: -32, transform: 'rotate(45deg)',
-          background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', color: '#060d1f',
-          fontSize: 10, fontWeight: 800, padding: '4px 40px',
-          letterSpacing: '0.04em', textTransform: 'uppercase',
-        }}>
-          Template
-        </div>
-      )}
+      {/* Index + template marker */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 12 }}>
+        {plan.is_template && (
+          <Badge variant="warning" label="Template" />
+        )}
+      </div>
 
       {/* Title + difficulty */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: '#f1f5f9', fontFamily: "'Outfit', sans-serif", flex: 1, paddingRight: plan.is_template ? 60 : 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+        <div style={{
+          fontSize: 18, fontWeight: 500, color: '#1D1D1F', fontFamily: 'var(--font-display)',
+          letterSpacing: '-0.02em', lineHeight: 1, flex: 1, minWidth: 0,
+        }}>
           {plan.title}
         </div>
-        <span style={{
-          padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-          background: dc.bg, border: `1px solid ${dc.border}`, color: dc.text,
-          textTransform: 'capitalize', whiteSpace: 'nowrap',
-        }}>
-          {plan.difficulty_level || 'beginner'}
+        <span style={{ flexShrink: 0 }}>
+          <Badge variant={DIFFICULTY_VARIANTS[plan.difficulty_level] || 'success'} label={plan.difficulty_level || 'beginner'} />
         </span>
       </div>
 
       {/* Duration info */}
-      <div style={{ fontSize: 13, color: '#64748b', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+      <div style={{ ...captionStyle, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
         {plan.duration_weeks || 4} weeks &middot; {plan.sessions_per_week || 3} sessions/week
       </div>
 
       {/* Goals preview */}
       {plan.goals && (
-        <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 10, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        <div style={{ fontSize: 13, color: '#515154', marginBottom: 10, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           {plan.goals.length > 80 ? plan.goals.substring(0, 80) + '...' : plan.goals}
         </div>
       )}
 
       {/* Phases count */}
       {(plan.phases?.length ?? 0) > 0 && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', color: '#a78bfa', fontSize: 11, fontWeight: 600, marginBottom: 10 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+        <div style={{ ...captionStyle, display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
           {plan.phases.length} phase{plan.phases.length > 1 ? 's' : ''}
         </div>
       )}
@@ -844,58 +857,53 @@ function PlanCard({ plan, index, isManager, isCoach, coaches, onEdit, onDelete, 
       {/* Manager: coach assignment info */}
       {isManager && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10,
-          background: 'rgba(6,13,31,0.4)', marginBottom: 10,
+          display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', marginBottom: 2,
+          borderTop: '1px solid #F2F2F7',
         }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={plan.coach_user_id ? '#2dd4bf' : '#fbbf24'} strokeWidth="1.8" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={plan.coach_user_id ? '#6E6E73' : '#FF9500'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
           </svg>
-          <span style={{ fontSize: 13, color: plan.coach_user_id ? '#94a3b8' : '#fbbf24', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: plan.coach_user_id ? '#1D1D1F' : '#FF9500' }}>
             {plan.coach_user_id ? (coachName || `Coach #${plan.coach_user_id}`) : 'Unassigned'}
           </span>
         </div>
       )}
 
       {/* Assignment count */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 10, background: 'rgba(6,13,31,0.4)', marginBottom: 14 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round">
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', marginBottom: 4,
+        borderTop: '1px solid #F2F2F7',
+      }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E6E73" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
         </svg>
-        <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>
+        <span style={{ fontSize: 13, color: '#1D1D1F' }}>
           {plan.assignments_count ?? plan.active_assignments_count ?? 0} assignment{(plan.assignments_count ?? 0) !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 6, paddingTop: 14, borderTop: '1px solid rgba(51,65,85,0.2)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, paddingTop: 14, borderTop: '1px solid #E5E5EA', flexWrap: 'wrap' }}>
         {isManager && !plan.is_template && (
-          <button type="button" onClick={onAssignCoach} title="Assign to Coach"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
-            style={actionBtnStyle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>
+          <button type="button" onClick={onAssignCoach} title="Assign to Coach" aria-label="Assign to Coach"
+            className="pl-icon-btn" style={actionBtnStyle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>
           </button>
         )}
         {(isCoach || isManager) && (
-          <button type="button" onClick={onAssignPlan} title="Assign to Group/Swimmer"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,191,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
-            style={actionBtnStyle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
+          <button type="button" onClick={onAssignPlan} title="Assign to Group/Swimmer" aria-label="Assign to Group or Swimmer"
+            className="pl-icon-btn" style={actionBtnStyle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
           </button>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-          <button type="button" onClick={onEdit} title="Edit"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
-            style={actionBtnStyle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+        <div style={{ marginInlineStart: 'auto', display: 'flex', gap: 6 }}>
+          <button type="button" onClick={onEdit} title="Edit" aria-label="Edit"
+            className="pl-icon-btn" style={actionBtnStyle}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           </button>
-          <button type="button" onClick={onDelete} title="Delete"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.15)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
-            style={actionBtnStyle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fda4af" strokeWidth="1.8" strokeLinecap="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          <button type="button" onClick={onDelete} title="Delete" aria-label="Delete"
+            className="pl-icon-btn" style={{ ...actionBtnStyle, color: '#FF3B30' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
         </div>
       </div>
@@ -908,9 +916,11 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
   if (!assignments || assignments.length === 0) {
     return (
       <div style={emptyBoxStyle}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>&#128196;</div>
-        <p style={{ color: '#94a3b8', fontSize: 16, fontWeight: 600, margin: '0 0 4px' }}>No assignments yet</p>
-        <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Assign a training plan to a group or swimmer to get started.</p>
+        <p style={{
+          color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600,
+          letterSpacing: '-0.02em', lineHeight: 1, margin: '0 0 10px',
+        }}>No assignments yet</p>
+        <p style={{ color: '#6E6E73', fontSize: 14, margin: 0 }}>Assign a training plan to a group or swimmer to get started.</p>
       </div>
     );
   }
@@ -918,7 +928,6 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {assignments.map((a, i) => {
-        const sc = STATUS_COLORS[a.status] || STATUS_COLORS.active;
         const startDate = new Date(a.start_date);
         const endDate = new Date(a.end_date);
         const now = new Date();
@@ -928,31 +937,30 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
 
         return (
           <div key={a.id} style={{
-            background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-            border: '1px solid rgba(34,211,238,0.06)',
-            borderRadius: 16, padding: 18,
-            animation: `fadeInUp 0.4s ease-out ${0.05 + i * 0.06}s both`,
+            background: '#FFFFFF',
+            border: '1px solid #E5E5EA', borderRadius: 16,
+            padding: 18,
+            animation: `fadeInUp 0.3s ease-out ${0.04 + i * 0.04}s both`,
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{
+                  fontSize: 16, fontWeight: 500, color: '#1D1D1F', marginBottom: 6,
+                  fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+                }}>
                   {a.training_plan?.title || 'Untitled Plan'}
                 </div>
-                <div style={{ fontSize: 13, color: '#94a3b8' }}>
+                <div style={{ fontSize: 13, color: '#515154' }}>
                   {a.group ? `Group: ${a.group.name}` : a.swimmer ? `${a.swimmer.first_name} ${a.swimmer.last_name}` : 'Unknown'}
                 </div>
               </div>
-              <span style={{
-                padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text,
-                textTransform: 'capitalize',
-              }}>
-                {a.status}
+              <span style={{ flexShrink: 0 }}>
+                <Badge variant={STATUS_VARIANTS[a.status] || 'neutral'} label={a.status} />
               </span>
             </div>
 
             {/* Dates */}
-            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#64748b', marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 16, ...captionStyle, marginBottom: 12 }}>
               <span>Start: {formatDate(startDate)}</span>
               <span>End: {formatDate(endDate)}</span>
             </div>
@@ -960,15 +968,15 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
             {/* Progress bar */}
             {a.status === 'active' && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b', marginBottom: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', ...captionStyle, marginBottom: 6 }}>
                   <span>{elapsedDays} / {totalDays} days</span>
-                  <span>{progress}%</span>
+                  <span style={{ color: '#1D1D1F' }}>{progress}%</span>
                 </div>
-                <div style={{ height: 6, borderRadius: 3, background: 'rgba(51,65,85,0.3)', overflow: 'hidden' }}>
+                <div style={{ height: 4, background: '#EDEDF0', overflow: 'hidden' }}>
                   <div style={{
-                    height: '100%', borderRadius: 3, width: `${progress}%`,
-                    background: 'linear-gradient(90deg, #22d3ee, #2dd4bf)',
-                    transition: 'width 0.5s ease',
+                    height: '100%', width: `${progress}%`,
+                    background: '#FFFFFF',
+                    transition: 'width 0.4s ease',
                   }} />
                 </div>
               </div>
@@ -976,21 +984,21 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
 
             {/* Coach notes */}
             {a.coach_notes && (
-              <div style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic', marginBottom: 10, padding: '6px 10px', background: 'rgba(6,13,31,0.4)', borderRadius: 8 }}>
+              <div style={{ borderRadius: 16, fontSize: 13, color: '#515154', marginBottom: 10, padding: '10px 12px', background: '#F2F2F7', borderInlineStart: '2px solid #AEAEB2', lineHeight: 1.5 }}>
                 {a.coach_notes}
               </div>
             )}
 
             {/* Actions */}
             {a.status === 'active' && (
-              <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(51,65,85,0.2)' }}>
-                <button type="button" onClick={() => onStatusUpdate(a, 'paused')} style={statusBtnStyle('#fbbf24')}>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 14, borderTop: '1px solid #E5E5EA', flexWrap: 'wrap' }}>
+                <button type="button" onClick={() => onStatusUpdate(a, 'paused')} style={statusBtnStyle('#FF9500')}>
                   Pause
                 </button>
-                <button type="button" onClick={() => onStatusUpdate(a, 'completed')} style={statusBtnStyle('#22d3ee')}>
+                <button type="button" onClick={() => onStatusUpdate(a, 'completed')} style={statusBtnStyle('#34C759')}>
                   Complete
                 </button>
-                <button type="button" onClick={() => onStatusUpdate(a, 'cancelled')} style={statusBtnStyle('#f43f5e')}>
+                <button type="button" onClick={() => onStatusUpdate(a, 'cancelled')} style={statusBtnStyle('#FF3B30')}>
                   Cancel
                 </button>
               </div>
@@ -1004,18 +1012,18 @@ function AssignmentsTable({ assignments, onStatusUpdate }) {
 
 /* ── Toggle Switch ── */
 function ToggleSwitch({ checked, onChange, color }) {
-  const c = color || '#2dd4bf';
+  const c = color || '#1D1D1F';
   return (
     <button type="button" role="switch" aria-checked={checked} onClick={onChange} style={{
-      position: 'relative', display: 'inline-flex', width: 44, height: 24, borderRadius: 12,
-      background: checked ? c : 'rgba(51,65,85,0.4)',
-      border: checked ? `1px solid ${c}40` : '1px solid rgba(51,65,85,0.5)',
-      cursor: 'pointer', transition: 'all 0.25s ease', padding: 0, flexShrink: 0,
+      position: 'relative', display: 'inline-flex', width: 44, height: 26, borderRadius: 13,
+      background: checked ? '#34C759' : '#E5E5EA',
+      border: 'none',
+      cursor: 'pointer', transition: 'background 0.15s ease, border-color 0.15s ease', padding: 0, flexShrink: 0,
     }}>
       <span style={{
-        position: 'absolute', top: 2, insetInlineStart: checked ? 22 : 2,
-        width: 18, height: 18, borderRadius: '50%', background: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'inset-inline-start 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        position: 'absolute', top: 2, insetInlineStart: checked ? 20 : 2,
+        width: 18, height: 18, background: '#F5F5F7',
+        transition: 'inset-inline-start 0.2s ease',
       }} />
     </button>
   );
@@ -1025,14 +1033,14 @@ function ToggleSwitch({ checked, onChange, color }) {
 function ErrorBanner({ message }) {
   return (
     <div style={{
-      background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)',
-      borderRadius: 10, padding: '10px 14px', marginTop: 16,
-      fontSize: 13, color: '#fda4af', display: 'flex', alignItems: 'center', gap: 8,
-      animation: 'fadeInUp 0.3s ease-out',
+      background: '#FFFFFF', border: '1px solid #FF3B30',
+      padding: '12px 14px', marginTop: 16,
+      fontSize: 13, color: '#FF3B30', display: 'flex', alignItems: 'center', gap: 8,
+      animation: 'fadeIn 0.2s ease-out',
     }}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-        <circle cx="8" cy="8" r="7" stroke="#f43f5e" strokeWidth="1.5" />
-        <path d="M8 5v3M8 10.5v.5" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="8" cy="8" r="7" stroke="#FF3B30" strokeWidth="1.5" />
+        <path d="M8 5v3M8 10.5v.5" stroke="#FF3B30" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {message}
     </div>
@@ -1040,34 +1048,24 @@ function ErrorBanner({ message }) {
 }
 
 /* ── Shared styles ── */
-const emptyBoxStyle = {
+const emptyBoxStyle = { borderRadius: 16,
   textAlign: 'center', padding: '60px 20px',
-  background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
-  borderRadius: 18, border: '1px solid rgba(34,211,238,0.06)',
-};
-
-const stepperBtn = {
-  width: 40, height: 40, borderRadius: 12,
-  background: 'rgba(51,65,85,0.3)', border: '1px solid rgba(51,65,85,0.5)',
-  color: '#94a3b8', cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'all 0.2s',
+  background: '#FFFFFF',
+  border: '1px solid #E5E5EA',
 };
 
 const iconBtn = {
-  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+  background: 'transparent', border: 'none', cursor: 'pointer', padding: 4,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 };
 
 const actionBtnStyle = {
-  background: 'rgba(51,65,85,0.2)', border: '1px solid rgba(51,65,85,0.3)',
-  borderRadius: 8, width: 32, height: 32, cursor: 'pointer',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'all 0.2s',
+  width: 32, height: 32,
 };
 
 const statusBtnStyle = (color) => ({
-  padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-  background: `${color}10`, border: `1px solid ${color}30`, color,
-  cursor: 'pointer', transition: 'all 0.2s',
+  padding: '8px 14px',
+  background: 'transparent', border: `1px solid ${color}`, color,
+  fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em',
+  cursor: 'pointer', transition: 'background 0.15s ease, color 0.15s ease',
 });

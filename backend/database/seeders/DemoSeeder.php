@@ -57,8 +57,8 @@ class DemoSeeder extends Seeder
             'slug' => 'future-academy',
             'logo_url' => null,
             'theme_color' => '#0ea5e9',
-            'primary_color' => '#0ea5e9',
-            'secondary_color' => '#06b6d4',
+            'primary_color' => '#0071E3',
+            'secondary_color' => '#1D1D1F',
             'app_name' => 'Future Academy',
             'about' => 'Future Academy is a premier swim club dedicated to developing swimmers of all levels. We offer competitive and recreational programs for youth and adults.',
             'contact_email' => 'info@futureacademy.com',
@@ -386,8 +386,8 @@ class DemoSeeder extends Seeder
         // ── Corporate Settings (CraveClubs) ──
         CorporateSetting::set('platform_name', 'CraveClubs');
         CorporateSetting::set('platform_logo_url', null);
-        CorporateSetting::set('primary_color', '#8b5cf6');
-        CorporateSetting::set('secondary_color', '#22d3ee');
+        CorporateSetting::set('primary_color', '#0071E3');
+        CorporateSetting::set('secondary_color', '#1D1D1F');
         CorporateSetting::set('tagline', 'Club Management Platform');
 
         // ── Club Features (all enabled for demo) ──

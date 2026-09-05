@@ -8,6 +8,8 @@ import { RouteErrorBoundary } from './ErrorBoundary';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api/notifications';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
+const CAPTION = { fontSize: 12, fontWeight: 500, color: '#6E6E73' };
+
 function timeAgo(dateStr, t) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -19,7 +21,7 @@ function timeAgo(dateStr, t) {
   return t('time.daysShort', { count: days });
 }
 
-export function NotificationBell({ navigate }) {
+export function NotificationBell({ navigate, onDark = false }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -81,20 +83,17 @@ export function NotificationBell({ navigate }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        style={{
-          background: open ? 'rgba(34,211,238,0.12)' : 'rgba(34,211,238,0.06)',
-          border: `1px solid ${open ? 'rgba(34,211,238,0.2)' : 'rgba(34,211,238,0.1)'}`,
-          borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', cursor: 'pointer', position: 'relative', transition: 'all 0.2s',
-        }}
+        className={`pl-icon-btn${onDark ? ' on-dark' : ''}`}
+        aria-label={t('notifications.title')}
+        style={{ position: 'relative', borderRadius: 18 }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
         </svg>
         {unreadCount > 0 && (
           <div style={{
-            position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16,
-            borderRadius: 8, background: '#ef4444', border: '2px solid #0a1628',
+            position: 'absolute', top: -3, insetInlineEnd: -3, minWidth: 17, height: 17, borderRadius: 9,
+            background: '#FF3B30', border: '2px solid #F5F5F7',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 9, fontWeight: 700, color: '#fff', padding: '0 3px',
           }}>{unreadCount > 9 ? '9+' : unreadCount}</div>
@@ -102,54 +101,53 @@ export function NotificationBell({ navigate }) {
       </button>
 
       {open && (
-        <div style={{
-          position: 'absolute', top: 44, right: 0, width: 'min(320px, calc(100vw - 32px))', maxHeight: 400,
-          background: 'linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%)',
-          border: '1px solid rgba(34,211,238,0.12)', borderRadius: 14,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 100, overflow: 'hidden',
-          animation: 'fadeInUp 0.2s ease-out',
+        <div className="notification-dropdown" style={{
+          position: 'absolute', top: 44, right: 0, width: 'min(340px, calc(100vw - 32px))', maxHeight: 420,
+          background: '#FFFFFF', color: '#1D1D1F', borderRadius: 16,
+          border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 16px 48px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.06)',
+          zIndex: 100, overflow: 'hidden',
+          animation: 'fadeInUp 0.18s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '12px 16px', borderBottom: '1px solid rgba(51,65,85,0.2)',
+            padding: '12px 16px', borderBottom: '1px solid #E5E5EA',
           }}>
-            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>{t('notifications.title')}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('notifications.title')}</span>
             {unreadCount > 0 && (
               <button type="button" onClick={handleMarkAllRead} style={{
-                background: 'none', border: 'none', color: '#22d3ee', fontSize: 11,
-                fontWeight: 600, cursor: 'pointer', padding: '2px 6px',
+                background: 'none', border: 'none', color: '#0071E3', cursor: 'pointer', padding: 0, fontSize: 12, fontWeight: 500,
               }}>{t('notifications.markAllRead')}</button>
             )}
           </div>
 
-          <div style={{ overflowY: 'auto', maxHeight: 320 }}>
+          <div style={{ overflowY: 'auto', maxHeight: 340 }}>
             {notifications.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: '#475569', fontSize: 13 }}>
+              <div style={{ padding: 32, textAlign: 'center', color: '#6E6E73', fontSize: 13 }}>
                 {t('notifications.noNotifications')}
               </div>
-            ) : notifications.map(notif => (
+            ) : notifications.map((notif, i) => (
               <div
                 key={notif.id}
                 onClick={() => handleNotificationClick(notif)}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.04)'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F5F5F7'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 style={{
-                  padding: '10px 16px', cursor: 'pointer', transition: 'background 0.15s',
-                  borderBottom: '1px solid rgba(51,65,85,0.1)',
-                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '12px 16px', cursor: 'pointer', transition: 'background 0.15s',
+                  borderBottom: i < notifications.length - 1 ? '1px solid #F2F2F7' : 'none',
+                  display: 'flex', gap: 12, alignItems: 'flex-start',
                 }}
               >
                 <div style={{
                   width: 8, height: 8, borderRadius: 4, flexShrink: 0, marginTop: 5,
-                  background: notif.read_at ? 'transparent' : '#22d3ee',
+                  background: notif.read_at ? '#E5E5EA' : '#0071E3',
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{notif.title}</div>
+                  <div style={{ color: '#1D1D1F', fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{notif.title}</div>
                   <div style={{
-                    color: '#94a3b8', fontSize: 11, lineHeight: 1.4,
+                    color: '#515154', fontSize: 12, lineHeight: 1.4,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>{notif.body}</div>
-                  <div style={{ color: '#475569', fontSize: 10, marginTop: 3 }}>{timeAgo(notif.created_at, t)}</div>
+                  <div style={{ color: '#86868B', marginTop: 4, fontSize: 11 }}>{timeAgo(notif.created_at, t)}</div>
                 </div>
               </div>
             ))}
@@ -222,17 +220,39 @@ const CLUB_MANAGER_NAV = [
   },
 ];
 
-function NavIcon({ d, active }) {
+function NavIcon({ d }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-      stroke={active ? 'var(--theme-primary, #22d3ee)' : '#64748b'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-      style={{ flexShrink: 0, transition: 'stroke 0.2s ease' }}>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+      stroke="#6E6E73" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0, transition: 'stroke 0.15s' }}>
       <path d={d} />
     </svg>
   );
 }
 
-// Role labels are now fetched via t('roles.ROLE_KEY') in the component
+const navLinkStyle = ({ isActive }) => ({
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '8px 10px', margin: '1px 0',
+  color: isActive ? '#1D1D1F' : '#3A3A3C',
+  background: isActive ? 'rgba(0,0,0,0.07)' : 'transparent',
+  textDecoration: 'none', fontSize: 13.5, fontWeight: isActive ? 600 : 500,
+  borderRadius: 8, position: 'relative',
+});
+
+function BrandMark({ logo, name, size = 32, color }) {
+  const r = Math.round(size * 0.28);
+  if (logo) {
+    return <img src={logo} alt={name} style={{ width: size, height: size, borderRadius: r, objectFit: 'cover', flexShrink: 0, background: '#fff' }} />;
+  }
+  const initials = (name || 'C').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: r, background: color || '#0071E3', color: '#fff', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'var(--font-display)', fontSize: size * 0.4, fontWeight: 600, letterSpacing: '-0.02em',
+    }}>{initials}</div>
+  );
+}
 
 export default function Layout() {
   const { t } = useTranslation();
@@ -246,22 +266,21 @@ export default function Layout() {
   const isClubManager = user?.role === 'CLUB_MANAGER';
   const showSportBreadcrumb = isClubManager && currentSport && location.pathname !== '/club';
 
-  // Feature filter helper
   const isFeatureVisible = (item) => {
     if (!item.feature) return true;
     if (!features) return true;
     return features[`${item.feature}_enabled`] ?? true;
   };
 
-  // For non-CLUB_MANAGER roles: flat filtered array
   const isGroupedNav = user?.role === 'CLUB_MANAGER';
   const flatItems = isGroupedNav ? [] : (allNavItems[user?.role] || []).filter(isFeatureVisible);
 
-  // Dynamic branding: club users see club name, corporate users see platform name
   const isClubUser = user?.role !== 'PLATFORM_ADMIN' && user?.club;
   const brandName = isClubUser ? user.club.name : (corporate?.platform_name || 'CraveClubs');
   const brandTagline = isClubUser ? t('club.clubPortal') : (corporate?.tagline || t('corporate.managementPlatform'));
   const brandLogo = isClubUser ? user.club.logo_url : null;
+  const brandColor = isClubUser ? (user.club.primary_color || user.club.theme_color) : null;
+  const brandColorHex = brandColor ? (brandColor.startsWith('#') ? brandColor : `#${brandColor}`) : null;
 
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
   useEffect(() => { document.title = brandName || 'CraveClubs'; }, [brandName]);
@@ -278,161 +297,104 @@ export default function Layout() {
     navigate(isClubRole && clubSlug ? `/portal/${clubSlug}` : '/login');
   };
 
+  const renderLink = (item) => (
+    <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
+      className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
+      style={navLinkStyle}
+    >
+      <NavIcon d={item.icon} />
+      <span>{t(item.label)}</span>
+    </NavLink>
+  );
+
+  const sidebarSurface = {
+    background: 'rgba(246,246,248,0.86)',
+    backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+  };
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#060d1f', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#F5F5F7', overflow: 'hidden' }}>
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)} className="sidebar-overlay"
-          style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(3,8,18,0.7)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', animation: 'fadeIn 0.2s ease-out' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', animation: 'fadeIn 0.15s ease-out' }}
         />
       )}
 
       {/* Mobile top bar */}
       <div className="mobile-topbar" style={{
         display: 'none', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 30,
-        height: 60, padding: '0 16px',
-        background: 'linear-gradient(180deg, #0a1628 0%, #0d1f3c 100%)',
-        borderBottom: '1px solid rgba(34,211,238,0.08)',
+        height: 60, padding: '0 14px',
+        ...sidebarSurface,
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
         alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{ background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.12)', borderRadius: 10, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--theme-primary, #22d3ee)' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            {sidebarOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></>}
+        <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} className="pl-icon-btn" aria-label="Menu" style={{ background: 'transparent', border: 'none' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            {sidebarOpen ? <path d="M18 6L6 18M6 6l12 12" /> : <><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>}
           </svg>
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #163060 0%, #122347 100%)', border: '1px solid rgba(34,211,238,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--theme-primary, #22d3ee)' }}>
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>{user?.name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <BrandMark logo={brandLogo} name={brandName} size={28} color={brandColorHex} />
+          <span style={{ color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brandName}</span>
         </div>
-        <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18C23 14 25.5 20 28 17" stroke="var(--theme-primary, #22d3ee)" strokeWidth="2.5" strokeLinecap="round"/></svg>
-        </div>
+        <div style={{ width: 36 }} />
       </div>
 
       {/* Sidebar */}
       <aside className={`sidebar${sidebarOpen ? ' sidebar-open' : ''}`} style={{
-        width: 260, background: 'linear-gradient(180deg, #0a1628 0%, #0d1f3c 100%)',
-        borderRight: '1px solid rgba(34,211,238,0.08)', display: 'flex', flexDirection: 'column',
+        width: 250, ...sidebarSurface, color: '#1D1D1F',
+        borderRight: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column',
         flexShrink: 0, position: 'relative', overflowY: 'auto', overflowX: 'hidden',
-        height: '100vh', zIndex: 50, transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        height: '100vh', zIndex: 50, transition: 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)',
       }}>
-        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 200, height: 120, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(34,211,238,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-        {/* User info */}
-        <div style={{ padding: '24px 22px 18px', borderBottom: '1px solid rgba(34,211,238,0.06)', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 4px' }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: 'var(--theme-primary, #22d3ee)', flexShrink: 0 }}>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#94a3b8', fontSize: 15, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>{user?.name}</div>
-              <div style={{ color: '#475569', fontSize: 9, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{t(`roles.${user?.role}`, user?.role)}</div>
+        {/* Brand */}
+        <div style={{ padding: '20px 16px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <BrandMark logo={brandLogo} name={brandName} size={36} color={brandColorHex} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brandName}</div>
+              <div style={{ ...CAPTION, fontSize: 11, marginTop: 1 }}>{brandTagline}</div>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <nav style={{ flex: 1, padding: '4px 10px 10px', display: 'flex', flexDirection: 'column' }}>
           {isGroupedNav ? (
-            /* Club Manager: grouped sections */
-            (() => {
-              let itemIndex = 0;
-              return CLUB_MANAGER_NAV.map((group, groupIndex) => {
-                const visibleItems = group.items.filter(isFeatureVisible);
-                if (visibleItems.length === 0) return null;
-                const startIndex = itemIndex;
-                itemIndex += visibleItems.length;
-                return (
-                  <div key={group.section}>
-                    {groupIndex > 0 && (
-                      <div style={{ height: 1, margin: '8px 14px', background: 'rgba(34,211,238,0.04)' }} />
-                    )}
-                    <div style={{
-                      padding: groupIndex === 0 ? '0 14px 6px' : '16px 14px 6px',
-                      color: '#334155', fontSize: 10,
-                      fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-                      fontFamily: "'DM Sans', sans-serif",
-                    }}>{t(group.section)}</div>
-                    {visibleItems.map((item, i) => (
-                      <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
-                        className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
-                        style={({ isActive }) => ({
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '11px 14px', color: isActive ? '#e2e8f0' : '#94a3b8',
-                          background: isActive ? 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(6,182,212,0.05) 100%)' : 'transparent',
-                          textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-                          borderRadius: 10, border: isActive ? '1px solid rgba(34,211,238,0.12)' : '1px solid transparent',
-                          animation: `slideInLeft 0.3s ease-out ${(startIndex + i) * 0.04}s both`,
-                          position: 'relative', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
-                        })}
-                      >
-                        <NavIcon d={item.icon} active={false} />
-                        <span>{t(item.label)}</span>
-                      </NavLink>
-                    ))}
+            CLUB_MANAGER_NAV.map((group, groupIndex) => {
+              const visibleItems = group.items.filter(isFeatureVisible);
+              if (visibleItems.length === 0) return null;
+              return (
+                <div key={group.section} style={{ marginTop: groupIndex > 0 ? 14 : 0 }}>
+                  <div style={{ padding: '4px 10px 6px', fontSize: 11, fontWeight: 600, color: '#86868B', letterSpacing: '0.01em' }}>
+                    {t(group.section)}
                   </div>
-                );
-              });
-            })()
+                  {visibleItems.map(renderLink)}
+                </div>
+              );
+            })
           ) : (
-            /* Other roles: flat list */
-            flatItems.map((item, i) => (
-              <NavLink key={item.to} to={item.to} end={item.to.split('/').length <= 2}
-                className={({ isActive }) => `nav-link${isActive ? ' active-nav' : ''}`}
-                style={({ isActive }) => ({
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 14px', color: isActive ? '#e2e8f0' : '#94a3b8',
-                  background: isActive ? 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(6,182,212,0.05) 100%)' : 'transparent',
-                  textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-                  borderRadius: 10, border: isActive ? '1px solid rgba(34,211,238,0.12)' : '1px solid transparent',
-                  animation: `slideInLeft 0.3s ease-out ${i * 0.04}s both`,
-                  position: 'relative', fontFamily: "'DM Sans', sans-serif", overflow: 'hidden',
-                })}
-              >
-                <NavIcon d={item.icon} active={false} />
-                <span>{t(item.label)}</span>
-              </NavLink>
-            ))
+            flatItems.map(renderLink)
           )}
         </nav>
 
-        {/* Bottom: Platform branding + Sign out */}
-        <div style={{ padding: '0 14px 14px', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 12px', borderTop: '1px solid rgba(34,211,238,0.06)', marginBottom: 10, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -1, left: '10%', right: '10%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.1), transparent)', pointerEvents: 'none' }} />
-            {brandLogo ? (
-              <img src={brandLogo} alt={brandName} style={{ width: 34, height: 34, borderRadius: 10, objectFit: 'cover', border: '1px solid rgba(34,211,238,0.2)', flexShrink: 0 }} />
-            ) : isClubUser ? (
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg, ${user.club.primary_color || user.club.theme_color || 'var(--theme-primary, #22d3ee)'}, ${user.club.secondary_color || 'var(--theme-secondary, #06b6d4)'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: '#fff' }}>
-                {brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-              </div>
-            ) : (
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)', border: '1px solid rgba(34,211,238,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-                  <path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18C23 14 25.5 20 28 17" stroke="var(--theme-primary, #22d3ee)" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M4 24C6.5 21 9 26 12 22C15 18 17 26 20 22C23 18 25.5 24 28 21" stroke="var(--theme-secondary, #06b6d4)" strokeWidth="2" strokeLinecap="round" opacity="0.5"/>
-                </svg>
-              </div>
-            )}
-            <div>
-              <h2 style={{ fontFamily: "'Outfit', sans-serif", color: '#94a3b8', margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>{brandName}</h2>
-              <div style={{ color: '#475569', fontSize: 9, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{brandTagline}</div>
+        {/* Bottom: user + sign out */}
+        <div style={{ padding: '10px 12px 14px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 4px 10px' }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 17, background: '#E5E5EA', color: '#1D1D1F', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 600,
+            }}>
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: '#1D1D1F', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</div>
+              <div style={{ ...CAPTION, fontSize: 11 }}>{t(`roles.${user?.role}`, user?.role)}</div>
             </div>
           </div>
-
-          <button onClick={handleLogout}
-            onMouseEnter={e => { e.target.style.background = 'rgba(244,63,94,0.15)'; e.target.style.borderColor = 'rgba(244,63,94,0.3)'; }}
-            onMouseLeave={e => { e.target.style.background = 'rgba(244,63,94,0.06)'; e.target.style.borderColor = 'rgba(244,63,94,0.15)'; }}
-            style={{
-              width: '100%', padding: '9px 14px', background: 'rgba(244,63,94,0.06)',
-              color: '#fda4af', border: '1px solid rgba(244,63,94,0.15)',
-              borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s ease',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button type="button" onClick={handleLogout} className="pl-btn pl-btn-secondary pl-btn-sm" style={{ width: '100%', justifyContent: 'center', gap: 8, color: '#FF3B30' }}>
+            <svg className="rtl-flip" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
             {t('nav.signOut')}
@@ -442,83 +404,37 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="main-content" style={{
-        flex: 1, display: 'flex', flexDirection: 'column', color: '#e2e8f0',
-        background: 'radial-gradient(ellipse at 0% 0%, rgba(13,31,60,0.4) 0%, transparent 50%), #060d1f',
+        flex: 1, display: 'flex', flexDirection: 'column', color: '#1D1D1F',
+        background: '#F5F5F7',
         height: '100vh', overflow: 'hidden',
       }}>
         {/* Content header bar (fixed, does not scroll) */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 clamp(16px, 4vw, 32px)', height: 64, minHeight: 64,
-          background: 'linear-gradient(180deg, rgba(10,22,40,0.97) 0%, rgba(10,22,40,0.92) 100%)',
-          borderBottom: '1px solid rgba(34,211,238,0.08)',
+          padding: '0 clamp(16px, 4vw, 32px)', height: 56, minHeight: 56,
+          ...sidebarSurface,
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
           flexShrink: 0, zIndex: 20,
         }}>
-          {/* Left: breadcrumb or page context */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, fontSize: 13, color: '#6E6E73' }}>
             {showSportBreadcrumb ? (
               <>
-                <button
+                <button type="button"
                   onClick={() => { clearSport(); navigate('/club'); }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.1)'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.04)'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.1)'; }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.1)',
-                    borderRadius: 8, padding: '5px 10px', color: '#94a3b8', fontSize: 13,
-                    fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#0071E3', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+                  <svg className="rtl-flip" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                   {t('nav.home')}
                 </button>
-                <div style={{ width: 1, height: 20, background: 'rgba(51,65,85,0.3)' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 8,
-                    background: currentSport.color || '#8b5cf6',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,
-                  }}>
-                    {currentSport.icon ? currentSport.icon.charAt(0).toUpperCase() : '?'}
-                  </div>
-                  <span style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>
-                    {currentSport.name}
-                  </span>
-                </div>
+                <span style={{ color: '#AEAEB2' }}>/</span>
+                <span style={{ width: 8, height: 8, borderRadius: 4, background: currentSport.color || '#0071E3', display: 'inline-block', flexShrink: 0 }} />
+                <span style={{ color: '#1D1D1F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentSport.name}</span>
               </>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {brandLogo ? (
-                  <img src={brandLogo} alt={brandName} style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(34,211,238,0.15)' }} />
-                ) : isClubUser ? (
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 8,
-                    background: `linear-gradient(135deg, ${user.club.primary_color || user.club.theme_color || '#22d3ee'}, ${user.club.secondary_color || '#06b6d4'})`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
-                  }}>
-                    {brandName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                  </div>
-                ) : (
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 8,
-                    background: 'linear-gradient(135deg, rgba(34,211,238,0.15) 0%, rgba(6,182,212,0.08) 100%)',
-                    border: '1px solid rgba(34,211,238,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18C23 14 25.5 20 28 17" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                  </div>
-                )}
-                <span style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em' }}>
-                  {brandName}
-                </span>
-              </div>
+              <span style={{ color: '#1D1D1F', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{brandName}</span>
             )}
           </div>
 
-          {/* Right: Language switcher + Notification bell */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <LanguageSwitcher compact />
             <NotificationBell navigate={navigate} />
@@ -526,7 +442,7 @@ export default function Layout() {
         </div>
 
         {/* Page content (scrollable) */}
-        <div className="page-scroll-area" style={{ flex: 1, padding: '24px clamp(16px, 4vw, 32px)', overflowY: 'auto' }}>
+        <div className="page-scroll-area" style={{ flex: 1, padding: '26px clamp(16px, 4vw, 32px) 40px', overflowY: 'auto' }}>
           <RouteErrorBoundary key={location.pathname}>
             <Outlet />
           </RouteErrorBoundary>

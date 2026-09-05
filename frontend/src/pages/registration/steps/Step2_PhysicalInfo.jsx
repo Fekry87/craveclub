@@ -63,13 +63,16 @@ export default function Step2_PhysicalInfo() {
     >
       {/* ── Height Slider ────────────────────────────────────────── */}
       <FormField label="Height">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 14, color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+          <span style={{
+            fontSize: 12, fontWeight: 500, color: '#86868B',
+          }}>
             Drag to adjust
           </span>
           <span style={{
-            fontSize: 20, fontWeight: 700, color: '#1CB0F6',
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600,
+            letterSpacing: '-0.02em', lineHeight: 1,
+            color: '#1D1D1F',
           }}>
             {heightCm} cm
           </span>
@@ -82,22 +85,24 @@ export default function Step2_PhysicalInfo() {
           value={heightCm}
           onChange={e => setHeightCm(Number(e.target.value))}
           style={{
-            width: '100%', accentColor: '#1CB0F6',
-            height: 6, borderRadius: 999,
-            cursor: 'pointer',
+            width: '100%', accentColor: '#0071E3',
+            height: 4, cursor: 'pointer',
           }}
         />
       </FormField>
 
       {/* ── Weight Slider ────────────────────────────────────────── */}
       <FormField label="Weight">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 14, color: '#94a3b8', fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+          <span style={{
+            fontSize: 12, fontWeight: 500, color: '#86868B',
+          }}>
             Drag to adjust
           </span>
           <span style={{
-            fontSize: 20, fontWeight: 700, color: '#58CC02',
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600,
+            letterSpacing: '-0.02em', lineHeight: 1,
+            color: '#1D1D1F',
           }}>
             {weightKg} kg
           </span>
@@ -110,9 +115,8 @@ export default function Step2_PhysicalInfo() {
           value={weightKg}
           onChange={e => setWeightKg(Number(e.target.value))}
           style={{
-            width: '100%', accentColor: '#58CC02',
-            height: 6, borderRadius: 999,
-            cursor: 'pointer',
+            width: '100%', accentColor: '#0071E3',
+            height: 4, cursor: 'pointer',
           }}
         />
       </FormField>
@@ -120,49 +124,35 @@ export default function Step2_PhysicalInfo() {
       {/* ── Fitness Level Chips ──────────────────────────────────── */}
       <FormField label="Fitness Level">
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {FITNESS_OPTIONS.map(option => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => { setFitnessLevel(option); clearError('fitnessLevel'); }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 999,
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 14,
-                fontFamily: "'DM Sans', sans-serif",
-                border: fitnessLevel === option
-                  ? '2px solid #58CC02'
-                  : '2px solid rgba(51,65,85,0.3)',
-                background: fitnessLevel === option
-                  ? '#58CC02'
-                  : 'rgba(15,23,42,0.4)',
-                color: fitnessLevel === option
-                  ? '#ffffff'
-                  : '#94a3b8',
-                textTransform: 'capitalize',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                if (fitnessLevel !== option) {
-                  e.currentTarget.style.borderColor = 'rgba(88,204,2,0.4)';
-                  e.currentTarget.style.background = 'rgba(88,204,2,0.08)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (fitnessLevel !== option) {
-                  e.currentTarget.style.borderColor = 'rgba(51,65,85,0.3)';
-                  e.currentTarget.style.background = 'rgba(15,23,42,0.4)';
-                }
-              }}
-            >
-              {option}
-            </button>
-          ))}
+          {FITNESS_OPTIONS.map((option) => {
+            const active = fitnessLevel === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => { setFitnessLevel(option); clearError('fitnessLevel'); }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '9px 16px',
+                  borderRadius: 980,
+                  cursor: 'pointer',
+                  fontSize: 13, fontWeight: 500,
+                  textTransform: 'capitalize',
+                  border: active ? '1px solid #0071E3' : '1px solid #E5E5EA',
+                  background: active ? '#0071E3' : '#FFFFFF',
+                  color: active ? '#FFFFFF' : '#515154',
+                  transition: 'border-color 0.15s ease, background 0.15s ease, color 0.15s ease',
+                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#D2D2D7'; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = '#E5E5EA'; }}
+              >
+                {option}
+              </button>
+            );
+          })}
         </div>
         {errors.fitnessLevel && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.fitnessLevel}
           </span>
         )}
@@ -170,51 +160,40 @@ export default function Step2_PhysicalInfo() {
 
       {/* ── Prior Experience Toggle ──────────────────────────────── */}
       <FormField label="Have you practiced water sports before?">
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{
+          display: 'flex', gap: 4, padding: 4,
+          background: '#F2F2F7', borderRadius: 12,
+        }}>
           {[
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
-          ].map(opt => (
-            <button
-              key={opt.label}
-              type="button"
-              onClick={() => { setPriorExperience(opt.value); clearError('priorExperience'); }}
-              style={{
-                flex: 1, height: 52,
-                borderRadius: 8,
-                border: priorExperience === opt.value
-                  ? '2px solid #1CB0F6'
-                  : '2px solid rgba(51,65,85,0.5)',
-                background: priorExperience === opt.value
-                  ? 'rgba(28,176,246,0.1)'
-                  : 'rgba(6,13,31,0.6)',
-                color: priorExperience === opt.value
-                  ? '#1CB0F6'
-                  : '#94a3b8',
-                fontWeight: 600, cursor: 'pointer',
-                fontSize: 14,
-                fontFamily: "'DM Sans', sans-serif",
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                if (priorExperience !== opt.value) {
-                  e.currentTarget.style.borderColor = 'rgba(28,176,246,0.4)';
-                  e.currentTarget.style.background = 'rgba(28,176,246,0.05)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (priorExperience !== opt.value) {
-                  e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)';
-                  e.currentTarget.style.background = 'rgba(6,13,31,0.6)';
-                }
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
+          ].map((opt) => {
+            const active = priorExperience === opt.value;
+            return (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => { setPriorExperience(opt.value); clearError('priorExperience'); }}
+                style={{
+                  flex: 1, height: 38,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none',
+                  borderRadius: 9,
+                  background: active ? '#FFFFFF' : 'transparent',
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
+                  color: active ? '#1D1D1F' : '#6E6E73',
+                  cursor: 'pointer',
+                  fontSize: 14, fontWeight: active ? 600 : 500,
+                  transition: 'background 0.18s var(--ease-spring), color 0.15s ease, box-shadow 0.18s ease',
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
         {errors.priorExperience && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.priorExperience}
           </span>
         )}
@@ -231,43 +210,25 @@ export default function Step2_PhysicalInfo() {
           rows={3}
         />
         <div style={{
-          fontSize: 12, color: '#64748b', textAlign: 'right',
-          marginTop: 4, fontFamily: "'DM Sans', sans-serif",
+          fontSize: 12, fontWeight: 500, color: '#86868B',
+          textAlign: 'end', marginTop: 6,
         }}>
           {medicalNotes.length}/300
         </div>
       </FormField>
 
       {/* ── Continue Button ──────────────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
         <button
           type="button"
           onClick={handleContinue}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-            color: '#060d1f', fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: '0 2px 8px rgba(45,212,191,0.15)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {t('actions.next')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg className="rtl-flip" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </button>
       </div>

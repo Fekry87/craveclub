@@ -9,29 +9,23 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { SportCard } from './SportModuleDashboard';
 import { NotificationBell } from '../../components/Layout';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher';
+import { labelStyle } from '../../components/ui/styles';
 import { useTranslation } from 'react-i18next';
 
 /* ─────── Card Shell (same as Dashboard.jsx) ─────── */
 function DashCard({ children, delay = 0, style: extraStyle }) {
   return (
     <div
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.15)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(34,211,238,0.04)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.06)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)';
-      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        borderRadius: 18,
+        background: '#FFFFFF',
         padding: '22px 24px',
-        border: '1px solid rgba(34,211,238,0.06)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-        animation: `fadeInUp 0.4s ease-out ${delay}s both`,
-        position: 'relative', overflow: 'hidden',
-        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        border: '1px solid #E5E5EA',
+        borderRadius: 16,
+        animation: `fadeInUp 0.3s ease-out ${delay}s both`,
+        position: 'relative',
+        transition: 'border-color 0.15s ease',
         ...extraStyle,
       }}
     >
@@ -86,21 +80,22 @@ export default function ManagerHomePage() {
   const clubName = user?.club?.name || '';
   const clubLogo = user?.club?.logo_url;
   const clubInitials = clubName ? clubName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'CC';
-  const clubColor = user?.club?.primary_color || user?.club?.theme_color || '#22d3ee';
+  const rawColor = user?.club?.primary_color || user?.club?.theme_color || '#0071E3';
+  const clubColor = rawColor.startsWith('#') ? rawColor : `#${rawColor}`;
 
   /* ── Loading state (full screen) ── */
   if (loading) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#060d1f', color: '#94a3b8',
+        minHeight: '100vh', background: '#F5F5F7', color: '#515154',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 10 }}>
-            <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
+          <svg width="36" height="36" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="2" />
+            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#0071E3" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
+          <div style={{ ...labelStyle }}>{t('dashboard.loadingDashboard')}</div>
         </div>
       </div>
     );
@@ -110,29 +105,24 @@ export default function ManagerHomePage() {
   if (error) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#060d1f',
+        minHeight: '100vh', background: '#F5F5F7',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-            background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)',
+          <div style={{ borderRadius: 14,
+            width: 56, height: 56, margin: '0 auto 18px',
+            background: 'rgba(255,59,48,0.12)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" />
             </svg>
           </div>
-          <div style={{ color: '#f1f5f9', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{error}</div>
-          <button
-            onClick={loadData}
-            style={{
-              marginTop: 12, padding: '8px 20px', borderRadius: 10,
-              background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.2)',
-              color: '#22d3ee', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
+          <div style={{
+            color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600,
+            letterSpacing: '-0.02em', marginBottom: 16,
+          }}>{error}</div>
+          <button type="button" onClick={loadData} className="pl-btn pl-btn-secondary">
             {t('actions.back')}
           </button>
         </div>
@@ -145,79 +135,54 @@ export default function ManagerHomePage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(ellipse at 0% 0%, rgba(13,31,60,0.4) 0%, transparent 50%), #060d1f',
-      color: '#e2e8f0',
+      background: '#F5F5F7',
+      color: '#1D1D1F',
     }}>
       {/* ═══ TOP BAR ═══ */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,
-        background: 'linear-gradient(180deg, rgba(10,22,40,0.97) 0%, rgba(10,22,40,0.92) 100%)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(34,211,238,0.08)',
+        background: 'rgba(246,246,248,0.86)',
+        backdropFilter: 'saturate(180%) blur(20px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
         padding: isMobile ? '0 16px' : '0 32px',
-        height: 64,
+        height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         {/* Left: Club logo + name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           {clubLogo ? (
             <img
               src={clubLogo} alt={clubName}
-              style={{
-                width: 38, height: 38, borderRadius: 12, objectFit: 'cover',
-                border: '1px solid rgba(34,211,238,0.15)',
-              }}
+              style={{ borderRadius: 8, width: 30, height: 30, objectFit: 'cover', flexShrink: 0, background: '#FFFFFF' }}
             />
           ) : (
-            <div style={{
-              width: 38, height: 38, borderRadius: 12,
-              background: `linear-gradient(135deg, ${clubColor}, ${clubColor}aa)`,
+            <div style={{ borderRadius: 8,
+              width: 30, height: 30, background: clubColor,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: '#fff',
+              fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600,
+              color: '#1D1D1F',
               flexShrink: 0,
             }}>
               {clubInitials}
             </div>
           )}
-          <div>
-            <div style={{
-              color: '#f1f5f9', fontSize: 16, fontWeight: 700,
-              fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em',
-              lineHeight: 1.2,
-            }}>{clubName}</div>
-            <div style={{
-              color: '#475569', fontSize: 10, fontWeight: 500,
-              textTransform: 'uppercase', letterSpacing: '0.05em',
-            }}>{t('club.clubPortal')}</div>
-          </div>
+          <span style={{
+            color: '#1D1D1F', fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{clubName}</span>
         </div>
 
-        {/* Right: Notification bell + Sign out */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <LanguageSwitcher />
+        {/* Right: Language + Notification bell + Sign out */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <LanguageSwitcher compact />
           <NotificationBell navigate={navigate} />
           <button
             type="button"
             onClick={handleLogout}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(244,63,94,0.15)';
-              e.currentTarget.style.borderColor = 'rgba(244,63,94,0.3)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(244,63,94,0.06)';
-              e.currentTarget.style.borderColor = 'rgba(244,63,94,0.15)';
-            }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 10,
-              background: 'rgba(244,63,94,0.06)',
-              border: '1px solid rgba(244,63,94,0.15)',
-              color: '#fda4af', fontSize: 13, fontWeight: 500,
-              fontFamily: "'DM Sans', sans-serif",
-              cursor: 'pointer', transition: 'all 0.2s ease',
-            }}
+            className="pl-btn pl-btn-secondary pl-btn-sm"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="rtl-flip" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
             {!isMobile && t('nav.signOut')}
@@ -227,46 +192,33 @@ export default function ManagerHomePage() {
 
       {/* ═══ MAIN CONTENT ═══ */}
       <div style={{
-        padding: isMobile ? '20px 16px' : '24px 32px',
+        padding: isMobile ? '24px 16px 40px' : '36px 32px 56px',
         maxWidth: 1280, margin: '0 auto',
       }}>
-        {/* ═══ SECTION 1: Page Header ═══ */}
+        {/* ═══ SECTION 1: Greeting ═══ */}
         <div style={{
-          marginBottom: 24, padding: '20px 24px', borderRadius: 16,
-          background: 'linear-gradient(135deg, rgba(13,31,60,0.5) 0%, rgba(6,13,31,0.3) 100%)',
-          border: '1px solid rgba(34,211,238,0.06)',
-          position: 'relative', overflow: 'hidden',
-          animation: 'fadeInUp 0.4s ease-out',
+          marginBottom: 28,
+          animation: 'fadeIn 0.25s ease-out',
         }}>
-          <div style={{
-            position: 'absolute', top: -40, right: -40, width: 120, height: 120,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <h1 style={{
-                margin: '0 0 4px',
-                fontFamily: "'DM Sans', sans-serif", fontSize: isMobile ? 20 : 24, fontWeight: 700,
-                color: '#f1f5f9', letterSpacing: '-0.02em',
-              }}>
-                {greeting}, <span style={{ color: '#22d3ee' }}>{firstName}</span>
-              </h1>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
-                {t('dashboard.subtitle')}
-              </p>
-            </div>
+          <h1 style={{
+            margin: 0,
+            fontFamily: 'var(--font-display)', fontSize: isMobile ? 26 : 32, fontWeight: 700,
+            color: '#1D1D1F', letterSpacing: '-0.02em', lineHeight: 1.15,
+          }}>
+            {greeting}, <span style={{ color: '#0071E3' }}>{firstName}</span>
+          </h1>
+          <div style={{ color: '#6E6E73', fontSize: 15, marginTop: 6 }}>
+            {t('dashboard.subtitle')}
           </div>
         </div>
 
         {/* ═══ Sport Module Cards ═══ */}
-        <div style={{ marginBottom: 22, animation: 'fadeInUp 0.4s ease-out 0.15s both' }}>
+        <div style={{ marginBottom: 22, animation: 'fadeInUp 0.3s ease-out 0.1s both' }}>
           {sportModules.length === 0 ? (
-            <DashCard delay={0.2}>
+            <DashCard delay={0.15}>
               <EmptyState
                 icon={
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
                   </svg>
                 }
@@ -276,16 +228,16 @@ export default function ManagerHomePage() {
             </DashCard>
           ) : sportModules.length === 1 ? (
             <div style={{ maxWidth: 400 }}>
-              <SportCard module={sportModules[0]} onEnter={() => handleEnterSport(sportModules[0])} />
+              <SportCard module={sportModules[0]} index={0} onEnter={() => handleEnterSport(sportModules[0])} />
             </div>
           ) : (
             <div style={{
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: 20,
+              gap: 16,
             }}>
-              {sportModules.map(mod => (
-                <SportCard key={mod.id} module={mod} onEnter={() => handleEnterSport(mod)} />
+              {sportModules.map((mod, i) => (
+                <SportCard key={mod.id} module={mod} index={i} onEnter={() => handleEnterSport(mod)} />
               ))}
             </div>
           )}

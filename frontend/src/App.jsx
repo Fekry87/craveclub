@@ -80,8 +80,9 @@ const PageLoader = () => {
   const stored = localStorage.getItem('craveclubs_lang');
   const text = stored === 'ar' ? 'جارٍ التحميل...' : 'Loading...';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <div>{text}</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F5F5F7', gap: 12 }}>
+      <span style={{ width: 8, height: 8, borderRadius: 4, background: '#0071E3', animation: 'pulse-glow 1s ease-in-out infinite' }} />
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73' }}>{text}</span>
     </div>
   );
 };

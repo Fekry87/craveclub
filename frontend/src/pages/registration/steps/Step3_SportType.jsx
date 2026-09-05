@@ -5,12 +5,12 @@ import WizardLayout from '../components/WizardLayout';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 
 const SPORTS = [
-  { id: 'freestyle',    label: 'Free Swimming',  emoji: '\u{1F3CA}', color: '#1CB0F6', bg: '#EBF8FF' },
-  { id: 'competitive',  label: 'Competitive',    emoji: '\u{1F3C5}', color: '#58CC02', bg: '#F0FFF4' },
-  { id: 'diving',       label: 'Diving',         emoji: '\u{1F93F}', color: '#FF9600', bg: '#FFFBEB' },
-  { id: 'waterpolo',    label: 'Water Polo',     emoji: '\u{1F93D}', color: '#CE82FF', bg: '#FAF5FF' },
-  { id: 'kids',         label: 'Kids Swimming',  emoji: '\u{1F476}', color: '#2DD4BF', bg: '#F0FDFA' },
-  { id: 'aquafitness',  label: 'Aqua Fitness',   emoji: '\u{1F4AA}', color: '#FFC800', bg: '#FFFFF0' },
+  { id: 'freestyle',    label: 'Free Swimming',  emoji: '\u{1F3CA}' },
+  { id: 'competitive',  label: 'Competitive',    emoji: '\u{1F3C5}' },
+  { id: 'diving',       label: 'Diving',         emoji: '\u{1F93F}' },
+  { id: 'waterpolo',    label: 'Water Polo',     emoji: '\u{1F93D}' },
+  { id: 'kids',         label: 'Kids Swimming',  emoji: '\u{1F476}' },
+  { id: 'aquafitness',  label: 'Aqua Fitness',   emoji: '\u{1F4AA}' },
 ];
 
 export default function Step3_SportType() {
@@ -61,9 +61,8 @@ export default function Step3_SportType() {
       {/* ── Selection counter ────────────────────────────────────── */}
       {selected.length > 0 && (
         <p style={{
-          textAlign: 'center', color: '#1CB0F6',
-          fontSize: 13, fontWeight: 600, marginBottom: 8,
-          fontFamily: "'DM Sans', sans-serif", margin: '0 0 8px',
+          fontSize: 13, fontWeight: 500,
+          color: '#0071E3', textAlign: 'start', margin: '0 0 14px',
         }}>
           {selected.length} sport{selected.length > 1 ? 's' : ''} selected
         </p>
@@ -76,7 +75,7 @@ export default function Step3_SportType() {
         gap: 12,
         marginBottom: 16,
       }}>
-        {SPORTS.map(sport => {
+        {SPORTS.map((sport) => {
           const isSelected = selected.includes(sport.id);
           return (
             <button
@@ -87,53 +86,45 @@ export default function Step3_SportType() {
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px 12px',
-                borderRadius: 12,
-                border: isSelected
-                  ? `2px solid ${sport.color}`
-                  : '2px solid rgba(51,65,85,0.3)',
-                background: isSelected
-                  ? `${sport.color}18`
-                  : 'rgba(6,13,31,0.6)',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start',
+                gap: 12,
+                padding: '18px 16px',
+                borderRadius: 14,
+                textAlign: 'start',
+                border: isSelected ? '2px solid #0071E3' : '1px solid #E5E5EA',
+                background: isSelected ? 'rgba(0,113,227,0.06)' : '#FFFFFF',
                 cursor: 'pointer',
-                transition: 'all 150ms ease',
-                boxShadow: isSelected
-                  ? `0 0 0 3px ${sport.color}22`
-                  : 'none',
+                transition: 'border-color 0.15s ease, background 0.15s ease',
               }}
-              onMouseEnter={e => {
-                if (!isSelected) {
-                  e.currentTarget.style.borderColor = `${sport.color}66`;
-                  e.currentTarget.style.background = `${sport.color}0A`;
-                }
-              }}
-              onMouseLeave={e => {
-                if (!isSelected) {
-                  e.currentTarget.style.borderColor = 'rgba(51,65,85,0.3)';
-                  e.currentTarget.style.background = 'rgba(6,13,31,0.6)';
-                }
-              }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = '#D2D2D7'; }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = '#E5E5EA'; }}
             >
-              {/* Checkmark */}
+              {/* Selected marker */}
               {isSelected && (
                 <span style={{
-                  position: 'absolute', top: 8, right: 8,
-                  color: sport.color, fontSize: 16, fontWeight: 700,
+                  position: 'absolute', top: 12, insetInlineEnd: 12,
+                  width: 20, height: 20, borderRadius: '50%', background: '#0071E3',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill={sport.color}>
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
                   </svg>
                 </span>
               )}
 
-              <span style={{ fontSize: 32, lineHeight: 1 }}>{sport.emoji}</span>
               <span style={{
-                marginTop: 8, fontSize: 13, fontWeight: 600,
-                color: isSelected ? sport.color : '#94a3b8',
-                textAlign: 'center',
-                fontFamily: "'DM Sans', sans-serif",
+                width: 44, height: 44, borderRadius: 12,
+                background: isSelected ? 'rgba(0,113,227,0.12)' : '#F2F2F7',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, lineHeight: 1,
+                transition: 'background 0.15s ease',
+              }}>{sport.emoji}</span>
+              <span style={{
+                fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600,
+                letterSpacing: '-0.01em', lineHeight: 1.2,
+                color: '#1D1D1F',
               }}>
                 {sport.label}
               </span>
@@ -145,44 +136,26 @@ export default function Step3_SportType() {
       {/* ── Error ────────────────────────────────────────────────── */}
       {errors.sports && (
         <p style={{
-          color: '#f87171', fontSize: 13,
-          textAlign: 'center', margin: '0 0 8px',
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#FF3B30', fontSize: 13,
+          textAlign: 'start', margin: '0 0 8px',
+          fontFamily: 'var(--font-body)',
         }}>
           {errors.sports}
         </p>
       )}
 
       {/* ── Continue Button ──────────────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
         <button
           type="button"
           onClick={handleContinue}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-            color: '#060d1f', fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: '0 2px 8px rgba(45,212,191,0.15)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {t('actions.next')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg className="rtl-flip" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </button>
       </div>

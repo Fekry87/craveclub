@@ -10,31 +10,27 @@ import { StatCard } from '../../components/ui/Cards';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/CrudTable';
+import { labelStyle } from '../../components/ui/styles';
 
 /* ─────── Toast Notification ─────── */
 function Toast({ message }) {
   if (!message) return null;
   return (
     <div style={{
-      position: 'fixed', top: 20, right: 20, zIndex: 1000,
-      background: 'linear-gradient(145deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.95) 100%)',
-      border: '1px solid rgba(34,211,238,0.15)',
-      borderRadius: 14,
-      padding: '14px 20px',
-      color: '#f1f5f9',
-      fontSize: 13,
-      fontWeight: 500,
-      fontFamily: "'DM Sans', sans-serif",
-      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-      animation: 'fadeInUp 0.3s ease-out',
+      position: 'fixed', top: 20, insetInlineEnd: 20, zIndex: 1000,
+      background: 'rgba(29,29,31,0.92)',
+      color: '#1D1D1F',
+      borderRadius: 12,
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      boxShadow: '0 8px 28px rgba(0,0,0,0.22)',
+      padding: '12px 16px',
+      fontSize: 14,
+      fontFamily: 'var(--font-body)',
+      animation: 'fadeInUp 0.25s ease-out',
       display: 'flex', alignItems: 'center', gap: 10,
+      maxWidth: 'min(360px, calc(100vw - 40px))',
     }}>
-      <span style={{
-        width: 8, height: 8, borderRadius: '50%',
-        background: '#34d399',
-        flexShrink: 0,
-        animation: 'glowPulse 2s infinite',
-      }} />
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34C759', flexShrink: 0 }} />
       {message}
     </div>
   );
@@ -45,23 +41,18 @@ function LiveBadge({ liveState }) {
   const { t } = useTranslation();
   const isLive = liveState === 'live';
   const isOffline = liveState === 'offline';
-  const color = isLive ? '#34d399' : isOffline ? '#f59e0b' : '#64748b';
+  const dot = isLive ? '#34C759' : isOffline ? '#FF9500' : '#86868B';
+  const tint = isLive ? 'rgba(52,199,89,0.14)' : isOffline ? 'rgba(255,149,0,0.16)' : '#F2F2F7';
+  const text = isLive ? '#1E7A3B' : isOffline ? '#A35A00' : '#515154';
   const label = isLive ? t('registrations.live') : isOffline ? t('registrations.offline') : t('registrations.connecting');
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
-      color,
-      textTransform: 'uppercase',
-      padding: '4px 10px', borderRadius: 6,
-      background: isLive ? 'rgba(52,211,153,0.10)' : isOffline ? 'rgba(245,158,11,0.08)' : 'rgba(13,31,60,0.4)',
-      border: `1px solid ${isLive ? 'rgba(52,211,153,0.20)' : isOffline ? 'rgba(245,158,11,0.18)' : 'rgba(34,211,238,0.06)'}`,
+      display: 'inline-flex', alignItems: 'center', gap: 7,
+      fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, lineHeight: '16px',
+      color: text, background: tint,
+      padding: '4px 11px', borderRadius: 980, whiteSpace: 'nowrap',
     }}>
-      <span style={{
-        width: 7, height: 7, borderRadius: '50%',
-        backgroundColor: color,
-        animation: isLive ? 'glowPulse 2s infinite' : 'none',
-      }} />
+      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: dot, flexShrink: 0 }} />
       {label}
     </span>
   );
@@ -217,14 +208,12 @@ export default function Registrations() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
         <div style={{
-          color: '#94a3b8', fontSize: 13,
-          fontFamily: "'DM Sans', sans-serif",
+          ...labelStyle,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <div style={{
-            width: 20, height: 20, borderRadius: '50%',
-            border: '2px solid rgba(255,255,255,0.08)',
-            borderTopColor: '#22d3ee',
+            width: 18, height: 18, border: '2px solid #E5E5EA',
+            borderTopColor: '#0071E3',
             animation: 'spin 0.8s linear infinite',
           }} />
           {t('registrations.loading')}
@@ -237,19 +226,11 @@ export default function Registrations() {
   if (error) {
     return (
       <div style={{
-        background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.20)',
-        borderRadius: 18, padding: '24px 28px', textAlign: 'center',
+        background: '#FFFFFF', border: '1px solid #FF3B30',
+        padding: '24px 28px', textAlign: 'center',
       }}>
-        <p style={{ color: '#f43f5e', fontSize: 13, margin: '0 0 14px' }}>{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          style={{
-            background: 'rgba(34,211,238,0.08)', color: '#22d3ee',
-            border: '1px solid rgba(34,211,238,0.15)', borderRadius: 10,
-            padding: '8px 20px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-          }}
-        >
+        <p style={{ color: '#FF3B30', fontSize: 13, margin: '0 0 16px' }}>{error}</p>
+        <button type="button" onClick={() => window.location.reload()} className="pl-btn pl-btn-secondary">
           {t('actions.retry')}
         </button>
       </div>
@@ -263,25 +244,17 @@ export default function Registrations() {
   const totalCount = registrations.length;
 
   const thStyle = {
-    padding: '12px 16px', textAlign: 'start', fontSize: 11,
-    fontWeight: 600, color: '#64748b', textTransform: 'uppercase',
-    letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.04)',
-    fontFamily: "'DM Sans', sans-serif", whiteSpace: 'nowrap',
-    background: 'rgba(13,31,60,0.4)',
+    padding: '12px 16px', textAlign: 'start',
+    ...labelStyle, fontWeight: 500,
+    borderBottom: '1px solid #E5E5EA',
+    whiteSpace: 'nowrap',
+    background: '#FFFFFF',
   };
 
   const tdStyle = {
-    padding: '14px 16px', fontSize: 13, color: '#94a3b8',
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-    fontFamily: "'DM Sans', sans-serif",
-  };
-
-  const actionBtnBase = {
-    padding: '5px 12px', borderRadius: 6,
-    fontSize: 11, fontWeight: 600,
-    cursor: 'pointer', border: 'none', transition: 'all 0.2s ease',
-    fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.01em',
-    display: 'inline-flex', alignItems: 'center', gap: 4,
+    padding: '14px 16px', fontSize: 14, color: '#1D1D1F',
+    borderBottom: '1px solid #E5E5EA',
+    fontFamily: 'var(--font-body)',
   };
 
   return (
@@ -302,19 +275,14 @@ export default function Registrations() {
         <StatCard
           label={t('status.pending')}
           value={
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
               {pendingCount}
               {pendingCount > 0 && (
-                <span style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: '#fbbf24',
-                  animation: 'glowPulse 2s infinite',
-                  display: 'inline-block',
-                }} />
+                <span style={{ width: 8, height: 8, borderRadius: 4, background: '#0071E3', display: 'inline-block' }} />
               )}
             </span>
           }
-          accentColor="#fbbf24"
+          index={0}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
@@ -324,7 +292,7 @@ export default function Registrations() {
         <StatCard
           label={t('status.approved')}
           value={approvedCount}
-          accentColor="#34d399"
+          index={1}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
@@ -334,7 +302,7 @@ export default function Registrations() {
         <StatCard
           label={t('status.rejected')}
           value={rejectedCount}
-          accentColor="#f43f5e"
+          index={2}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
@@ -344,7 +312,7 @@ export default function Registrations() {
         <StatCard
           label={t('registrations.total')}
           value={totalCount}
-          accentColor="#22d3ee"
+          index={3}
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" />
@@ -356,12 +324,10 @@ export default function Registrations() {
 
       {/* ── Empty State ─────────────────────────────────── */}
       {registrations.length === 0 && (
-        <div style={{
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-          borderRadius: 18,
-          border: '1px solid rgba(34,211,238,0.06)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-          animation: 'fadeInUp 0.4s ease-out 0.1s both',
+        <div style={{ borderRadius: 16,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          animation: 'fadeInUp 0.3s ease-out 0.08s both',
         }}>
           <EmptyState
             title={t('registrations.noPending')}
@@ -380,18 +346,16 @@ export default function Registrations() {
 
       {/* ── Registrations Table ─────────────────────────── */}
       {registrations.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-          borderRadius: 18,
-          border: '1px solid rgba(34,211,238,0.06)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-          overflow: 'hidden',
-          animation: 'fadeInUp 0.4s ease-out 0.1s both',
+        <div style={{ borderRadius: 16,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          animation: 'fadeInUp 0.3s ease-out 0.08s both',
         }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 940 }}>
               <thead>
                 <tr>
+                  <th style={{ ...thStyle, width: 56, color: '#6E6E73' }}>#</th>
                   <th style={thStyle}>{t('registrations.columns.name')}</th>
                   <th style={thStyle}>{t('registrations.columns.phone')}</th>
                   <th style={thStyle}>{t('registrations.columns.branch')}</th>
@@ -404,24 +368,26 @@ export default function Registrations() {
                 </tr>
               </thead>
               <tbody>
-                {registrations.map(reg => (
+                {registrations.map((reg, ri) => (
                   <tr
                     key={reg.id}
                     className="data-table-row"
                     style={{
-                      backgroundColor: newIds.has(reg.id)
-                        ? 'rgba(52,211,153,0.08)' : 'transparent',
+                      backgroundColor: newIds.has(reg.id) ? '#F2F2F7' : 'transparent',
                       transition: 'background-color 1s ease',
                     }}
                   >
-                    <td style={{ ...tdStyle, fontWeight: 600, color: '#f1f5f9' }}>
+                    <td style={{ ...tdStyle, ...labelStyle, color: '#6E6E73', padding: '14px 16px' }}>
+                      
+                    </td>
+                    <td style={{ ...tdStyle, fontWeight: 500 }}>
                       {reg.swimmer_name ?? reg.full_name}
                     </td>
-                    <td style={tdStyle}>{reg.swimmer_phone ?? reg.phone}</td>
-                    <td style={tdStyle}>{reg.branch_name ?? reg.branch?.name ?? '\u2014'}</td>
-                    <td style={tdStyle}>{reg.coach_name ?? reg.coach?.user?.name ?? '\u2014'}</td>
-                    <td style={tdStyle}>{reg.plan_name ?? reg.plan?.name ?? '\u2014'}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600, color: '#22d3ee' }}>
+                    <td style={{ ...tdStyle, color: '#515154' }}>{reg.swimmer_phone ?? reg.phone}</td>
+                    <td style={{ ...tdStyle, color: '#515154' }}>{reg.branch_name ?? reg.branch?.name ?? '\u2014'}</td>
+                    <td style={{ ...tdStyle, color: '#515154' }}>{reg.coach_name ?? reg.coach?.user?.name ?? '\u2014'}</td>
+                    <td style={{ ...tdStyle, color: '#515154' }}>{reg.plan_name ?? reg.plan?.name ?? '\u2014'}</td>
+                    <td style={{ ...tdStyle, fontWeight: 500, color: '#0071E3' }}>
                       {reg.total_amount} {t('common.currency')}
                     </td>
                     <td style={tdStyle}>
@@ -430,7 +396,7 @@ export default function Registrations() {
                         variant={STATUS_VARIANT[reg.status] || 'neutral'}
                       />
                     </td>
-                    <td style={{ ...tdStyle, color: '#64748b', fontSize: 11 }}>
+                    <td style={{ ...tdStyle, ...labelStyle, padding: '14px 16px' }}>
                       {formatDate(reg.created_at)}
                     </td>
                     <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
@@ -438,30 +404,20 @@ export default function Registrations() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             type="button"
+                            className="pl-btn pl-btn-primary pl-btn-sm"
                             onClick={() => { setApproveTarget(reg); setActionError(null); setApproveResult(null); }}
-                            style={{
-                              ...actionBtnBase,
-                              background: 'rgba(52,211,153,0.10)',
-                              color: '#34d399',
-                              border: '1px solid rgba(52,211,153,0.20)',
-                            }}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                             {t('registrations.approve')}
                           </button>
                           <button
                             type="button"
+                            className="pl-btn pl-btn-danger pl-btn-sm"
                             onClick={() => { setRejectTarget(reg); setActionError(null); }}
-                            style={{
-                              ...actionBtnBase,
-                              background: 'rgba(244,63,94,0.10)',
-                              color: '#f43f5e',
-                              border: '1px solid rgba(244,63,94,0.20)',
-                            }}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18" />
                               <line x1="6" y1="6" x2="18" y2="18" />
                             </svg>
@@ -469,7 +425,7 @@ export default function Registrations() {
                           </button>
                         </div>
                       ) : (
-                        <span style={{ color: '#475569', fontSize: 11 }}>{'\u2014'}</span>
+                        <span style={{ ...labelStyle, color: '#6E6E73' }}>{'\u2014'}</span>
                       )}
                     </td>
                   </tr>
@@ -486,7 +442,7 @@ export default function Registrations() {
           title={t('registrations.approveTitle')}
           onClose={closeApproveModal}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -496,49 +452,48 @@ export default function Registrations() {
             /* ── Success view ── */
             <div>
               <div style={{
-                background: 'var(--color-success-bg)', border: '1px solid var(--color-success)',
-                borderRadius: 'var(--radius-lg)', padding: '20px 24px', marginBottom: 20,
+                background: '#FFFFFF', border: '1px solid #34C759',
+                padding: '20px 22px', marginBottom: 20,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'var(--color-surface)',
-                    border: '2px solid var(--color-success)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ borderRadius: 10,
+                    width: 36, height: 36,
+                    border: '1px solid #34C759',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success-text)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34C759" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
-                  <div>
-                    <div style={{ color: 'var(--color-success-text)', fontWeight: 600, fontSize: 'var(--text-md)', fontFamily: 'var(--font-sans)' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      color: '#1D1D1F', fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600,
+                      letterSpacing: '-0.02em', lineHeight: 1,
+                    }}>
                       {t('registrations.approvedTitle')}
                     </div>
-                    <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', marginTop: 2 }}>
+                    <div style={{ ...labelStyle, marginTop: 7 }}>
                       {t('registrations.accountCreated')}
                     </div>
                   </div>
                 </div>
 
-                <div style={{
-                  background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '14px 16px',
-                  border: '1px solid var(--color-border)',
-                }}>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 10 }}>
+                <div style={{ borderTop: '1px solid #E5E5EA', paddingTop: 14 }}>
+                  <div style={{ ...labelStyle, marginBottom: 10 }}>
                     {t('registrations.accountCredentials')}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.email')}</span>
-                      <span style={{ color: 'var(--color-text)', fontWeight: 500, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.email}</span>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid #F2F2F7' }}>
+                      <span style={{ ...labelStyle }}>{t('registrations.email')}</span>
+                      <span style={{ color: '#1D1D1F', fontFamily: 'var(--font-body)', fontSize: 12, textAlign: 'end' }}>{approveResult.email}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.tempPassword')}</span>
-                      <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>{approveResult.temp_password}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid #F2F2F7' }}>
+                      <span style={{ ...labelStyle }}>{t('registrations.tempPassword')}</span>
+                      <span style={{ color: '#0071E3', fontFamily: 'var(--font-body)', fontSize: 12, textAlign: 'end' }}>{approveResult.temp_password}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>{t('registrations.groupAssigned')}</span>
-                      <span style={{ color: approveResult.group_assigned ? 'var(--color-success-text)' : 'var(--color-warning-text)', fontWeight: 500 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0' }}>
+                      <span style={{ ...labelStyle }}>{t('registrations.groupAssigned')}</span>
+                      <span style={{ color: approveResult.group_assigned ? '#34C759' : '#FF9500', fontSize: 13, textAlign: 'end' }}>
                         {approveResult.group_assigned ? t('common.yes') : t('registrations.noGroupFound')}
                       </span>
                     </div>
@@ -553,37 +508,37 @@ export default function Registrations() {
           ) : (
             /* ── Confirmation view ── */
             <div>
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
+              <p style={{ color: '#515154', fontSize: 14, margin: '0 0 16px', lineHeight: 1.6 }}>
                 <Trans
                   i18nKey="registrations.confirmApprove"
                   values={{ name: approveTarget.full_name }}
-                  components={{ b: <strong style={{ color: 'var(--color-text)' }} /> }}
+                  components={{ b: <strong style={{ color: '#1D1D1F', fontWeight: 500 }} /> }}
                 />
               </p>
 
-              <div style={{
-                background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: '16px 18px',
-                border: '1px solid var(--color-border)', marginBottom: 8,
+              <div style={{ borderRadius: 16,
+                background: '#F2F2F7', padding: '16px 18px',
+                border: '1px solid #E5E5EA', marginBottom: 8,
               }}>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
+                <div style={{ ...labelStyle, marginBottom: 12 }}>
                   {t('registrations.willAutomatically')}
                 </div>
-                <ul style={{ margin: 0, paddingBlock: 0, paddingInline: '18px 0', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)', lineHeight: 2 }}>
+                <ul style={{ margin: 0, paddingBlock: 0, paddingInline: '18px 0', color: '#515154', fontSize: 13, lineHeight: 2 }}>
                   <li>
-                    <Trans i18nKey="registrations.bulletAccount" components={{ b: <span style={{ color: 'var(--color-text)' }} /> }} />
+                    <Trans i18nKey="registrations.bulletAccount" components={{ b: <span style={{ color: '#1D1D1F' }} /> }} />
                   </li>
                   <li>
                     <Trans
                       i18nKey="registrations.bulletBranch"
                       values={{ branch: approveTarget.branch?.name ?? t('registrations.selectedBranch') }}
-                      components={{ b: <span style={{ color: 'var(--color-primary)' }} /> }}
+                      components={{ b: <span style={{ color: '#0071E3' }} /> }}
                     />
                   </li>
                   <li>
                     <Trans
                       i18nKey="registrations.bulletGroup"
                       values={{ coach: approveTarget.coach?.user?.name ?? t('registrations.selectedCoach') }}
-                      components={{ b: <span style={{ color: 'var(--color-primary)' }} /> }}
+                      components={{ b: <span style={{ color: '#0071E3' }} /> }}
                     />
                   </li>
                 </ul>
@@ -591,9 +546,9 @@ export default function Registrations() {
 
               {actionError && (
                 <div style={{
-                  background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
-                  borderRadius: 'var(--radius-md)', padding: '10px 14px', marginTop: 12,
-                  color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)',
+                  background: '#FFFFFF', border: '1px solid #FF3B30',
+                  padding: '10px 14px', marginTop: 12,
+                  color: '#FF3B30', fontSize: 13,
                 }}>
                   {actionError}
                 </div>
@@ -609,16 +564,15 @@ export default function Registrations() {
                   {actionSaving ? (
                     <>
                       <div style={{
-                        width: 14, height: 14, borderRadius: '50%',
-                        border: '2px solid var(--color-border)',
-                        borderTopColor: 'var(--color-primary)',
+                        width: 14, height: 14, border: '2px solid rgba(242,242,242,0.35)',
+                        borderTopColor: '#F5F5F7',
                         animation: 'spin 0.8s linear infinite',
                       }} />
                       {t('registrations.approving')}
                     </>
                   ) : (
                     <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                       {t('registrations.approveTitle')}
@@ -637,28 +591,28 @@ export default function Registrations() {
           title={t('registrations.rejectTitle')}
           onClose={closeRejectModal}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" />
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           }
         >
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', margin: '0 0 16px', lineHeight: 1.6 }}>
+          <p style={{ color: '#515154', fontSize: 14, margin: '0 0 16px', lineHeight: 1.6 }}>
             <Trans
               i18nKey="registrations.confirmReject"
               values={{ name: rejectTarget.full_name }}
-              components={{ b: <strong style={{ color: 'var(--color-text)' }} /> }}
+              components={{ b: <strong style={{ color: '#1D1D1F', fontWeight: 500 }} /> }}
             />
           </p>
 
           <div style={{
-            background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
-            borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: 8,
-            color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)', lineHeight: 1.5,
+            background: '#FFFFFF', border: '1px solid #FF3B30',
+            padding: '12px 16px', marginBottom: 8,
+            color: '#FF3B30', fontSize: 13, lineHeight: 1.5,
             display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -668,9 +622,9 @@ export default function Registrations() {
 
           {actionError && (
             <div style={{
-              background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger)',
-              borderRadius: 'var(--radius-md)', padding: '10px 14px', marginTop: 12,
-              color: 'var(--color-danger-text)', fontSize: 'var(--text-sm)',
+              background: '#FFFFFF', border: '1px solid #FF3B30',
+              padding: '10px 14px', marginTop: 12,
+              color: '#FF3B30', fontSize: 13,
             }}>
               {actionError}
             </div>
@@ -686,16 +640,15 @@ export default function Registrations() {
               {actionSaving ? (
                 <>
                   <div style={{
-                    width: 14, height: 14, borderRadius: '50%',
-                    border: '2px solid var(--color-danger-bg)',
-                    borderTopColor: 'var(--color-danger-text)',
+                    width: 14, height: 14, border: '2px solid rgba(255,59,48,0.25)',
+                    borderTopColor: '#FF3B30',
                     animation: 'spin 0.8s linear infinite',
                   }} />
                   {t('registrations.rejecting')}
                 </>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>

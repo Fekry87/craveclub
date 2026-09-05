@@ -1,12 +1,13 @@
 const variants = {
-  success:  { bg: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'rgba(16, 185, 129, 0.25)' },
-  warning:  { bg: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.25)' },
-  danger:   { bg: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: 'rgba(239, 68, 68, 0.25)' },
-  info:     { bg: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.25)' },
-  neutral:  { bg: 'rgba(148, 163, 184, 0.12)', color: '#94a3b8', border: 'rgba(148, 163, 184, 0.2)' },
-  pending:  { bg: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: 'rgba(245, 158, 11, 0.25)' },
-  approved: { bg: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'rgba(16, 185, 129, 0.25)' },
-  rejected: { bg: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: 'rgba(239, 68, 68, 0.25)' },
+  success:  { bg: 'rgba(52,199,89,0.14)',  color: '#1E7A3B' },
+  warning:  { bg: 'rgba(255,149,0,0.16)',  color: '#A35A00' },
+  danger:   { bg: 'rgba(255,59,48,0.12)',  color: '#B12A20' },
+  info:     { bg: 'rgba(0,113,227,0.12)',  color: '#0058B3' },
+  neutral:  { bg: '#F2F2F7',               color: '#515154' },
+  accent:   { bg: 'rgba(0,113,227,0.12)',  color: '#0058B3' },
+  pending:  { bg: 'rgba(255,149,0,0.16)',  color: '#A35A00' },
+  approved: { bg: 'rgba(52,199,89,0.14)',  color: '#1E7A3B' },
+  rejected: { bg: 'rgba(255,59,48,0.12)',  color: '#B12A20' },
 };
 
 export function Badge({ variant = 'neutral', label, children }) {
@@ -14,10 +15,9 @@ export function Badge({ variant = 'neutral', label, children }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
-      padding: '3px 10px', borderRadius: 20,
-      fontSize: 12, fontWeight: 600, lineHeight: '18px',
+      padding: '3px 9px', borderRadius: 980,
+      fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, lineHeight: '16px',
       background: v.bg, color: v.color,
-      border: `1px solid ${v.border}`,
       textTransform: 'capitalize', whiteSpace: 'nowrap',
     }}>
       {label || children}

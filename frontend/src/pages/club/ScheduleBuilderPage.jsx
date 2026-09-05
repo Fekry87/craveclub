@@ -50,18 +50,18 @@ function WeekdayPicker({ selected = [], onChange }) {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: '50%',
-                border: active ? '2px solid #22d3ee' : '2px solid rgba(34,211,238,0.15)',
-                background: active ? 'rgba(34,211,238,0.15)' : 'transparent',
-                color: active ? '#22d3ee' : '#64748b',
+                borderRadius: 20,
+                border: `1px solid ${active ? '#0071E3' : '#E5E5EA'}`,
+                background: active ? '#0071E3' : '#FFFFFF',
+                color: active ? '#FFFFFF' : '#515154',
                 cursor: 'pointer',
                 fontSize: 13,
-                fontWeight: 600,
-                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: 500,
+                fontFamily: 'var(--font-body)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.2s ease',
+                transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
               }}
             >
               {d.label}
@@ -69,7 +69,10 @@ function WeekdayPicker({ selected = [], onChange }) {
           );
         })}
       </div>
-      <div style={{ fontSize: 11, color: '#64748b', marginTop: 6 }}>
+      <div style={{
+        fontSize: 11, color: '#6E6E73', marginTop: 8,
+        fontFamily: 'var(--font-body)',
+      }}>
         {selected.length} day{selected.length !== 1 ? 's' : ''} per week selected
       </div>
     </div>
@@ -98,7 +101,10 @@ function ScheduleCalendar({
 
   if (!viewMonth) {
     return (
-      <div style={{ color: '#64748b', textAlign: 'center', padding: 40, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{
+        color: '#6E6E73', textAlign: 'center', padding: 40, fontSize: 11,
+        fontFamily: 'var(--font-body)',
+      }}>
         Set period dates to see calendar preview
       </div>
     );
@@ -124,21 +130,24 @@ function ScheduleCalendar({
   const nextMonth = () => setViewMonth(new Date(year, month + 1, 1));
 
   const getCellStyle = (dateStr) => {
-    if (!startDate || !endDate) return {};
+    if (!startDate || !endDate) return { border: '1px solid #E5E5EA', color: '#1D1D1F' };
     const d = new Date(dateStr);
     const inPeriod = d >= startDate && d <= endDate;
-    if (!inPeriod) return { background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.2)' };
-    if (holidaySet.has(dateStr)) return { background: 'rgba(239,68,68,0.25)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' };
-    if (generatedSet.has(dateStr)) return { background: 'rgba(34,197,94,0.2)', color: '#86efac', border: '1px solid rgba(34,197,94,0.3)', cursor: 'pointer' };
-    if (previewSet.has(dateStr)) return { background: 'rgba(59,130,246,0.2)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.3)' };
-    return { color: '#94a3b8' };
+    if (!inPeriod) return { border: '1px solid #F2F2F7', color: '#6E6E73' };
+    if (holidaySet.has(dateStr)) return { border: '1px solid #FF3B30', color: '#FF3B30' };
+    if (generatedSet.has(dateStr)) return { border: '1px solid #E5E5EA', color: '#1D1D1F', cursor: 'pointer' };
+    if (previewSet.has(dateStr)) return { border: '1px solid #E5E5EA', background: '#F2F2F7', color: '#1D1D1F' };
+    return { border: '1px solid #E5E5EA', color: '#515154' };
   };
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <button type="button" onClick={prevMonth} style={navBtnStyle}>&lt;</button>
-        <span style={{ fontWeight: 600, color: '#f1f5f9', fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>
+        <span style={{
+          color: '#1D1D1F', fontSize: 16, fontFamily: 'var(--font-display)', fontWeight: 600,
+          letterSpacing: '-0.02em', lineHeight: 1,
+        }}>
           {monthNames[month]} {year}
         </span>
         <button type="button" onClick={nextMonth} style={navBtnStyle}>&gt;</button>
@@ -146,7 +155,10 @@ function ScheduleCalendar({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center' }}>
         {dayLabels.map((l) => (
-          <div key={l} style={{ fontSize: 11, color: '#64748b', padding: '4px 0', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>{l}</div>
+          <div key={l} style={{
+            fontSize: 11, color: '#6E6E73', padding: '6px 0',
+            fontFamily: 'var(--font-body)',
+          }}>{l}</div>
         ))}
         {cells.map((day, i) => {
           if (day === null) return <div key={`e-${i}`} />;
@@ -158,48 +170,55 @@ function ScheduleCalendar({
               key={dateStr}
               onClick={() => clickable && onDayClick?.(dateStr)}
               style={{
-                padding: '6px 2px',
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: 500,
-                transition: 'all 0.15s',
+                position: 'relative',
+                padding: '8px 2px',
+                fontSize: 12,
+                fontFamily: 'var(--font-body)',
+                transition: 'border-color 0.15s ease',
                 cursor: clickable ? 'pointer' : 'default',
-                border: '1px solid transparent',
                 ...style,
               }}
             >
               {day}
+              {generatedSet.has(dateStr) && (
+                <span style={{
+                  position: 'absolute', bottom: 3, insetInlineEnd: 3,
+                  width: 6, height: 6, borderRadius: 3, background: '#0071E3', display: 'block',
+                }} />
+              )}
             </div>
           );
         })}
       </div>
 
       <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
-        <Legend color="rgba(59,130,246,0.4)" label="Session day" />
-        <Legend color="rgba(34,197,94,0.4)" label="Generated" />
-        <Legend color="rgba(239,68,68,0.4)" label="Holiday" />
+        <Legend color="#F2F2F7" label="Session day" />
+        <Legend color="#0071E3" label="Generated" />
+        <Legend color="#FF3B30" label="Holiday" />
       </div>
     </div>
   );
 }
 
-const navBtnStyle = {
-  background: 'rgba(6,13,31,0.6)',
-  border: '1px solid rgba(34,211,238,0.10)',
-  color: '#94a3b8',
-  borderRadius: 8,
+const navBtnStyle = { borderRadius: 16,
+  background: '#FFFFFF',
+  border: '1px solid #AEAEB2',
+  color: '#1D1D1F',
   width: 32,
   height: 32,
   cursor: 'pointer',
-  fontSize: 14,
-  transition: 'all 0.2s ease',
+  fontSize: 13,
+  fontFamily: 'var(--font-body)',
+  transition: 'border-color 0.15s ease',
 };
 
 function Legend({ color, label }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{ width: 12, height: 12, borderRadius: 3, background: color }} />
-      <span style={{ fontSize: 11, color: '#64748b', fontFamily: "'DM Sans', sans-serif" }}>{label}</span>
+      <div style={{ width: 10, height: 10, background: color, border: '1px solid #E5E5EA' }} />
+      <span style={{
+        fontSize: 11, color: '#6E6E73', fontFamily: 'var(--font-body)',
+      }}>{label}</span>
     </div>
   );
 }
@@ -210,9 +229,13 @@ function HolidayDialog({ date, onConfirm, onCancel, hasSession, t }) {
   return (
     <div style={overlayStyle}>
       <div style={dialogStyle}>
-        <h3 style={{ margin: '0 0 8px', color: '#f1f5f9', fontSize: 15, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Add Holiday: {date}</h3>
+        <h3 style={{
+          margin: '0 0 16px', color: '#1D1D1F', fontSize: 18,
+          fontFamily: 'var(--font-display)', fontWeight: 600,
+          letterSpacing: '-0.02em', lineHeight: 1,
+        }}>Add Holiday: {date}</h3>
         {hasSession && (
-          <div style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, color: '#fbbf24', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #FF9500', padding: '8px 12px', marginBottom: 12, color: '#FF9500', fontSize: 13, fontFamily: 'var(--font-body)' }}>
             A session exists on this date and will be cancelled.
           </div>
         )}
@@ -224,8 +247,8 @@ function HolidayDialog({ date, onConfirm, onCancel, hasSession, t }) {
           style={inputStyle}
         />
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-          <button type="button" onClick={onCancel} style={cancelBtnStyle}>{t('actions.cancel')}</button>
-          <button type="button" onClick={() => onConfirm(reason)} style={confirmBtnStyle}>{t('actions.confirm')}</button>
+          <button type="button" className="pl-btn pl-btn-ghost" onClick={onCancel}>{t('actions.cancel')}</button>
+          <button type="button" className="pl-btn pl-btn-primary" onClick={() => onConfirm(reason)}>{t('actions.confirm')}</button>
         </div>
       </div>
     </div>
@@ -493,18 +516,16 @@ export default function ScheduleBuilderPage() {
     <div>
       {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed', top: 20, right: 20, zIndex: 1000,
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.95) 100%)',
-          border: '1px solid rgba(34,211,238,0.15)',
-          borderRadius: 14, padding: '14px 20px',
-          color: '#f1f5f9', fontSize: 13, fontWeight: 500,
-          fontFamily: "'DM Sans', sans-serif",
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        <div style={{ borderRadius: 14, position: 'fixed', top: 20, insetInlineEnd: 20, zIndex: 1000,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          padding: '14px 20px',
+          color: '#1D1D1F', fontSize: 11,
+          fontFamily: 'var(--font-body)',
           animation: 'fadeInUp 0.3s ease-out',
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0, animation: 'glowPulse 2s infinite' }} />
+          <span style={{ width: 6, height: 6, borderRadius: 3, background: '#0071E3', flexShrink: 0 }} />
           {toast}
         </div>
       )}
@@ -525,39 +546,34 @@ export default function ScheduleBuilderPage() {
       {/* Error Banner */}
       {error && (
         <div style={{
-          background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.20)',
-          borderRadius: 14, padding: '12px 16px', marginBottom: 20,
-          color: '#f43f5e', fontSize: 13, fontFamily: "'DM Sans', sans-serif",
+          background: '#FFFFFF', border: '1px solid #FF3B30',
+          padding: '12px 16px', marginBottom: 20,
+          color: '#FF3B30', fontSize: 13, fontFamily: 'var(--font-body)',
           display: 'flex', alignItems: 'center', gap: 8,
           animation: 'fadeInUp 0.3s ease-out',
         }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span style={{ flex: 1 }}>{error}</span>
-          <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: 16, padding: 0 }}>x</button>
+          <button type="button" onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', fontSize: 16, padding: 0 }}>x</button>
         </div>
       )}
 
       {/* Two-Column Builder */}
       <div className="schedule-builder-grid" style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 16, marginBottom: 22 }}>
         {/* Left Panel - Form */}
-        <div style={{
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-          border: '1px solid rgba(34,211,238,0.06)',
-          borderRadius: 18, padding: '26px 28px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
+        <div style={{ borderRadius: 16,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          padding: '26px 28px',
           animation: 'fadeInUp 0.4s ease-out 0.1s both',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h3 style={{ color: '#22d3ee', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h3 style={{ color: '#1D1D1F', fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               {editingSchedule ? 'Edit Schedule' : 'New Schedule'}
             </h3>
             {editingSchedule && (
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{ ...smallBtnStyle, fontSize: 11, padding: '3px 8px' }}
-              >
+              <button type="button" className="pl-btn pl-btn-ghost pl-btn-sm" onClick={resetForm}>
                 Cancel Edit
               </button>
             )}
@@ -598,7 +614,7 @@ export default function ScheduleBuilderPage() {
                   onChange={(e) => handleChange('period_start', e.target.value)}
                   style={{ ...inputStyle, flex: 1 }}
                 />
-                <span style={{ color: '#64748b', fontSize: 13 }}>to</span>
+                <span style={{ color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)',}}>to</span>
                 <input
                   type="date"
                   value={form.period_end}
@@ -607,7 +623,7 @@ export default function ScheduleBuilderPage() {
                 />
               </div>
               {durationDays > 0 && (
-                <div style={{ fontSize: 11, color: durationDays > 365 ? '#f43f5e' : '#64748b', marginTop: 4, fontFamily: "'DM Sans', sans-serif" }}>
+                <div style={{ fontSize: 11, color: durationDays > 365 ? '#FF3B30' : '#6E6E73', marginTop: 8, fontFamily: 'var(--font-body)',}}>
                   Duration: {durationDays} days
                   {durationDays > 365 && ' (exceeds 365 day limit)'}
                 </div>
@@ -637,7 +653,7 @@ export default function ScheduleBuilderPage() {
                     onClick={() => handleChange('duration_minutes', Math.max(30, form.duration_minutes - 15))}
                     style={stepBtnStyle}
                   >-</button>
-                  <span style={{ color: '#f1f5f9', fontSize: 13, minWidth: 50, textAlign: 'center', fontFamily: "'DM Sans', sans-serif" }}>
+                  <span style={{ color: '#1D1D1F', fontSize: 12, minWidth: 56, textAlign: 'center', fontFamily: 'var(--font-body)',}}>
                     {form.duration_minutes} min
                   </span>
                   <button
@@ -679,30 +695,18 @@ export default function ScheduleBuilderPage() {
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
+                  className="pl-btn pl-btn-primary"
                   onClick={handleSaveEdit}
                   disabled={saving}
-                  style={{
-                    ...primaryBtnStyle,
-                    flex: 1,
-                    opacity: saving ? 0.6 : 1,
-                    background: 'rgba(52,211,153,0.12)',
-                    border: '1px solid rgba(52,211,153,0.25)',
-                    color: '#34d399',
-                  }}
+                  style={{ flex: 1, justifyContent: 'center' }}
                 >
                   {saving ? t('loading.saving') : t('actions.saveChanges')}
                 </button>
                 <button
                   type="button"
+                  className="pl-btn pl-btn-ghost"
                   onClick={resetForm}
-                  style={{
-                    ...primaryBtnStyle,
-                    flex: 0,
-                    minWidth: 100,
-                    background: 'rgba(6,13,31,0.6)',
-                    border: '1px solid rgba(34,211,238,0.10)',
-                    color: '#94a3b8',
-                  }}
+                  style={{ minWidth: 100, justifyContent: 'center' }}
                 >
                   Cancel
                 </button>
@@ -710,12 +714,10 @@ export default function ScheduleBuilderPage() {
             ) : (
               <button
                 type="button"
+                className="pl-btn pl-btn-primary"
                 onClick={handleCreateAndPreview}
                 disabled={previewing || saving}
-                style={{
-                  ...primaryBtnStyle,
-                  opacity: previewing ? 0.6 : 1,
-                }}
+                style={{ width: '100%', justifyContent: 'center' }}
               >
                 {previewing ? 'Creating preview...' : 'Preview Schedule'}
               </button>
@@ -724,15 +726,14 @@ export default function ScheduleBuilderPage() {
         </div>
 
         {/* Right Panel - Calendar */}
-        <div style={{
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-          border: '1px solid rgba(34,211,238,0.06)',
-          borderRadius: 18, padding: '26px 28px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
+        <div style={{ borderRadius: 16,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          padding: '26px 28px',
           animation: 'fadeInUp 0.4s ease-out 0.15s both',
         }}>
-          <h3 style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 18px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <h3 style={{ color: '#1D1D1F', fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid #E5E5EA', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
             Calendar Preview
           </h3>
 
@@ -747,29 +748,33 @@ export default function ScheduleBuilderPage() {
 
           {/* Preview Summary */}
           {previewData && !generatedResult && (
-            <div style={{
+            <div style={{ borderRadius: 16,
               marginTop: 20,
-              background: 'rgba(34,211,238,0.06)',
-              border: '1px solid rgba(34,211,238,0.12)',
-              borderRadius: 14,
+              background: '#F2F2F7',
+              border: '1px solid #E5E5EA',
               padding: 16,
             }}>
-              <div style={{ color: '#22d3ee', fontSize: 13, fontWeight: 600, marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>
+              <div style={{
+                color: '#1D1D1F', fontSize: 15, marginBottom: 10,
+                fontFamily: 'var(--font-display)', fontWeight: 600,
+                letterSpacing: '-0.02em', lineHeight: 1.2,
+              }}>
                 {previewData.total} sessions will be created in {durationDays} days
               </div>
               {previewData.holiday_dates?.length > 0 && (
-                <div style={{ color: '#f43f5e', fontSize: 12, marginBottom: 8 }}>
+                <div style={{
+                  color: '#FF3B30', fontSize: 11, marginBottom: 12,
+                  fontFamily: 'var(--font-body)',
+                }}>
                   {previewData.holiday_dates.length} holiday(s) excluded
                 </div>
               )}
               <button
                 type="button"
+                className="pl-btn pl-btn-accent"
                 onClick={handleGenerate}
                 disabled={generating}
-                style={{
-                  ...generateBtnStyle,
-                  opacity: generating ? 0.6 : 1,
-                }}
+                style={{ width: '100%', justifyContent: 'center' }}
               >
                 {generating ? 'Generating...' : 'Confirm & Create Sessions'}
               </button>
@@ -778,18 +783,25 @@ export default function ScheduleBuilderPage() {
 
           {/* Generation Result */}
           {generatedResult && (
-            <div style={{
+            <div style={{ borderRadius: 16,
               marginTop: 20,
-              background: 'rgba(52,211,153,0.06)',
-              border: '1px solid rgba(52,211,153,0.15)',
-              borderRadius: 14,
+              background: '#FFFFFF',
+              border: '1px solid #E5E5EA',
+              borderInlineStart: '3px solid #34C759',
               padding: 16,
             }}>
-              <div style={{ color: '#34d399', fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>
+              <div style={{
+                color: '#34C759', fontSize: 15,
+                fontFamily: 'var(--font-display)', fontWeight: 600,
+                letterSpacing: '-0.02em', lineHeight: 1.2,
+              }}>
                 {generatedResult.created} sessions created successfully
               </div>
               {generatedResult.skipped > 0 && (
-                <div style={{ color: '#64748b', fontSize: 12, marginTop: 4 }}>
+                <div style={{
+                  color: '#6E6E73', fontSize: 11, marginTop: 8,
+                  fontFamily: 'var(--font-body)',
+                }}>
                   {generatedResult.skipped} skipped (already exist or holiday)
                 </div>
               )}
@@ -799,25 +811,27 @@ export default function ScheduleBuilderPage() {
       </div>
 
       {/* Schedules List Table */}
-      <div style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        border: '1px solid rgba(34,211,238,0.06)',
-        borderRadius: 18, padding: '26px 28px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
+      <div style={{ borderRadius: 16,
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        padding: '26px 28px',
         animation: 'fadeInUp 0.4s ease-out 0.2s both',
       }}>
-        <h3 style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 18px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <h3 style={{ color: '#1D1D1F', fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, margin: '0 0 18px', paddingBottom: 12, borderBottom: '1px solid #E5E5EA', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
           Existing Schedules
         </h3>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 30, color: '#94a3b8' }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.08)', borderTopColor: '#22d3ee', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
-            <div style={{ fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{t('loading.default')}</div>
+          <div style={{ textAlign: 'center', padding: 30, color: '#515154' }}>
+            <div style={{ width: 24, height: 24, border: '2px solid #E5E5EA', borderTopColor: '#1D1D1F', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
+            <div style={{ fontSize: 11, color: '#6E6E73', fontFamily: 'var(--font-body)',}}>{t('loading.default')}</div>
           </div>
         ) : schedules.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 30, color: '#64748b', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
+          <div style={{
+            textAlign: 'center', padding: 30, color: '#6E6E73', fontSize: 11,
+            fontFamily: 'var(--font-body)',
+          }}>
             No recurring schedules yet. Create one above.
           </div>
         ) : (
@@ -832,7 +846,7 @@ export default function ScheduleBuilderPage() {
               </thead>
               <tbody>
                 {schedules.map((s) => (
-                  <tr key={s.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <tr key={s.id} style={{ borderBottom: '1px solid #E5E5EA' }}>
                     <td style={tdStyle}>{s.name}</td>
                     <td style={tdStyle}>{s.group?.name || '-'}</td>
                     <td style={tdStyle}>
@@ -850,15 +864,15 @@ export default function ScheduleBuilderPage() {
                     </td>
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button type="button" onClick={() => handleEditSchedule(s)} style={{ ...smallBtnStyle, color: '#fbbf24', borderColor: 'rgba(245,158,11,0.3)' }}>
+                        <button type="button" className="pl-btn pl-btn-ghost pl-btn-sm" onClick={() => handleEditSchedule(s)}>
                           Edit
                         </button>
                         {s.status === 'draft' && (
-                          <button type="button" onClick={() => handleGenerateFromTable(s.id)} style={smallBtnStyle}>
+                          <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" onClick={() => handleGenerateFromTable(s.id)}>
                             Generate
                           </button>
                         )}
-                        <button type="button" onClick={() => handleDeleteSchedule(s.id)} style={{ ...smallBtnStyle, color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}>
+                        <button type="button" className="pl-btn pl-btn-danger pl-btn-sm" onClick={() => handleDeleteSchedule(s.id)}>
                           Delete
                         </button>
                       </div>
@@ -877,16 +891,17 @@ export default function ScheduleBuilderPage() {
 // ── Status Badge ───────────────────────────────────────────
 function StatusBadge({ status }) {
   const map = {
-    draft: { bg: 'rgba(148,163,184,0.08)', color: '#94a3b8', border: 'rgba(148,163,184,0.15)' },
-    active: { bg: 'rgba(52,211,153,0.08)', color: '#34d399', border: 'rgba(52,211,153,0.15)' },
-    completed: { bg: 'rgba(34,211,238,0.08)', color: '#22d3ee', border: 'rgba(34,211,238,0.15)' },
+    draft: { color: '#6E6E73', border: '#AEAEB2' },
+    active: { color: '#34C759', border: '#34C759' },
+    completed: { color: '#1D1D1F', border: '#1D1D1F' },
   };
   const s = map[status] || map.draft;
   return (
     <span style={{
-      padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
-      fontFamily: "'DM Sans', sans-serif",
+      padding: '3px 10px', fontSize: 10,
+      background: 'transparent', color: s.color, border: `1px solid ${s.border}`,
+      fontFamily: 'var(--font-body)', letterSpacing: '-0.02em',
+      display: 'inline-block',
     }}>
       {status}
     </span>
@@ -897,7 +912,10 @@ function StatusBadge({ status }) {
 function FieldGroup({ label, children }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>
+      <label style={{
+        display: 'block', fontSize: 11, color: '#6E6E73', marginBottom: 8,
+        fontFamily: 'var(--font-body)',
+      }}>
         {label}
       </label>
       {children}
@@ -906,139 +924,72 @@ function FieldGroup({ label, children }) {
 }
 
 // ── Shared Styles ──────────────────────────────────────────
-const inputStyle = {
+const inputStyle = { borderRadius: 16,
   width: '100%',
-  padding: '10px 14px',
-  background: 'rgba(6,13,31,0.6)',
-  border: '1px solid rgba(34,211,238,0.10)',
-  borderRadius: 10,
-  color: '#e2e8f0',
-  fontSize: 13,
-  fontFamily: "'DM Sans', sans-serif",
+  height: 42,
+  padding: '0 12px',
+  background: '#FFFFFF',
+  border: '1px solid #AEAEB2',
+  color: '#1D1D1F',
+  fontSize: 14,
+  fontFamily: 'var(--font-body)',
   outline: 'none',
   boxSizing: 'border-box',
-  transition: 'border-color 0.2s ease',
+  transition: 'border-color 0.15s ease',
 };
 
-const primaryBtnStyle = {
-  width: '100%',
-  padding: '12px',
-  background: 'rgba(34,211,238,0.12)',
-  border: '1px solid rgba(34,211,238,0.25)',
-  borderRadius: 10,
-  color: '#22d3ee',
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: "'DM Sans', sans-serif",
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-};
 
-const generateBtnStyle = {
-  width: '100%',
-  padding: '12px',
-  background: 'rgba(52,211,153,0.12)',
-  border: '1px solid rgba(52,211,153,0.25)',
-  borderRadius: 10,
-  color: '#34d399',
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: "'DM Sans', sans-serif",
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-};
 
-const stepBtnStyle = {
-  width: 28,
-  height: 28,
-  borderRadius: 8,
-  border: '1px solid rgba(34,211,238,0.10)',
-  background: 'rgba(6,13,31,0.6)',
-  color: '#94a3b8',
+const stepBtnStyle = { borderRadius: 16,
+  width: 30,
+  height: 30,
+  border: '1px solid #AEAEB2',
+  background: '#FFFFFF',
+  color: '#1D1D1F',
   cursor: 'pointer',
   fontSize: 14,
+  fontFamily: 'var(--font-body)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  transition: 'all 0.2s ease',
+  transition: 'border-color 0.15s ease',
 };
 
-const smallBtnStyle = {
-  padding: '4px 10px',
-  fontSize: 11,
-  fontWeight: 600,
-  borderRadius: 6,
-  border: '1px solid rgba(34,211,238,0.15)',
-  background: 'rgba(34,211,238,0.06)',
-  color: '#22d3ee',
-  cursor: 'pointer',
-  fontFamily: "'DM Sans', sans-serif",
-  transition: 'all 0.2s ease',
-};
 
 const overlayStyle = {
   position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background: 'rgba(0,0,0,0.6)',
-  backdropFilter: 'blur(4px)',
+  inset: 0,
+  background: 'rgba(29,29,31,0.5)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: 999,
 };
 
-const dialogStyle = {
-  background: 'linear-gradient(145deg, rgba(13,31,60,0.95) 0%, rgba(10,22,40,0.95) 100%)',
-  borderRadius: 18,
+const dialogStyle = { borderRadius: 16,
+  background: '#FFFFFF',
   padding: 28,
   minWidth: 380,
-  border: '1px solid rgba(34,211,238,0.10)',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+  border: '1px solid #E5E5EA',
 };
 
-const cancelBtnStyle = {
-  padding: '8px 16px',
-  background: 'rgba(6,13,31,0.6)',
-  border: '1px solid rgba(34,211,238,0.10)',
-  borderRadius: 10,
-  color: '#94a3b8',
-  cursor: 'pointer',
-  fontSize: 13,
-  fontFamily: "'DM Sans', sans-serif",
-};
 
-const confirmBtnStyle = {
-  padding: '8px 16px',
-  background: 'rgba(34,211,238,0.12)',
-  border: '1px solid rgba(34,211,238,0.25)',
-  borderRadius: 10,
-  color: '#22d3ee',
-  cursor: 'pointer',
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: "'DM Sans', sans-serif",
-};
 
 const thStyle = {
   padding: '10px 14px',
-  textAlign: 'left',
+  textAlign: 'start',
   fontSize: 11,
-  fontWeight: 600,
-  color: '#64748b',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  borderBottom: '1px solid rgba(255,255,255,0.04)',
-  background: 'rgba(13,31,60,0.4)',
-  fontFamily: "'DM Sans', sans-serif",
+  fontWeight: 500,
+  color: '#6E6E73',
+  borderBottom: '1px solid #E5E5EA',
+  background: '#FFFFFF',
+  fontFamily: 'var(--font-body)',
 };
 
 const tdStyle = {
   padding: '10px 14px',
   fontSize: 13,
-  color: '#94a3b8',
-  fontFamily: "'DM Sans', sans-serif",
-  borderBottom: '1px solid rgba(255,255,255,0.04)',
+  color: '#1D1D1F',
+  fontFamily: 'var(--font-body)',
+  borderBottom: '1px solid #E5E5EA',
 };
