@@ -5,6 +5,10 @@ import api from '../../api/axios';
 import { getAvatarColor } from '../../components/CrudTable';
 import ClubSportModulesPanel from './ClubSportModulesPanel';
 
+const labelStyle = {
+  fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+};
+
 const featureLabels = {
   leaderboard_enabled: { label: 'Leaderboard', desc: 'Gamified XP ranking system for swimmers', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
   evaluations_enabled: { label: 'Evaluations', desc: 'Coach evaluation and rating system', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
@@ -20,27 +24,45 @@ function FeatureToggleCard({ featureKey, enabled, onToggle }) {
   const f = featureLabels[featureKey];
   return (
     <div onClick={onToggle}
-      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, background: enabled ? 'rgba(139,92,246,0.04)' : 'rgba(51,65,85,0.08)', border: `1px solid ${enabled ? 'rgba(139,92,246,0.12)' : 'rgba(51,65,85,0.15)'}`, cursor: 'pointer', transition: 'all 0.2s' }}
+      onMouseEnter={e => { if (!enabled) e.currentTarget.style.borderColor = '#86868B'; }}
+      onMouseLeave={e => { if (!enabled) e.currentTarget.style.borderColor = '#E5E5EA'; }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+        background: '#FFFFFF', border: `1px solid ${enabled ? '#1D1D1F' : '#E5E5EA'}`,
+        cursor: 'pointer', transition: 'border-color 0.15s ease',
+      }}
     >
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: enabled ? 'rgba(139,92,246,0.1)' : 'rgba(51,65,85,0.15)', border: `1px solid ${enabled ? 'rgba(139,92,246,0.15)' : 'rgba(51,65,85,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={enabled ? '#a78bfa' : '#475569'} strokeWidth="2" strokeLinecap="round"><path d={f.icon} /></svg>
+      <div style={{
+        width: 36, height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: enabled ? '#F2F2F7' : '#FFFFFF', border: `1px solid ${enabled ? '#E5E5EA' : '#E5E5EA'}`,
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={enabled ? '#1D1D1F' : '#AEAEB2'} strokeWidth="2" strokeLinecap="round"><path d={f.icon} /></svg>
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ color: enabled ? '#e2e8f0' : '#64748b', fontSize: 14, fontWeight: 600 }}>{f.label}</div>
-        <div style={{ color: '#475569', fontSize: 12, marginTop: 2 }}>{f.desc}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          color: enabled ? '#1D1D1F' : '#6E6E73', fontSize: 14, fontWeight: 500,
+          fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
+        }}>{f.label}</div>
+        <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 3, fontFamily: 'var(--font-body)' }}>{f.desc}</div>
       </div>
-      <div style={{ width: 42, height: 22, borderRadius: 11, background: enabled ? 'linear-gradient(135deg, #8b5cf6, #a78bfa)' : 'rgba(51,65,85,0.4)', padding: 2, transition: 'all 0.25s', flexShrink: 0 }}>
-        <div style={{ width: 18, height: 18, borderRadius: 9, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'all 0.25s', transform: enabled ? 'translateX(20px)' : 'translateX(0)' }} />
+      <div style={{ width: 42, height: 22, background: enabled ? '#1D1D1F' : '#AEAEB2', padding: 2, transition: 'background 0.2s ease', flexShrink: 0 }}>
+        <div style={{ width: 18, height: 18, background: '#F5F5F7', transition: 'transform 0.2s ease', transform: enabled ? 'translateX(20px)' : 'translateX(0)' }} />
       </div>
     </div>
   );
 }
 
-function StatBox({ label, value, color }) {
+function StatBox({ label, value, index }) {
   return (
-    <div style={{ textAlign: 'center', padding: '16px 12px', borderRadius: 12, background: 'rgba(6,13,31,0.3)', border: '1px solid rgba(51,65,85,0.15)' }}>
-      <div style={{ color, fontSize: 28, fontWeight: 700, fontFamily: "'Outfit', sans-serif", lineHeight: 1 }}>{value}</div>
-      <div style={{ color: '#64748b', fontSize: 12, fontWeight: 500, marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+    <div style={{ borderRadius: 16, padding: '18px 16px', background: '#FFFFFF', border: '1px solid #E5E5EA' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ ...labelStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</div>
+        
+      </div>
+      <div style={{
+        color: '#1D1D1F', fontSize: 30, fontWeight: 500, fontFamily: 'var(--font-display)',
+        letterSpacing: '-0.02em', lineHeight: 1, marginTop: 14,
+      }}>{value}</div>
     </div>
   );
 }
@@ -65,10 +87,10 @@ export default function CorporateClubDetail() {
   };
 
   if (!club) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#64748b' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#6E6E73' }}>
       <div style={{ textAlign: 'center' }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="rgba(139,92,246,0.2)" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" /></svg>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
+        <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}><circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="3" /><path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#1D1D1F" strokeWidth="3" strokeLinecap="round" /></svg>
+        <div style={labelStyle}>{t('loading.default')}</div>
       </div>
     </div>
   );
@@ -79,60 +101,65 @@ export default function CorporateClubDetail() {
   return (
     <div>
       {/* Back button */}
-      <button onClick={() => navigate('/corporate/clubs')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#64748b', fontSize: 13, fontWeight: 500, cursor: 'pointer', marginBottom: 20, padding: 0 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+      <button onClick={() => navigate('/corporate/clubs')}
+        style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 18, padding: 0 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
         Back to Clubs
       </button>
 
       {/* Club Header */}
-      <div style={{ background: 'linear-gradient(145deg, rgba(13,31,60,0.85) 0%, rgba(139,92,246,0.06) 50%, rgba(13,31,60,0.65) 100%)', borderRadius: 22, padding: '32px 36px', border: '1px solid rgba(139,92,246,0.1)', position: 'relative', overflow: 'hidden', marginBottom: 24, animation: 'fadeInUp 0.5s ease-out' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent 10%, rgba(139,92,246,0.2) 50%, transparent 90%)' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 18, background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: ac.text, flexShrink: 0, boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>{initials}</div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: 0, letterSpacing: '-0.02em' }}>{club.name}</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-              <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, background: 'rgba(51,65,85,0.3)', color: '#94a3b8', fontFamily: "'DM Sans', monospace" }}>{club.slug}</span>
-              {club.contact_email && <span style={{ color: '#64748b', fontSize: 13 }}>{club.contact_email}</span>}
+      <div style={{ borderRadius: 16, background: '#FFFFFF', padding: '28px 32px', border: '1px solid #E5E5EA', marginBottom: 24, animation: 'fadeInUp 0.5s ease-out' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ borderRadius: 14,
+            width: 64, height: 64, background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, color: ac.text, flexShrink: 0,
+          }}>{initials}</div>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: '#1D1D1F', margin: 0,
+              letterSpacing: '-0.02em', lineHeight: 1,
+            }}>{club.name}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+              <span style={{ ...labelStyle, color: '#515154', padding: '2px 8px', border: '1px solid #AEAEB2' }}>{club.slug}</span>
+              {club.contact_email && <span style={{ color: '#6E6E73', fontSize: 13 }}>{club.contact_email}</span>}
             </div>
           </div>
           {/* Color swatches */}
           <div style={{ display: 'flex', gap: 6 }}>
             {[club.primary_color || club.theme_color, club.secondary_color, club.accent_color].filter(Boolean).map((color, i) => (
-              <div key={i} style={{ width: 28, height: 28, borderRadius: 8, background: color, border: '2px solid rgba(255,255,255,0.1)', boxShadow: `0 0 10px ${color}40` }} />
+              <div key={i} style={{ borderRadius: 6, width: 26, height: 26, background: color, border: '1px solid #E5E5EA' }} />
             ))}
           </div>
-          <button
-            onClick={() => navigate(`/corporate/clubs/${id}/branding`)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.2)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.1)'; }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>
+          <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm"
+            onClick={() => navigate(`/corporate/clubs/${id}/branding`)}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>
             Configure Branding
           </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 24, animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
-        <StatBox label="Users" value={club.users_count || 0} color="#a78bfa" />
-        <StatBox label="Swimmers" value={club.swimmer_profiles_count || 0} color="#22d3ee" />
-        <StatBox label="Coaches" value={club.coach_profiles_count || 0} color="#2dd4bf" />
-        <StatBox label="Groups" value={club.groups_count || 0} color="#38bdf8" />
-        <StatBox label="Sessions" value={club.training_sessions_count || 0} color="#fbbf24" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 24, animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+        <StatBox label="Users" value={club.users_count || 0} index={0} />
+        <StatBox label="Swimmers" value={club.swimmer_profiles_count || 0} index={1} />
+        <StatBox label="Coaches" value={club.coach_profiles_count || 0} index={2} />
+        <StatBox label="Groups" value={club.groups_count || 0} index={3} />
+        <StatBox label="Sessions" value={club.training_sessions_count || 0} index={4} />
       </div>
 
       {/* Feature Controls */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)', borderRadius: 18, padding: '24px 26px', border: '1px solid rgba(139,92,246,0.08)', animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          </div>
-          <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Feature Controls</h2>
-          {saving && <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 500, marginLeft: 'auto' }}>{t('loading.saving')}</span>}
+      <div style={{ borderRadius: 16, background: '#FFFFFF', padding: '22px 24px', border: '1px solid #E5E5EA', animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
+        <div style={{
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10,
+          paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid #E5E5EA',
+        }}>
+          <h2 style={{
+            margin: 0, color: '#1D1D1F', fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-display)',
+            letterSpacing: '-0.02em', lineHeight: 1,
+          }}>Feature Controls</h2>
+          {saving && <span style={{ ...labelStyle, color: '#0071E3' }}>{t('loading.saving')}</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
           {Object.keys(featureLabels).map(key => (
             <FeatureToggleCard key={key} featureKey={key} enabled={club.features?.[key] ?? true} onToggle={() => toggleFeature(key)} />
           ))}

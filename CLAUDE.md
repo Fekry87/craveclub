@@ -102,7 +102,9 @@
 - Session attendance endpoint (`GET /coach/sessions/{id}/attendance`) returns `end_time` and nested `group` object in session data — required by mobile
 - i18n: Frontend is bilingual (Arabic RTL + English LTR) via i18next + react-i18next; backend notification titles/bodies, risk reasons, SMS messages, and seeder data remain English-only
 - i18n config: `frontend/src/i18n/index.js` — fallbackLng: 'en', localStorage key `craveclubs_lang`, supported: ['ar', 'en']
-- Translation files: `frontend/src/locales/{en,ar}/common.json` — ~200 keys (nav, actions, status, auth, dashboard, forms, empty states, etc.)
+- Translation files: `frontend/src/locales/{en,ar}/common.json` — ~440 keys, key trees must stay identical (verify with a node key-diff before committing). Sections include nav, actions, status, auth, dashboard, per-page sections (analytics, registrations, subscriptions, branding, sportModules), plus `common` (currency, yes/no), `forms` (phonePlaceholder, phoneInvalid) and `registration` (PDPL consent/privacy copy)
+- i18n plurals: count-based keys use i18next v4 CLDR suffixes `_zero/_one/_two/_few/_many/_other` in BOTH files (Arabic needs all six: `شهر واحد / شهران / 3 أشهر / 11 شهرًا`). Legacy `_plural` keys are a v3 convention that i18next 25 does NOT honour without `compatibilityJSON`
+- `t(key, { defaultValue })` is the pattern for strings added in shared components/wizard steps before their keys land in both dictionaries — English default renders, Arabic appears once the key exists
 - DirectionProvider: `frontend/src/providers/DirectionProvider.jsx` — sets `document.documentElement.dir` + `lang` + body font; provides `useDirection()` hook returning `{ direction, isRtl }`
 - LanguageSwitcher: `frontend/src/components/LanguageSwitcher.jsx` — globe toggle, compact (icon) and full (icon+text) variants; toggles `i18n.changeLanguage()`
 - RTL font: IBM Plex Sans Arabic (Google Fonts) — applied via CSS `html[dir="rtl"]` rules in index.css
@@ -116,12 +118,17 @@
 - To deploy to production: merge staging → main via Pull Request on GitHub
 - Two separate repos: backend+frontend live in `github.com/Fekry87/craveclub` (this repo); the mobile app lives in `github.com/Fekry87/craveclubs-mobile` (the `Club App/SwimmingApp` directory). The mobile repo commits to `main` directly — branch first, PR, merge.
 - **Production deploys happen via Railway's native GitHub integration** (Railway watches `main` and auto-deploys on push), NOT the GitHub Actions `deploy.yml`. That `deploy.yml` deploy job is broken (`if: ${{ secrets.PRODUCTION_URL }}` — `secrets` is not allowed in `if:`, so the workflow fails at parse time in 0s on every merge). Its red X is cosmetic; do NOT "fix" it or you create a double-deploy race with Railway. The `ci.yml` workflow (tests + Pint lint) is the one that must stay green.
-- Production backend URL: `https://web-production-c3c32.up.railway.app`. Health: `/api/v1/health` (200 = healthy). The `api.craveclubs.com` custom domain is NOT set up (NXDOMAIN) — do not point anything at it until it's configured in Railway.
+- Production backend URL: `https://web-production-c3c32.up.railway.app`. Health: `/api/v1/health` (200 = healthy). Real domain scheme is **`.co`**: `app.craveclubs.co` = live portal frontend (Cloudflare-fronted Railway service `craveclub`); `api.craveclubs.co` has DNS but returns 502 until it's attached as a custom domain on the backend Railway service — do that, then flip the mobile API URL to it. `api.craveclubs.com` never existed (NXDOMAIN).
 - CI Pint lint gate: run `cd backend && vendor/bin/pint` before pushing — CI fails the whole lint step on ANY style issue across all 253 files (incl. pre-existing debt), not just changed files.
+- **CI does NOT run on pushes to `staging`** — `ci.yml` triggers only on `push` to `main`/`develop` and on `pull_request` to `main`. To get the MySQL+Redis test run on staging work, open the staging → main PR (opening ≠ deploying; only the merge deploys via Railway).
+- Frontend ESLint is NOT in CI. It has pre-existing `react-hooks` / `react-refresh` errors (e.g. `Cards.jsx` non-component export, `Date.now` in wizard steps) — don't be alarmed, and don't try to fix them as part of unrelated work.
 
 ## Common Commands
 - `cd backend && php artisan test` — run all tests (244 tests)
 - `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
+- `cd backend && composer audit` — must be clean before a release (dependency CVEs)
+- `cd frontend && npm audit fix` — fix frontend dependency CVEs (npm's advisory endpoint is flaky from this machine; retry on timeout)
+- `/grill-me` — local Claude Code skill (mattpocock/skills `grill-me` + `grilling`, in `.claude/skills/`, gitignored) — relentless design-tree interview before committing to a plan
 - `cd frontend && npx vitest run` — run all frontend tests (22 tests)
 - `cd backend && php artisan serve` — start API server (port 8000)
 - `cd frontend && npm run dev` — start Vite dev server (port 5173)
@@ -149,7 +156,7 @@
 - Registration approval chain: `registration.coach_id` → `coach_profiles.id` → `user_id` → `groups.coach_user_id` — used to auto-assign swimmers to groups
 - User model `'password' => 'hashed'` cast auto-hashes plain passwords on create — no need to call `Hash::make()`
 - User model has NO `is_active` column — `is_active` exists on clubs, branches, plans, but NOT users; do NOT pass `is_active` in `User::create()`
-- Migration numbering: sequential from `2024_01_01_000069_` — check last number before adding new migrations
+- Migration numbering: sequential from `2024_01_01_000071_` (last: `000071_add_consent_given_at_to_registrations`) — check last number before adding new migrations
 - Rate limits: env-configurable via `RATE_LIMIT_AUTH` (default 60) and `RATE_LIMIT_GUEST` (default 20) in AppServiceProvider — useful for load testing without code changes
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
@@ -193,6 +200,7 @@
 - `backend/app/Console/Commands/CheckQueueHealth.php` — queue health monitor: pending/failed counts, Sentry alerts, scheduled every 5min
 - `backend/app/Http/Controllers/Api/AccountDeletionController.php` — account deletion: requestDeletion, reactivate, status
 - `backend/tests/Feature/AccountDeletionTest.php` — 12 tests for full account deletion lifecycle
+- `backend/tests/Feature/ValidationTest.php` — 10 tests incl. PDPL consent timestamp recorded / nullable for older clients
 - `backend/docs/DEPLOYMENT.md` — Railway deployment guide: env vars, processes, post-deploy commands, queue management
 - `Procfile` — Railway process definitions: web, worker, scheduler, reverb
 - `backend/railway.json` — Railway build config: DOCKERFILE builder, dockerContext=backend
@@ -205,9 +213,14 @@
 - `frontend/src/contexts/AuthContext.jsx` — auth state management
 - `frontend/src/contexts/RegistrationContext.jsx` — registration wizard state (useReducer + sessionStorage + Outlet)
 - `frontend/src/lib/echo.js` — Laravel Echo instance factory (Reverb broadcaster, uses `crave_club_token`)
+- `frontend/src/lib/dates.js` — locale-aware `formatDate()` / `formatDateTime()` / `dateLocale()` following the active i18n language (Arabic → Gregorian + Latin digits)
+- `frontend/src/components/ui/Cards.jsx` — StatCard, CardInfoRow, CardActions (Edit/Delete via `t('actions.*')`), MobileCardWrapper, `getAvatarColor`
+- `backend/database/migrations/2024_01_01_000071_add_consent_given_at_to_registrations.php` — PDPL consent timestamp on registrations
+- `session_notes/PILOT-READINESS.md` — first-pilot decisions (KSA swimming club, free 4-week pilot, portal-first, no Kafka, PDPL disclose-and-defer) + what was fixed + open items
+- `session_notes/QA-AUDIT-REPORT.md` — full-stack QA audit findings and the fixes applied
 - `frontend/src/components/Layout.jsx` — main layout with sidebar + fixed content header bar (breadcrumb + NotificationBell) + scrollable content area; exports `NotificationBell` component
 - `frontend/src/i18n/index.js` — i18next configuration (LanguageDetector, localStorage, fallback)
-- `frontend/src/locales/en/common.json` — English translation dictionary (~200 keys)
+- `frontend/src/locales/en/common.json` — English translation dictionary (~440 keys)
 - `frontend/src/locales/ar/common.json` — Arabic translation dictionary (mirrors English)
 - `frontend/src/providers/DirectionProvider.jsx` — RTL/LTR direction context provider
 - `frontend/src/components/LanguageSwitcher.jsx` — language toggle component (compact/full)
@@ -419,7 +432,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - ClubAnalyticsService methods are cached (1hr TTL) — N+1 fixes reduce cold-cache query count from 50+ to 5-8 per endpoint
 - `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
 - Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min), backup:database (02:00 UTC), accounts:purge (03:00 UTC) — registered via `Schedule::command()`
-- Migration numbering: sequential from `2024_01_01_000069_` — check last number before adding new migrations
+- Migration numbering: sequential from `2024_01_01_000071_` (last: `000071_add_consent_given_at_to_registrations`) — check last number before adding new migrations
 - `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
 - Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
 - `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false
@@ -452,12 +465,15 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Frontend `MiniChart` bar mode: each bar's column wrapper needs `height:100%` + `justifyContent:flex-end` or bars compute to 0px (percentage height of a zero-height parent).
 - Sport module `icon` is a RemixIcon name (e.g. `drop-fill`) but the web has no RemixIcon font — `SportCard` maps known names to emoji with a sport-name-initial fallback (do NOT render `icon.charAt(0)`, which shows the wrong letter like "D" for Swimming).
 - `WeekdayPicker` (ScheduleBuilderPage) array is ordered Sun→Sat; RTL flips it visually via the container's `dir` — don't hardcode the reverse order.
-- All mobile API config points at the live Railway backend; `api.craveclubs.com` was removed from `eas.json` + code fallbacks (it's NXDOMAIN). When the custom domain is configured in Railway, flip `eas.json` base profile + `config/club.ts` + `branding.service.ts` fallbacks to it.
+- All mobile API config points at the live Railway backend; `api.craveclubs.com` was removed from `eas.json` + code fallbacks (it's NXDOMAIN). When `api.craveclubs.co` is attached to the backend service in Railway (returns 200), flip `eas.json` base profile + `config/club.ts` + `branding.service.ts` fallbacks to it.
 - Demo corporate admin is `admin@craveclubs.com` (seeder, `.com`); production admin is `admin@craveclubs.co` (deploy command `admin:create`, `.co`) — intentionally different (demo vs prod). Seeded club manager is a real name ("Mahmoud Sami") so the greeting isn't "Good …, Club".
 - Target market is **Saudi Arabia (KSA)**: currency is SAR via the i18n key `common.currency` ("SAR" / "ر.س") — never hardcode `EGP`; phone placeholders use `forms.phonePlaceholder` (`+966 5x xxx xxxx`).
 - Locale-aware dates: use `formatDate()` / `dateLocale()` from `frontend/src/lib/dates.js` instead of `toLocaleDateString('en-US', …)`. Arabic is pinned to `ar-SA-u-ca-gregory-nu-latn` — bare `ar-SA` defaults to the Hijri calendar + Arabic-Indic digits in most browsers.
 - RTL inline styles: use logical properties (`insetInlineStart`, `paddingInlineStart`, `textAlign: 'start'`) — inline `left:`/`textAlign:'left'` overrides the `html[dir="rtl"]` CSS rules and breaks Arabic layout (toggle knobs, search icons, table headers).
-- PDPL (Saudi data-protection) consent: registrations carry `consent_given_at` (migration 000071). The API accepts an optional `consent_given` boolean (`sometimes|boolean` — optional so older mobile builds keep working) and stores `now()` when true; the portal wizard (Step8) requires the checkbox and always sends `true`. `consent_given` is a request flag, never a column — it is `unset()` before `Registration::create()`.
+- PDPL (Saudi data-protection) consent: registrations carry `consent_given_at` (migration 000071). The API accepts an optional `consent_given` boolean (`sometimes|boolean` — optional so older mobile builds keep working) and stores `now()` when true; the portal wizard (Step8) requires the checkbox and always sends `true`. `consent_given` is a request flag, never a column — it is `unset()` before `Registration::create()`. The mobile registration screen does NOT send it yet (follow-up in the mobile repo).
 - Railway terminates TLS at its proxy: `bootstrap/app.php` has `trustProxies(at: '*', headers: X_FORWARDED_*)`. Without it `$request->secure()` is always false in production → HSTS never fires and generated URLs are `http://`. Do NOT remove it.
 - Dockerfile hardening: `expose_php = Off` (no `X-Powered-By: PHP/x.y`) and nginx `server_tokens off` — keep both when editing the image.
 - Dependency hygiene: `cd backend && composer audit` must report zero advisories before a release; the AWS SDK pulls in `mtdowling/jmespath.php`, which had a critical code-injection CVE below 2.9.1.
+- Railway has TWO environments (Staging + Production), each with its own Redis/MySQL. Railway-managed Redis security patches (e.g. RediShell CVE-2025-49844) need a click per environment; the app tolerates the Redis restart (cache try/catch, queue retries).
+- Pilot demo playbook: when a meeting date exists, pre-build the prospect's club (name AR+EN, logo, colors, branches, coaches, plans, a few swimmers) 2–3 days before, and demo in Arabic. Manager pages verified demo-clean in Arabic: Dashboard, Sessions, Coaches, Groups, Analytics, Registrations, Subscription Plans, Branding. Wizard steps 1–7 still carry some English labels.
+- Registration wizard Step8 shows `#null` for branch/plan/coach when opened directly without walking the steps — that's the sessionStorage draft being empty, not a bug.

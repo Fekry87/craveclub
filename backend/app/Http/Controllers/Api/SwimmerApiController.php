@@ -7,8 +7,10 @@ use App\Models\Attendance;
 use App\Models\DailyEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
+use App\Models\Registration;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -74,6 +76,176 @@ class SwimmerApiController extends Controller
             'best_rating' => $bestRating,
             'monthly_ratings' => $monthlyRatings,
         ]);
+    }
+
+    /**
+     * Rich swimmer profile: coach, group(s), branch, subscription, signup
+     * preferences, XP/level/rank and headline stats — everything the
+     * mobile Profile tab shows.
+     */
+    public function profile(Request $request): JsonResponse
+    {
+        $profile = $this->getSwimmerProfile($request);
+        if (! $profile) {
+            return response()->json(['message' => 'Swimmer profile not found'], 404);
+        }
+
+        $clubId = $profile->club_id;
+        $profile->load(['branch', 'groups.coach.coachProfile']);
+
+        $registration = $this->findRegistrationForSwimmer($request->user(), $clubId, $profile);
+
+        // Coach: the swimmer's group coach, falling back to the coach chosen at signup
+        $coachUser = $profile->groups->first(fn ($g) => $g->coach !== null)?->coach
+            ?? $registration?->coach?->user;
+
+        $groups = $profile->groups->map(fn ($g) => [
+            'id' => $g->id,
+            'name' => $g->name,
+            'coach_name' => $g->coach?->name,
+        ])->values();
+
+        // Subscription — derived the same way as notifications:subscription-reminders
+        $subscription = null;
+        if ($registration && $registration->plan && $registration->plan->duration_months) {
+            $start = $registration->updated_at->copy()->startOfDay();
+            $end = $start->copy()->addMonths($registration->plan->duration_months);
+            $today = now()->startOfDay();
+            $daysLeft = (int) $today->diffInDays($end, false);
+            $totalDays = max(1, $start->diffInDays($end));
+            $elapsed = min($totalDays, max(0, $start->diffInDays($today)));
+
+            $subscription = [
+                'plan_name' => $registration->plan->name,
+                'duration_months' => $registration->plan->duration_months,
+                'price' => (float) $registration->plan->price,
+                'started_at' => $start->toDateString(),
+                'ends_at' => $end->toDateString(),
+                'days_left' => $daysLeft,
+                'progress' => round(($elapsed / $totalDays) * 100, 1),
+                'status' => $daysLeft < 0 ? 'expired' : ($daysLeft <= 14 ? 'expiring' : 'active'),
+            ];
+        }
+
+        $signup = $registration ? [
+            'primary_goal' => $registration->primary_goal,
+            'weekly_frequency' => $registration->weekly_frequency,
+            'preferred_time' => $registration->preferred_time,
+            'experience_level' => $registration->experience_level,
+            'fitness_level' => $registration->fitness_level,
+            'gender' => $registration->gender,
+            'height_cm' => $registration->height_cm,
+            'weight_kg' => $registration->weight_kg,
+            'registered_at' => $registration->created_at?->toDateString(),
+        ] : null;
+
+        // XP / level / rank (rank from the job-maintained xp_points column)
+        $settings = $this->getClubSettings($clubId);
+        $levels = $this->getClubLevels($clubId);
+        $xp = $this->computeSwimmerXp($profile->id, $clubId, $settings);
+        $level = $this->getLevelInfo($xp['total_xp'], $levels);
+        $rank = SwimmerProfile::where('club_id', $clubId)
+            ->where('xp_points', '>', $xp['total_xp'])
+            ->count() + 1;
+        $totalSwimmers = SwimmerProfile::where('club_id', $clubId)->count();
+
+        // Headline stats
+        $totalAttendance = Attendance::where('swimmer_id', $profile->id)->count();
+        $presentCount = Attendance::where('swimmer_id', $profile->id)->where('present', true)->count();
+        $avgRating = DailyEvaluation::where('swimmer_id', $profile->id)->avg('rating');
+
+        return response()->json([
+            'profile' => $profile->makeHidden(['branch', 'groups']),
+            'member_since' => $profile->created_at?->toDateString(),
+            'branch' => $profile->branch ? [
+                'id' => $profile->branch->id,
+                'name' => $profile->branch->name,
+                'address' => $profile->branch->address,
+                'city' => $profile->branch->city,
+                'phone' => $profile->branch->phone,
+                'working_hours' => $profile->branch->working_hours,
+            ] : null,
+            'coach' => $coachUser ? $this->formatCoach($coachUser) : null,
+            'groups' => $groups,
+            'subscription' => $subscription,
+            'signup' => $signup,
+            'xp' => [
+                'total_xp' => $xp['total_xp'],
+                'rank' => $rank,
+                'total_swimmers' => $totalSwimmers,
+                'current_streak' => $this->currentAttendanceStreak($profile->id, $clubId),
+                'level' => $level,
+            ],
+            'stats' => [
+                'attendance_rate' => $totalAttendance > 0 ? round(($presentCount / $totalAttendance) * 100, 1) : 0,
+                'sessions_attended' => $presentCount,
+                'total_sessions' => $totalAttendance,
+                'average_rating' => $avgRating ? round($avgRating, 1) : null,
+                'evaluation_count' => $xp['evaluation_count'],
+            ],
+        ]);
+    }
+
+    private function formatCoach(User $coachUser): array
+    {
+        $cp = $coachUser->coachProfile;
+
+        return [
+            'id' => $coachUser->id,
+            'name' => $coachUser->name,
+            'phone' => $cp?->phone,
+            'specialization' => $cp?->specialization,
+            'experience_years' => $cp?->experience_years,
+            'rating' => $cp?->rating !== null ? (float) $cp->rating : null,
+        ];
+    }
+
+    /**
+     * Approved registrations aren't linked to swimmer_profiles by id. Approval
+     * creates the swimmer login with a deterministic phone-derived email, so
+     * match on that first; fall back to full name + birth date.
+     */
+    private function findRegistrationForSwimmer(User $user, int $clubId, SwimmerProfile $profile): ?Registration
+    {
+        $base = Registration::where('club_id', $clubId)
+            ->whereIn('status', ['approved', 'active'])
+            ->with(['plan', 'coach.user.coachProfile'])
+            ->latest('updated_at');
+
+        if (preg_match('/^swimmer_(\d+)(?:_\d+)?@club\d+\.craveclubs\.local$/', $user->email, $m)) {
+            $digits = $m[1];
+            $match = (clone $base)->get()
+                ->first(fn ($r) => preg_replace('/[^0-9]/', '', (string) $r->phone) === $digits);
+            if ($match) {
+                return $match;
+            }
+        }
+
+        return (clone $base)
+            ->where('full_name', $profile->full_name)
+            ->when($profile->date_of_birth, fn ($q) => $q->whereDate('birth_date', $profile->date_of_birth->toDateString()))
+            ->first();
+    }
+
+    /** Consecutive most-recent sessions attended (0 if the latest was missed). */
+    private function currentAttendanceStreak(int $swimmerId, int $clubId): int
+    {
+        $records = Attendance::where('swimmer_id', $swimmerId)
+            ->whereHas('session', fn ($q) => $q->where('club_id', $clubId))
+            ->join('training_sessions', 'attendance.session_id', '=', 'training_sessions.id')
+            ->orderBy('training_sessions.date', 'desc')
+            ->select('attendance.present')
+            ->get();
+
+        $streak = 0;
+        foreach ($records as $r) {
+            if (! $r->present) {
+                break;
+            }
+            $streak++;
+        }
+
+        return $streak;
     }
 
     public function sessions(Request $request): JsonResponse

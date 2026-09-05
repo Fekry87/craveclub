@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-export function LanguageSwitcher({ compact = false }) {
+export function LanguageSwitcher({ compact = false, onDark = false }) {
   const { i18n, t } = useTranslation();
   const isArabic = i18n.language === 'ar';
 
@@ -8,80 +8,26 @@ export function LanguageSwitcher({ compact = false }) {
     i18n.changeLanguage(isArabic ? 'en' : 'ar');
   };
 
+  const cls = `pl-icon-btn${onDark ? ' on-dark' : ''}`;
+  const label = isArabic ? 'EN' : 'ع';
+
   if (compact) {
     return (
-      <button
-        type="button"
-        onClick={toggle}
-        title={t('language.switch')}
-        style={{
-          background: 'rgba(34,211,238,0.06)',
-          border: '1px solid rgba(34,211,238,0.1)',
-          borderRadius: 10,
-          width: 36,
-          height: 36,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          gap: 4,
-          transition: 'all 0.2s',
-          color: '#94a3b8',
-          fontSize: 12,
-          fontWeight: 700,
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(34,211,238,0.12)';
-          e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = 'rgba(34,211,238,0.06)';
-          e.currentTarget.style.borderColor = 'rgba(34,211,238,0.1)';
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-        </svg>
+      <button type="button" onClick={toggle} title={t('language.switch')} className={cls}
+        style={{ fontSize: 12, fontWeight: 600, borderRadius: 18 }}>
+        {label}
       </button>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      title={t('language.switch')}
-      style={{
-        background: 'rgba(34,211,238,0.06)',
-        border: '1px solid rgba(34,211,238,0.1)',
-        borderRadius: 10,
-        padding: '6px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        gap: 6,
-        transition: 'all 0.2s',
-        color: '#94a3b8',
-        fontSize: 12,
-        fontWeight: 600,
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(34,211,238,0.12)';
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'rgba(34,211,238,0.06)';
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.1)';
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <button type="button" onClick={toggle} title={t('language.switch')} className={cls}
+      style={{ width: 'auto', padding: '0 12px', gap: 8, fontSize: 12, fontWeight: 600 }}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         <circle cx="12" cy="12" r="10" />
         <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
       </svg>
-      {isArabic ? 'EN' : 'ع'}
+      {label}
     </button>
   );
 }

@@ -76,24 +76,46 @@ function extractFeatures(clubFeatures) {
   return result;
 }
 
-const colorPresets = ['#0ea5e9','#22d3ee','#2dd4bf','#10b981','#a78bfa','#8b5cf6','#f472b6','#f43f5e','#fb923c','#fbbf24','#38bdf8','#6366f1'];
+const colorPresets = ['#1D1D1F', '#0071E3', '#515154', '#6E6E73', '#86868B', '#AEAEB2', '#F2F2F7', '#34C759', '#FF9500', '#FF3B30'];
+
+const labelStyle = {
+  fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73',
+};
+
+const monoTag = {
+  display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
+  fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: '14px', background: 'transparent',
+  whiteSpace: 'nowrap',
+};
+
+function SectionTitle({ children, accent, hint }) {
+  return (
+    <div style={{ margin: '0 0 14px', paddingBottom: 10, borderBottom: '1px solid #E5E5EA' }}>
+      <h4 style={{ ...labelStyle, margin: 0, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {accent && <span style={{ width: 6, height: 6, borderRadius: 3, background: '#0071E3', display: 'inline-block', flexShrink: 0 }} />}
+        {children}
+      </h4>
+      {hint && <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 6, fontFamily: 'var(--font-body)' }}>{hint}</div>}
+    </div>
+  );
+}
 
 function ColorPicker({ label, value, onChange }) {
   return (
     <FormField label={label}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ width: 48, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(51,65,85,0.4)', position: 'relative' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: value || '#8b5cf6', boxShadow: `0 0 12px ${value || '#8b5cf6'}40`, border: '2px solid rgba(255,255,255,0.15)' }} />
-          <input type="color" value={value || '#8b5cf6'} onChange={e => onChange(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+      <div style={{ borderRadius: 16, display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #AEAEB2' }}>
+        <div style={{ width: 46, height: 42, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderInlineEnd: '1px solid #E5E5EA', position: 'relative' }}>
+          <div style={{ borderRadius: 6, width: 24, height: 24, background: value || '#1D1D1F', border: '1px solid #E5E5EA' }} />
+          <input type="color" value={value || '#1D1D1F'} onChange={e => onChange(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
         </div>
-        <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder="#8b5cf6"
-          style={{ flex: 1, minWidth: 0, padding: '0 14px', height: 44, background: 'transparent', border: 'none', color: '#e2e8f0', fontSize: '0.875rem', fontFamily: "'DM Mono', 'DM Sans', monospace", letterSpacing: '0.04em', outline: 'none' }}
+        <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder="#1D1D1F"
+          style={{ flex: 1, minWidth: 0, padding: '0 12px', height: 42, background: 'transparent', border: 'none', color: '#1D1D1F', fontSize: 13, fontFamily: 'var(--font-body)', outline: 'none' }}
         />
       </div>
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
         {colorPresets.map(color => (
-          <button key={color} onClick={() => onChange(color)}
-            style={{ width: 22, height: 22, borderRadius: 6, background: color, border: value === color ? '2px solid #fff' : '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s', transform: value === color ? 'scale(1.1)' : 'scale(1)' }}
+          <button key={color} type="button" onClick={() => onChange(color)}
+            style={{ borderRadius: 6, width: 22, height: 22, background: color, padding: 0, cursor: 'pointer', border: value === color ? '2px solid #1D1D1F' : '1px solid #E5E5EA', transition: 'border-color 0.15s ease' }}
           />
         ))}
       </div>
@@ -101,17 +123,20 @@ function ColorPicker({ label, value, onChange }) {
   );
 }
 
-function FeatureToggleRow({ feature, enabled, onChange }) {
+function FeatureToggleRow({ feature, enabled, onChange, index }) {
+  const on = enabled !== false;
   return (
     <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '12px 0', borderBottom: '1px solid rgba(51,65,85,0.15)',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+      padding: '12px 0', borderBottom: '1px solid #E5E5EA',
     }}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <span style={{ fontSize: 20 }}>{feature.icon}</span>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 14, color: '#e2e8f0' }}>{feature.label}</div>
-          <div style={{ fontSize: 12, color: '#718096' }}>{feature.desc}</div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            fontSize: 14, fontWeight: 500, color: '#1D1D1F',
+            fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
+          }}>{feature.label}</div>
+          <div style={{ fontSize: 12, color: '#6E6E73', marginTop: 3, fontFamily: 'var(--font-body)' }}>{feature.desc}</div>
         </div>
       </div>
       <label style={{
@@ -120,23 +145,21 @@ function FeatureToggleRow({ feature, enabled, onChange }) {
       }}>
         <input
           type="checkbox"
-          checked={enabled !== false}
+          checked={on}
           onChange={() => onChange(!enabled)}
           style={{ opacity: 0, width: 0, height: 0 }}
         />
         <span style={{
           position: 'absolute', inset: 0,
-          borderRadius: 999,
-          background: enabled !== false ? '#58CC02' : '#CBD5E0',
+          background: on ? '#1D1D1F' : '#AEAEB2',
           transition: 'background 200ms ease',
         }} />
         <span style={{
           position: 'absolute',
-          top: 3, left: enabled !== false ? 23 : 3,
+          top: 3, insetInlineStart: on ? 23 : 3,
           width: 18, height: 18,
-          borderRadius: '50%', background: '#FFFFFF',
-          transition: 'left 200ms ease',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          background: '#F5F5F7',
+          transition: 'inset-inline-start 200ms ease',
         }} />
       </label>
     </div>
@@ -145,7 +168,7 @@ function FeatureToggleRow({ feature, enabled, onChange }) {
 
 const emptyForm = {
   name: '', slug: '', about: '', contact_email: '', contact_phone: '',
-  theme_color: '#0ea5e9', primary_color: '', secondary_color: '', accent_color: '', font_preference: '',
+  theme_color: '#0071E3', primary_color: '', secondary_color: '', accent_color: '', font_preference: '',
   manager_name: '', manager_email: '', manager_password: '',
   features: { ...defaultFeatures },
   max_branches: 1,
@@ -160,115 +183,62 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
   const enabledFeatures = CLUB_FEATURES.filter(f => club.features?.[f.dbKey] !== false);
   const usedBranches = club.branches_count ?? 0;
   const maxBranches = club.max_branches ?? 1;
+  const atLimit = usedBranches >= maxBranches;
 
   return (
     <div
       onClick={onClick}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.25)';
-        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3), 0 0 30px rgba(139,92,246,0.06)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.borderColor = 'rgba(51,65,85,0.15)';
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
-      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        borderRadius: 20, padding: 0, overflow: 'hidden',
-        border: '1px solid rgba(51,65,85,0.15)',
-        cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        cursor: 'pointer', transition: 'border-color 0.15s ease',
         animation: `fadeInUp 0.4s ease-out ${index * 0.06}s both`,
-        position: 'relative',
       }}
     >
-      {/* Top color banner */}
-      <div style={{
-        height: 6, width: '100%',
-        background: brandColor
-          ? `linear-gradient(90deg, ${brandColor}, ${brandColor}88)`
-          : 'linear-gradient(90deg, rgba(139,92,246,0.3), rgba(139,92,246,0.1))',
-      }} />
-
       <div style={{ padding: '20px 22px 18px' }}>
         {/* Header: Avatar + Name + Slug */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           {club.logo_url ? (
             <img src={club.logo_url} alt={club.name}
-              style={{ width: 48, height: 48, borderRadius: 14, objectFit: 'cover', border: '2px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
+              style={{ borderRadius: 14, width: 48, height: 48, objectFit: 'cover', border: '1px solid #E5E5EA', flexShrink: 0 }}
             />
           ) : (
-            <div style={{
-              width: 48, height: 48, borderRadius: 14,
-              background: ac.bg,
+            <div style={{ borderRadius: 14,
+              width: 48, height: 48, background: ac.bg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 700, color: ac.text,
-              flexShrink: 0, boxShadow: '0 3px 12px rgba(0,0,0,0.25)',
-            }}>{initials}</div>
+              fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: ac.text,
+              flexShrink: 0 }}>{initials}</div>
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              color: '#f1f5f9', fontSize: 17, fontWeight: 700,
-              fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em',
+              color: '#1D1D1F', fontSize: 17, fontWeight: 500,
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1.1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{club.name}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-              <span style={{
-                padding: '2px 9px', borderRadius: 6, fontSize: 11, fontWeight: 500,
-                background: 'rgba(51,65,85,0.3)', color: '#94a3b8',
-                fontFamily: "'DM Sans', monospace",
-              }}>{club.slug}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <span style={{ ...monoTag, color: '#515154', border: '1px solid #AEAEB2' }}>{club.slug}</span>
               {brandColor && (
-                <div style={{
-                  width: 14, height: 14, borderRadius: 5,
-                  background: brandColor, border: '1.5px solid rgba(255,255,255,0.12)',
-                  boxShadow: `0 0 8px ${brandColor}40`,
-                }} />
+                <div style={{ width: 14, height: 14, background: brandColor, border: '1px solid #E5E5EA', flexShrink: 0 }} />
               )}
             </div>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
-          marginBottom: 14,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, marginBottom: 16, background: '#E5E5EA', border: '1px solid #E5E5EA' }}>
           {[
-            {
-              label: 'Users', value: club.users_count || 0,
-              color: '#a78bfa', bg: 'rgba(139,92,246,0.06)',
-              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>,
-            },
-            {
-              label: 'Swimmers', value: club.swimmer_profiles_count || 0,
-              color: '#22d3ee', bg: 'rgba(34,211,238,0.06)',
-              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M1 1l4 4m0 0l4-4M5 5v12" /><path d="M12 3a4 4 0 100 8 4 4 0 000-8z" /></svg>,
-            },
-            {
-              label: 'Branches', value: `${usedBranches}/${maxBranches}`,
-              color: usedBranches >= maxBranches ? '#f43f5e' : '#fbbf24',
-              bg: usedBranches >= maxBranches ? 'rgba(244,63,94,0.06)' : 'rgba(251,191,36,0.06)',
-              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={usedBranches >= maxBranches ? '#f43f5e' : '#fbbf24'} strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>,
-            },
+            { label: 'Users', value: club.users_count || 0, color: '#1D1D1F' },
+            { label: 'Swimmers', value: club.swimmer_profiles_count || 0, color: '#1D1D1F' },
+            { label: 'Branches', value: `${usedBranches}/${maxBranches}`, color: atLimit ? '#FF3B30' : '#1D1D1F' },
           ].map(stat => (
-            <div key={stat.label} style={{
-              padding: '10px 10px', borderRadius: 12,
-              background: stat.bg,
-              border: `1px solid ${stat.color}12`,
-              textAlign: 'center',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 3 }}>
-                {stat.icon}
-                <span style={{ color: stat.color, fontSize: 16, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-                  {stat.value}
-                </span>
-              </div>
-              <div style={{ color: '#64748b', fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {stat.label}
-              </div>
+            <div key={stat.label} style={{ padding: '12px 10px', background: '#FFFFFF', textAlign: 'center' }}>
+              <div style={{
+                color: stat.color, fontSize: 20, fontWeight: 500,
+                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+              }}>{stat.value}</div>
+              <div style={{ ...labelStyle, fontSize: 10, marginTop: 6 }}>{stat.label}</div>
             </div>
           ))}
         </div>
@@ -276,21 +246,12 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
         {/* Features */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 16 }}>
           {enabledFeatures.slice(0, 5).map(f => (
-            <span key={f.key} style={{
-              fontSize: 10, padding: '2px 7px',
-              borderRadius: 999, background: 'rgba(88,204,2,0.06)',
-              color: '#58CC02', border: '1px solid rgba(88,204,2,0.15)',
-              lineHeight: '16px',
-            }}>
-              {f.icon} {f.label}
+            <span key={f.key} style={{ ...monoTag, color: '#515154', border: '1px solid #E5E5EA' }}>
+              {f.label}
             </span>
           ))}
           {enabledFeatures.length > 5 && (
-            <span style={{
-              fontSize: 10, padding: '2px 7px', borderRadius: 999,
-              background: 'rgba(148,163,184,0.06)', color: '#94a3b8',
-              border: '1px solid rgba(148,163,184,0.15)', lineHeight: '16px',
-            }}>
+            <span style={{ ...monoTag, color: '#6E6E73', border: '1px solid #E5E5EA' }}>
               +{enabledFeatures.length - 5} more
             </span>
           )}
@@ -299,52 +260,20 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
         {/* Footer Actions */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          paddingTop: 14, borderTop: '1px solid rgba(51,65,85,0.12)',
+          paddingTop: 14, borderTop: '1px solid #E5E5EA',
         }}>
-          <button
-            onClick={e => { e.stopPropagation(); onClick(); }}
-            style={{
-              flex: 1, padding: '8px 0', borderRadius: 10,
-              background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)',
-              color: '#a78bfa', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              fontFamily: "'DM Sans', sans-serif",
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.06)'; }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+          <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" style={{ flex: 1, justifyContent: 'center' }}
+            onClick={e => { e.stopPropagation(); onClick(); }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
             View Details
           </button>
-          <button
-            onClick={e => { e.stopPropagation(); onEdit(club); }}
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.15)',
-              color: '#22d3ee', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.2s', flexShrink: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.06)'; }}
-            title="Edit Club"
-          >
+          <button type="button" className="pl-icon-btn" title="Edit Club"
+            onClick={e => { e.stopPropagation(); onEdit(club); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
-          <button
-            onClick={e => { e.stopPropagation(); onDelete(club); }}
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.15)',
-              color: '#f43f5e', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.2s', flexShrink: 0,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.06)'; }}
-            title="Delete Club"
-          >
+          <button type="button" className="pl-btn pl-btn-danger pl-btn-sm" title="Delete Club"
+            style={{ width: 34, padding: 0, justifyContent: 'center', flexShrink: 0 }}
+            onClick={e => { e.stopPropagation(); onDelete(club); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
           </button>
         </div>
@@ -401,7 +330,7 @@ export default function CorporateClubs() {
       setForm({
         name: full.name, slug: full.slug, about: full.about || '',
         contact_email: full.contact_email || '', contact_phone: full.contact_phone || '',
-        theme_color: full.theme_color || '#0ea5e9',
+        theme_color: full.theme_color || '#0071E3',
         primary_color: full.primary_color || '', secondary_color: full.secondary_color || '',
         accent_color: full.accent_color || '', font_preference: full.font_preference || '',
         manager_name: full.manager?.name || '', manager_email: full.manager?.email || '', manager_password: '',
@@ -412,7 +341,7 @@ export default function CorporateClubs() {
       setForm({
         name: club.name, slug: club.slug, about: club.about || '',
         contact_email: club.contact_email || '', contact_phone: club.contact_phone || '',
-        theme_color: club.theme_color || '#0ea5e9',
+        theme_color: club.theme_color || '#0071E3',
         primary_color: club.primary_color || '', secondary_color: club.secondary_color || '',
         accent_color: club.accent_color || '', font_preference: club.font_preference || '',
         manager_name: '', manager_email: '', manager_password: '',
@@ -440,7 +369,7 @@ export default function CorporateClubs() {
       <FormPage
         title={editId ? t('actions.edit') + ' Club' : t('actions.create') + ' Club'}
         onBack={closeForm}
-        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+        icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
       >
         {/* Club Info */}
         <FormField label="Club Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
@@ -452,11 +381,8 @@ export default function CorporateClubs() {
         </div>
 
         {/* Branding */}
-        <div style={{ marginTop: 12, padding: '18px 18px 6px', borderRadius: 14, background: 'rgba(139,92,246,0.03)', border: '1px solid rgba(139,92,246,0.08)' }}>
-          <h4 style={{ color: '#a78bfa', margin: '0 0 14px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>
-            Club Branding
-          </h4>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+          <SectionTitle accent>Club Branding</SectionTitle>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <ColorPicker label="Primary Color" value={form.primary_color || form.theme_color} onChange={v => setForm({ ...form, primary_color: v, theme_color: v })} />
             <ColorPicker label="Secondary Color" value={form.secondary_color} onChange={v => setForm({ ...form, secondary_color: v })} />
@@ -468,23 +394,25 @@ export default function CorporateClubs() {
         </div>
 
         {/* Branch Limit */}
-        <div style={{ marginTop: 12, padding: '18px 18px 14px', borderRadius: 14, background: 'rgba(251,191,36,0.03)', border: '1px solid rgba(251,191,36,0.08)' }}>
-          <h4 style={{ color: '#fbbf24', margin: '0 0 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-            Branch Limit
-          </h4>
-          <div style={{ color: '#64748b', fontSize: 12, marginBottom: 12 }}>Maximum number of branches this club can create</div>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 14px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+          <SectionTitle hint="Maximum number of branches this club can create">Branch Limit</SectionTitle>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button type="button" onClick={() => setForm({ ...form, max_branches: Math.max(1, form.max_branches - 1) })}
-              style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(51,65,85,0.5)', background: 'rgba(6,13,31,0.6)', cursor: 'pointer', fontSize: 18, fontWeight: 700, color: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-            <div style={{ minWidth: 80, textAlign: 'center', fontSize: 24, fontWeight: 800, color: '#f1f5f9' }}>{form.max_branches}</div>
-            <button type="button" onClick={() => setForm({ ...form, max_branches: Math.min(100, form.max_branches + 1) })}
-              style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(51,65,85,0.5)', background: 'rgba(6,13,31,0.6)', cursor: 'pointer', fontSize: 18, fontWeight: 700, color: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+            <button type="button" className="pl-icon-btn" onClick={() => setForm({ ...form, max_branches: Math.max(1, form.max_branches - 1) })}>−</button>
+            <div style={{
+              minWidth: 80, textAlign: 'center', fontSize: 32, fontWeight: 500, color: '#1D1D1F',
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+            }}>{form.max_branches}</div>
+            <button type="button" className="pl-icon-btn" onClick={() => setForm({ ...form, max_branches: Math.min(100, form.max_branches + 1) })}>+</button>
           </div>
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
             {[1, 3, 5, 10].map(n => (
               <button key={n} type="button" onClick={() => setForm({ ...form, max_branches: n })}
-                style={{ padding: '4px 12px', borderRadius: 999, border: form.max_branches === n ? '2px solid #1CB0F6' : '2px solid rgba(51,65,85,0.4)', background: form.max_branches === n ? 'rgba(28,176,246,0.1)' : 'rgba(6,13,31,0.4)', color: form.max_branches === n ? '#1CB0F6' : '#718096', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                style={{
+                  ...monoTag, padding: '5px 10px', cursor: 'pointer',
+                  background: form.max_branches === n ? '#1D1D1F' : 'transparent',
+                  color: form.max_branches === n ? '#F5F5F7' : '#6E6E73',
+                  border: `1px solid ${form.max_branches === n ? '#1D1D1F' : '#AEAEB2'}`,
+                }}>
                 {n} {n === 1 ? 'branch' : 'branches'}
               </button>
             ))}
@@ -493,11 +421,11 @@ export default function CorporateClubs() {
             const used = editClub.branches_count ?? 0;
             const remaining = form.max_branches - used;
             return (
-              <div style={{ fontSize: 13, color: '#718096', marginTop: 10 }}>
-                Currently using <strong style={{ color: '#e2e8f0' }}>{used}</strong> of{' '}
-                <strong style={{ color: '#e2e8f0' }}>{form.max_branches}</strong> branches
+              <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 12 }}>
+                Currently using <strong style={{ color: '#1D1D1F' }}>{used}</strong> of{' '}
+                <strong style={{ color: '#1D1D1F' }}>{form.max_branches}</strong> branches
                 {remaining < 0 && (
-                  <span style={{ color: '#E53E3E', marginLeft: 8 }}>
+                  <span style={{ color: '#FF3B30', marginInlineStart: 8 }}>
                     Warning: limit is below existing branch count
                   </span>
                 )}
@@ -507,15 +435,12 @@ export default function CorporateClubs() {
         </div>
 
         {/* Club Features */}
-        <div style={{ marginTop: 12, padding: '18px 18px 8px', borderRadius: 14, background: 'rgba(88,204,2,0.03)', border: '1px solid rgba(88,204,2,0.08)' }}>
-          <h4 style={{ color: '#58CC02', margin: '0 0 4px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58CC02" strokeWidth="2" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-            Club Features
-          </h4>
-          <div style={{ color: '#64748b', fontSize: 12, marginBottom: 12 }}>Control which features this club can access</div>
-          {CLUB_FEATURES.map(f => (
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 8px', background: '#FFFFFF', border: '1px solid #E5E5EA' }}>
+          <SectionTitle hint="Control which features this club can access">Club Features</SectionTitle>
+          {CLUB_FEATURES.map((f, fi) => (
             <FeatureToggleRow
               key={f.key}
+              index={fi}
               feature={f}
               enabled={form.features[f.dbKey]}
               onChange={v => setForm({ ...form, features: { ...form.features, [f.dbKey]: v } })}
@@ -524,11 +449,8 @@ export default function CorporateClubs() {
         </div>
 
         {/* Manager Account */}
-        <div style={{ marginTop: 12, padding: '18px 18px 6px', borderRadius: 14, background: 'rgba(45,212,191,0.03)', border: '1px solid rgba(45,212,191,0.08)' }}>
-          <h4 style={{ color: '#2dd4bf', margin: '0 0 14px', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            Club Manager Account
-          </h4>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+          <SectionTitle>Club Manager Account</SectionTitle>
           <FormField label="Manager Name"><Input value={form.manager_name} onChange={e => setForm({ ...form, manager_name: e.target.value })} /></FormField>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <FormField label="Manager Email"><Input type="email" value={form.manager_email} onChange={e => setForm({ ...form, manager_email: e.target.value })} /></FormField>
@@ -537,7 +459,7 @@ export default function CorporateClubs() {
         </div>
 
         {error && (
-          <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.2)', color: '#fc8181', fontSize: 13 }}>{error}</div>
+          <div style={{ marginTop: 12, padding: '10px 14px', background: '#FFFFFF', border: '1px solid #FF3B30', color: '#FF3B30', fontSize: 13 }}>{error}</div>
         )}
 
         <FormPageActions>
@@ -560,29 +482,25 @@ export default function CorporateClubs() {
       {/* Summary strip */}
       {clubs.length > 0 && (
         <div style={{
-          display: 'flex', gap: 14, marginBottom: 24,
+          display: 'flex', gap: 14, marginBottom: 24, flexWrap: 'wrap',
           animation: 'fadeInUp 0.4s ease-out',
         }}>
           {[
-            { label: 'Total Clubs', value: clubs.length, color: '#a78bfa', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" /></svg> },
-            { label: 'Total Users', value: clubs.reduce((s, c) => s + (c.users_count || 0), 0), color: '#22d3ee', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg> },
-            { label: 'Total Swimmers', value: clubs.reduce((s, c) => s + (c.swimmer_profiles_count || 0), 0), color: '#2dd4bf', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="7" r="4" /><path d="M5 21v-2a7 7 0 0114 0v2" /></svg> },
-          ].map(s => (
-            <div key={s.label} style={{
-              flex: 1, padding: '14px 18px', borderRadius: 14,
-              background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)',
-              border: `1px solid ${s.color}12`,
-              display: 'flex', alignItems: 'center', gap: 12,
+            { label: 'Total Clubs', value: clubs.length },
+            { label: 'Total Users', value: clubs.reduce((s, c) => s + (c.users_count || 0), 0) },
+            { label: 'Total Swimmers', value: clubs.reduce((s, c) => s + (c.swimmer_profiles_count || 0), 0) },
+          ].map((s, si) => (
+            <div key={s.label} style={{ borderRadius: 16,
+              flex: '1 1 180px', padding: '18px 20px', background: '#FFFFFF',
+              border: '1px solid #E5E5EA',
             }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ ...labelStyle, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</div>
+                </div>
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: `${s.color}0f`, border: `1px solid ${s.color}1a`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{s.icon}</div>
-              <div>
-                <div style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 700, fontFamily: "'Outfit', sans-serif", lineHeight: 1 }}>{s.value}</div>
-                <div style={{ color: '#64748b', fontSize: 11, fontWeight: 500, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</div>
-              </div>
+                color: '#1D1D1F', fontSize: 30, fontWeight: 500, fontFamily: 'var(--font-display)',
+                letterSpacing: '-0.02em', lineHeight: 1, marginTop: 14,
+              }}>{s.value}</div>
             </div>
           ))}
         </div>
@@ -590,23 +508,25 @@ export default function CorporateClubs() {
 
       {/* Cards grid */}
       {clubs.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '60px 20px', borderRadius: 20,
-          background: 'linear-gradient(135deg, rgba(13,31,60,0.3) 0%, rgba(10,22,40,0.2) 100%)',
-          border: '1px solid rgba(51,65,85,0.12)',
+        <div style={{ borderRadius: 16,
+          textAlign: 'center', padding: '60px 20px', background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
           animation: 'fadeInUp 0.4s ease-out',
         }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.12)',
+          <div style={{ borderRadius: 14,
+            width: 56, height: 56, margin: '0 auto 16px',
+            background: '#F2F2F7', border: '1px solid #E5E5EA',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
           </div>
-          <div style={{ color: '#f1f5f9', fontSize: 16, fontWeight: 600, fontFamily: "'Outfit', sans-serif", marginBottom: 6 }}>
+          <div style={{
+            color: '#1D1D1F', fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-display)',
+            letterSpacing: '-0.02em', marginBottom: 8,
+          }}>
             {search ? t('empty.noResults') : t('empty.noData')}
           </div>
-          <div style={{ color: '#64748b', fontSize: 13, marginBottom: 20 }}>
+          <div style={{ color: '#6E6E73', fontSize: 13, marginBottom: 20 }}>
             {search ? t('empty.noResultsHint') : t('empty.itemsWillAppear')}
           </div>
           {!search && (
@@ -637,11 +557,9 @@ export default function CorporateClubs() {
 
       {error && !showModal && (
         <div style={{
-          position: 'fixed', bottom: 24, right: 24,
-          padding: '12px 18px', borderRadius: 12,
-          background: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.25)',
-          color: '#fda4af', fontSize: 13, fontWeight: 500,
-          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+          position: 'fixed', bottom: 24, insetInlineEnd: 24,
+          padding: '12px 18px', background: '#FFFFFF', border: '1px solid #FF3B30',
+          color: '#FF3B30', fontSize: 13, fontWeight: 500,
           animation: 'fadeInUp 0.3s ease-out',
           zIndex: 100,
         }}>

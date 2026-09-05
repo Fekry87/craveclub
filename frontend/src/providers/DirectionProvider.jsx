@@ -21,8 +21,8 @@ export function DirectionProvider({ children }) {
     document.documentElement.lang = i18n.language;
     // Update font family on body
     document.body.style.fontFamily = isRtl
-      ? "'IBM Plex Sans Arabic', 'Tajawal', 'DM Sans', sans-serif"
-      : "'DM Sans', 'Outfit', sans-serif";
+      ? "'IBM Plex Sans Arabic', 'Tajawal', var(--font-body)"
+      : 'var(--font-body)';
   }, [direction, i18n.language, isRtl]);
 
   return (

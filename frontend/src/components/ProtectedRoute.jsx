@@ -6,7 +6,7 @@ export default function ProtectedRoute({ roles, children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <div style={{ color: '#94a3b8', padding: 40, textAlign: 'center' }}>Loading...</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 12, color: '#6E6E73' }}>Loading...</div>;
 
   if (!user) {
     // Redirect to the correct login page based on scope

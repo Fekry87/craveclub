@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSportModule } from '../../contexts/SportModuleContext';
 import { getClubSportModules } from '../../api/clubSportModules';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { labelStyle } from '../../components/ui/styles';
 
 export default function SportModuleDashboard() {
   const { t } = useTranslation();
@@ -35,13 +36,13 @@ export default function SportModuleDashboard() {
   // Loading
   if (modules === null && !error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: 'var(--color-text-muted)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#6E6E73' }}>
         <div style={{ textAlign: 'center' }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
-            <circle cx="12" cy="12" r="10" fill="none" stroke="var(--color-primary-dim)" strokeWidth="3" />
-            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" />
+          <svg width="36" height="36" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="2" />
+            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#0071E3" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('loading.default')}</div>
+          <div style={{ ...labelStyle }}>{t('loading.default')}</div>
         </div>
       </div>
     );
@@ -52,7 +53,7 @@ export default function SportModuleDashboard() {
     return (
       <EmptyState
         icon={
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
           </svg>
         }
@@ -71,24 +72,25 @@ export default function SportModuleDashboard() {
   };
 
   return (
-    <div style={{ animation: 'fadeInUp 0.5s ease-out' }}>
+    <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ ...labelStyle, marginBottom: 8 }}>
+          {t('sportModules.selectModule')}
+        </div>
         <h1 style={{
-          fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 700,
-          color: 'var(--color-text)', margin: 0, letterSpacing: '-0.02em',
+          fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700,
+          color: '#1D1D1F', margin: 0, letterSpacing: '-0.02em',
+          lineHeight: 1.1,
         }}>
           {clubName}
         </h1>
-        <div style={{ color: 'var(--color-text-muted)', fontSize: 15, marginTop: 6, fontWeight: 500 }}>
-          {t('sportModules.selectModule')}
-        </div>
       </div>
 
       {/* Card Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-        {modules.map((mod) => (
-          <SportCard key={mod.id} module={mod} onEnter={() => handleEnterSport(mod)} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        {modules.map((mod, i) => (
+          <SportCard key={mod.id} module={mod} index={i} onEnter={() => handleEnterSport(mod)} />
         ))}
       </div>
     </div>
@@ -108,10 +110,9 @@ function sportGlyph(module) {
   return module.name ? module.name.charAt(0).toUpperCase() : '?';
 }
 
-export function SportCard({ module, onEnter }) {
+export function SportCard({ module, onEnter, index }) {
   const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
-  const color = module.color || '#8b5cf6';
   const stats = module.stats || {};
 
   return (
@@ -119,56 +120,60 @@ export function SportCard({ module, onEnter }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: `1px solid var(--color-border)`,
-        borderTop: `4px solid ${color}`,
-        padding: '28px 24px 22px',
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
+        borderRadius: 16,
+        padding: '22px 24px 20px',
         cursor: 'pointer',
-        transition: 'all 0.25s ease',
-        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
-        boxShadow: hovered ? `var(--shadow-card), 0 8px 30px ${color}15` : 'var(--shadow-card)',
+        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.06)' : 'none',
+        transition: 'box-shadow 0.2s ease',
+        animation: `fadeInUp 0.3s ease-out ${(index || 0) * 0.05}s both`,
       }}
       onClick={onEnter}
     >
       {/* Icon + Name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
         <div style={{
-          width: 48, height: 48, borderRadius: 14,
-          background: `${color}15`,
-          border: `1px solid ${color}25`,
+          width: 46, height: 46, borderRadius: 12,
+          background: 'rgba(0,113,227,0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, fontWeight: 700, color,
+          fontSize: 22, color: '#0071E3', fontWeight: 600,
           flexShrink: 0,
         }}>
           {sportGlyph(module)}
         </div>
-        <div>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{
-            color: 'var(--color-text)', fontSize: 20, fontWeight: 700,
-            fontFamily: "'Outfit', sans-serif",
+            color: '#1D1D1F', fontSize: 17, fontWeight: 600,
+            fontFamily: 'var(--font-display)', letterSpacing: '-0.01em', lineHeight: 1.2,
           }}>
             {module.name}
           </div>
           {module.description && (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: 12, marginTop: 2 }}>{module.description}</div>
+            <div style={{ color: '#6E6E73', fontSize: 13, marginTop: 4 }}>{module.description}</div>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+      <div style={{
+        display: 'flex', marginBottom: 18,
+        background: '#F2F2F7', borderRadius: 12, padding: '4px 0',
+      }}>
         {[
           { label: t('sportModules.branches'), value: stats.branches_count || 0 },
           { label: t('sportModules.newRegistrations'), value: stats.new_registrations_count || 0 },
           { label: t('sportModules.activeSwimmers'), value: stats.active_swimmers_count || 0 },
-        ].map((stat) => (
-          <div key={stat.label} style={{ flex: 1, textAlign: 'center' }}>
+        ].map((stat, si) => (
+          <div key={stat.label} style={{
+            flex: 1, padding: '10px 8px', minWidth: 0, textAlign: 'center',
+            borderInlineStart: si > 0 ? '1px solid #E5E5EA' : 'none',
+          }}>
             <div style={{
-              color: 'var(--color-text)', fontSize: 18, fontWeight: 700,
-              fontFamily: "'DM Sans', sans-serif",
+              color: si === 1 && stat.value > 0 ? '#0071E3' : '#1D1D1F', fontSize: 24, fontWeight: 700,
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1.1,
             }}>{stat.value}</div>
-            <div style={{ color: 'var(--color-text-muted)', fontSize: 11, marginTop: 2 }}>{stat.label}</div>
+            <div style={{ ...labelStyle, marginTop: 5, lineHeight: 1.3 }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -176,22 +181,9 @@ export function SportCard({ module, onEnter }) {
       {/* CTA */}
       <button
         type="button"
+        className="pl-btn pl-btn-primary"
         onClick={(e) => { e.stopPropagation(); onEnter(); }}
-        style={{
-          width: '100%',
-          padding: '10px 0',
-          borderRadius: 10,
-          background: `${color}12`,
-          border: `1px solid ${color}30`,
-          color,
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          fontFamily: "'DM Sans', sans-serif",
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = `${color}22`; }}
-        onMouseLeave={e => { e.currentTarget.style.background = `${color}12`; }}
+        style={{ width: '100%', justifyContent: 'center' }}
       >
         {t('sportModules.manageActivity')}
       </button>

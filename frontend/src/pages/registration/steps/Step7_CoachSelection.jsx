@@ -119,19 +119,12 @@ export default function Step7_CoachSelection() {
   // ── Shimmer skeleton ──────────────────────────────────────────
   const renderLoading = () => (
     <>
-      <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
       {[1, 2, 3].map(i => (
         <div key={i} style={{
           width: '100%', height: 100,
-          borderRadius: 10, marginBottom: 10,
-          background: 'linear-gradient(90deg, rgba(51,65,85,0.15) 25%, rgba(51,65,85,0.25) 50%, rgba(51,65,85,0.15) 75%)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.4s infinite',
+          marginBottom: 10, borderRadius: 14,
+          background: '#F2F2F7',
+          border: '1px solid #E5E5EA',
         }} />
       ))}
     </>
@@ -143,32 +136,19 @@ export default function Step7_CoachSelection() {
       textAlign: 'center', padding: '40px 0',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
     }}>
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-        stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="#FF3B30" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
       <p style={{
-        color: '#f87171', fontSize: 14,
-        fontFamily: "'DM Sans', sans-serif", margin: 0,
+        color: '#FF3B30', fontSize: 13,
+        fontFamily: 'var(--font-body)', margin: 0,
       }}>
         {loadError}
       </p>
-      <button
-        type="button"
-        onClick={fetchCoaches}
-        style={{
-          padding: '8px 24px', borderRadius: 8,
-          border: '1px solid rgba(51,65,85,0.5)',
-          background: 'rgba(51,65,85,0.3)',
-          color: '#e2e8f0', fontSize: 14, fontWeight: 600,
-          cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.5)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.3)'; }}
-      >
+      <button type="button" onClick={fetchCoaches} className="pl-btn pl-btn-secondary pl-btn-sm">
         Retry
       </button>
     </div>
@@ -178,11 +158,11 @@ export default function Step7_CoachSelection() {
   const renderEmpty = () => (
     <div style={{
       textAlign: 'center', padding: '40px 0',
-      color: '#94a3b8', fontSize: 14,
-      fontFamily: "'DM Sans', sans-serif",
+      color: '#515154', fontSize: 14,
+      fontFamily: 'var(--font-body)',
     }}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-        stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+        stroke="#86868B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
         style={{ display: 'block', margin: '0 auto 12px' }}>
         <circle cx="12" cy="12" r="10" />
         <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
@@ -196,7 +176,7 @@ export default function Step7_CoachSelection() {
   // ── Coach cards ───────────────────────────────────────────────
   const renderCoaches = () => (
     <>
-      {coaches.map(coach => {
+      {coaches.map((coach) => {
         const isSelected = selectedCoach === coach.id;
         return (
           <div
@@ -204,40 +184,30 @@ export default function Step7_CoachSelection() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
+              gap: 14,
               padding: '14px 16px',
               marginBottom: 10,
-              borderRadius: 10,
-              border: isSelected
-                ? '2px solid #1CB0F6'
-                : '2px solid rgba(51,65,85,0.3)',
-              background: isSelected
-                ? 'rgba(28,176,246,0.1)'
-                : 'rgba(6,13,31,0.6)',
-              transition: 'all 150ms ease',
+              borderRadius: 14,
+              border: isSelected ? '2px solid #0071E3' : '1px solid #E5E5EA',
+              background: isSelected ? 'rgba(0,113,227,0.06)' : '#FFFFFF',
+              transition: 'border-color 0.15s ease, background 0.15s ease',
             }}
           >
-            {/* Avatar */}
+            {/* Avatar tile */}
             {coach.photo
               ? <img
                   src={coach.photo}
                   alt={coach.name}
-                  style={{
-                    width: 52, height: 52,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    flexShrink: 0,
-                  }}
+                  style={{ borderRadius: '50%', width: 52, height: 52, objectFit: 'cover', flexShrink: 0 }}
                 />
-              : <div style={{
-                  width: 52, height: 52, borderRadius: '50%',
-                  background: 'rgba(51,65,85,0.3)',
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0, fontSize: 20,
+              : <div style={{ borderRadius: '50%',
+                  width: 52, height: 52,
+                  background: '#F2F2F7', border: '1px solid #E5E5EA',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="#86868B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
@@ -247,22 +217,20 @@ export default function Step7_CoachSelection() {
             {/* Info */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontWeight: 700,
-                color: isSelected ? '#1CB0F6' : '#e2e8f0',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 15,
+                fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600,
+                letterSpacing: '-0.01em', lineHeight: 1.2,
+                color: '#1D1D1F',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {coach.name}
               </div>
               <div style={{
-                fontSize: 13, color: '#94a3b8', marginTop: 2,
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13, color: '#6E6E73', marginTop: 4,
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
-                <span style={{ color: '#FFC800' }}>&#9733;</span>
-                {coach.rating ?? '—'}
-                <span style={{ color: '#64748b' }}>&bull;</span>
+                <span style={{ color: '#FF9500' }}>&#9733;</span>
+                {coach.rating ?? '\u2014'}
+                <span style={{ color: '#6E6E73' }}>&bull;</span>
                 {coach.current_swimmers_count ?? 0} swimmers
               </div>
             </div>
@@ -270,7 +238,7 @@ export default function Step7_CoachSelection() {
             {/* Actions */}
             <div style={{
               display: 'flex', flexDirection: 'column', gap: 6,
-              flexShrink: 0,
+              flexShrink: 0, alignItems: 'stretch',
             }}>
               <button
                 type="button"
@@ -278,44 +246,14 @@ export default function Step7_CoachSelection() {
                   setCvCoach(coach);
                   setShowCvModal(true);
                 }}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 6,
-                  border: '1.5px solid rgba(51,65,85,0.5)',
-                  background: 'rgba(51,65,85,0.2)',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: '#94a3b8',
-                  fontFamily: "'DM Sans', sans-serif",
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(51,65,85,0.4)';
-                  e.currentTarget.style.color = '#e2e8f0';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(51,65,85,0.2)';
-                  e.currentTarget.style.color = '#94a3b8';
-                }}
+                className="pl-btn pl-btn-ghost pl-btn-sm"
               >
                 View Bio
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectCoach(coach.id)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 6,
-                  border: 'none',
-                  background: isSelected ? '#58CC02' : '#1CB0F6',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: '#FFFFFF',
-                  fontFamily: "'DM Sans', sans-serif",
-                  transition: 'all 150ms ease',
-                }}
+                className={`pl-btn pl-btn-sm ${isSelected ? 'pl-btn-secondary' : 'pl-btn-primary'}`}
               >
                 {isSelected ? 'Selected \u2713' : 'Select'}
               </button>
@@ -328,20 +266,18 @@ export default function Step7_CoachSelection() {
 
   // ── Schedule viewer ───────────────────────────────────────────
   const renderSchedule = () => (
-    <div style={{ marginTop: 20 }}>
+    <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
       <div style={{
-        fontWeight: 700, marginBottom: 10,
-        color: '#e2e8f0', fontSize: 14,
-        fontFamily: "'DM Sans', sans-serif",
+        fontSize: 12, fontWeight: 500,
+        color: '#6E6E73', marginBottom: 12,
       }}>
         Available Times
       </div>
 
       {scheduleLoading && (
         <div style={{
-          textAlign: 'center', padding: 20,
-          color: '#94a3b8', fontSize: 14,
-          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 12, fontWeight: 500,
+          color: '#86868B', padding: '12px 0',
         }}>
           Loading schedule...
         </div>
@@ -349,8 +285,8 @@ export default function Step7_CoachSelection() {
 
       {!scheduleLoading && schedule.length === 0 && (
         <p style={{
-          color: '#94a3b8', fontSize: 14, margin: 0,
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#6E6E73', fontSize: 13, margin: 0,
+          fontFamily: 'var(--font-body)',
         }}>
           No schedule available for this coach.
         </p>
@@ -361,7 +297,7 @@ export default function Step7_CoachSelection() {
           {/* Day tabs */}
           <div style={{
             display: 'flex', gap: 8,
-            flexWrap: 'wrap', marginBottom: 12,
+            flexWrap: 'wrap', marginBottom: 14,
           }}>
             {schedule.map(day => {
               const hasAvail = day.slots?.some(s => s.is_available);
@@ -374,19 +310,14 @@ export default function Step7_CoachSelection() {
                     if (hasAvail) setActiveDay(day.day_of_week);
                   }}
                   style={{
-                    padding: '6px 14px',
-                    borderRadius: 999,
-                    border: 'none',
+                    padding: '7px 16px',
+                    borderRadius: 980,
                     cursor: hasAvail ? 'pointer' : 'default',
-                    fontWeight: 600,
-                    fontSize: 13,
-                    opacity: hasAvail ? 1 : 0.4,
-                    background: isActive
-                      ? '#1CB0F6' : 'rgba(51,65,85,0.3)',
-                    color: isActive
-                      ? '#FFFFFF' : '#94a3b8',
-                    transition: 'all 150ms ease',
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 13, fontWeight: 500,
+                    border: isActive ? '1px solid #0071E3' : '1px solid #E5E5EA',
+                    background: isActive ? '#0071E3' : hasAvail ? '#FFFFFF' : '#F2F2F7',
+                    color: isActive ? '#FFFFFF' : hasAvail ? '#515154' : '#AEAEB2',
+                    transition: 'border-color 0.15s ease, background 0.15s ease, color 0.15s ease',
                   }}
                 >
                   {day.day_of_week?.slice(0, 3)}
@@ -417,28 +348,20 @@ export default function Step7_CoachSelection() {
                           setErrors(e => ({ ...e, time: null }));
                       }}
                       style={{
-                        padding: '8px 16px',
-                        borderRadius: 999,
-                        border: slot.is_available
-                          ? '2px solid #58CC02'
-                          : '2px solid rgba(51,65,85,0.3)',
+                        padding: '9px 16px',
+                        borderRadius: 10,
+                        border: !slot.is_available
+                          ? '1px solid transparent'
+                          : isSlotSelected ? '1px solid #0071E3' : '1px solid #D2D2D7',
                         background: !slot.is_available
-                          ? 'rgba(51,65,85,0.15)'
-                          : isSlotSelected
-                            ? '#58CC02'
-                            : 'rgba(88,204,2,0.1)',
+                          ? '#F2F2F7'
+                          : isSlotSelected ? '#0071E3' : '#FFFFFF',
                         color: !slot.is_available
-                          ? '#64748b'
-                          : isSlotSelected
-                            ? '#FFFFFF'
-                            : '#58CC02',
-                        cursor: slot.is_available
-                          ? 'pointer' : 'not-allowed',
-                        opacity: slot.is_available ? 1 : 0.5,
-                        fontWeight: 600,
-                        fontSize: 13,
-                        transition: 'all 150ms ease',
-                        fontFamily: "'DM Sans', sans-serif",
+                          ? '#AEAEB2'
+                          : isSlotSelected ? '#FFFFFF' : '#1D1D1F',
+                        cursor: slot.is_available ? 'pointer' : 'not-allowed',
+                        fontSize: 13, fontWeight: 500,
+                        transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
                       }}
                     >
                       {slot.time}
@@ -454,9 +377,9 @@ export default function Step7_CoachSelection() {
       {/* Time error */}
       {errors.time && (
         <p style={{
-          color: '#f87171', fontSize: 13,
-          margin: '8px 0 0',
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#FF3B30', fontSize: 13,
+          margin: '10px 0 0',
+          fontFamily: 'var(--font-body)',
         }}>
           {errors.time}
         </p>
@@ -480,9 +403,9 @@ export default function Step7_CoachSelection() {
       {/* ── Coach error ──────────────────────────────────────────── */}
       {errors.coach && (
         <p style={{
-          color: '#f87171', fontSize: 13,
-          textAlign: 'center', margin: '8px 0 0',
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#FF3B30', fontSize: 13,
+          textAlign: 'start', margin: '8px 0 0',
+          fontFamily: 'var(--font-body)',
         }}>
           {errors.coach}
         </p>
@@ -492,44 +415,18 @@ export default function Step7_CoachSelection() {
       {selectedCoach !== null && renderSchedule()}
 
       {/* ── Continue Button ──────────────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
         <button
           type="button"
           onClick={handleContinue}
           disabled={coaches === null}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: coaches === null ? 'not-allowed' : 'pointer',
-            background: coaches === null
-              ? 'rgba(51,65,85,0.3)'
-              : 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-            color: coaches === null ? '#64748b' : '#060d1f',
-            fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: coaches === null ? 'none' : '0 2px 8px rgba(45,212,191,0.15)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: coaches === null ? 0.5 : 1,
-          }}
-          onMouseEnter={e => {
-            if (coaches !== null) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }
-          }}
-          onMouseLeave={e => {
-            if (coaches !== null) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {t('actions.next')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg className="rtl-flip" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </button>
       </div>
@@ -541,61 +438,56 @@ export default function Step7_CoachSelection() {
           onClose={() => setShowCvModal(false)}
         >
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
             {cvCoach.photo
               ? <img
                   src={cvCoach.photo}
                   alt={cvCoach.name}
-                  style={{
-                    width: 80, height: 80,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                  }}
+                  style={{ borderRadius: '50%', width: 72, height: 72, objectFit: 'cover', flexShrink: 0 }}
                 />
-              : <div style={{
-                  width: 80, height: 80,
-                  borderRadius: '50%',
-                  background: 'rgba(51,65,85,0.3)',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+              : <div style={{ borderRadius: '50%',
+                  width: 72, height: 72,
+                  background: '#F2F2F7', border: '1px solid #E5E5EA',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                    stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                    stroke="#86868B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                 </div>
             }
-            <h3 style={{
-              margin: '8px 0 4px', color: '#f1f5f9',
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
-              {cvCoach.name}
-            </h3>
-            <p style={{
-              color: '#94a3b8', fontSize: 14, margin: 0,
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
-              {cvCoach.experience_years} years experience
-            </p>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{
+                margin: 0,
+                fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600,
+                letterSpacing: '-0.02em', lineHeight: 1.2,
+                color: '#1D1D1F',
+              }}>
+                {cvCoach.name}
+              </h3>
+              <p style={{
+                fontSize: 13, color: '#6E6E73', margin: '6px 0 0',
+              }}>
+                {cvCoach.experience_years} years experience
+              </p>
+            </div>
           </div>
 
           {/* Bio */}
           {cvCoach.bio && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20, paddingTop: 16, borderTop: '1px solid #F2F2F7' }}>
               <div style={{
-                fontWeight: 700, marginBottom: 6,
-                color: '#e2e8f0', fontSize: 14,
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12, fontWeight: 500,
+                color: '#6E6E73', marginBottom: 8,
               }}>
                 About
               </div>
               <p style={{
-                color: '#cbd5e1', fontSize: 14,
+                color: '#1D1D1F', fontSize: 14,
                 lineHeight: 1.6, margin: 0,
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: 'var(--font-body)',
               }}>
                 {cvCoach.bio}
               </p>
@@ -606,22 +498,21 @@ export default function Step7_CoachSelection() {
           {cvCoach.certifications &&
            Array.isArray(cvCoach.certifications) &&
            cvCoach.certifications.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20, paddingTop: 16, borderTop: '1px solid #F2F2F7' }}>
               <div style={{
-                fontWeight: 700, marginBottom: 6,
-                color: '#e2e8f0', fontSize: 14,
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12, fontWeight: 500,
+                color: '#6E6E73', marginBottom: 8,
               }}>
                 Certifications
               </div>
               {cvCoach.certifications.map((cert, i) => (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center',
-                  gap: 8, marginBottom: 4,
-                  fontSize: 14, color: '#cbd5e1',
-                  fontFamily: "'DM Sans', sans-serif",
+                  gap: 8, marginBottom: 6,
+                  fontSize: 14, color: '#1D1D1F',
+                  fontFamily: 'var(--font-body)',
                 }}>
-                  <span style={{ color: '#58CC02' }}>{'\u2713'}</span>
+                  <span style={{ width: 6, height: 6, borderRadius: 3, background: '#0071E3', flexShrink: 0 }} />
                   {cert}
                 </div>
               ))}
@@ -630,43 +521,34 @@ export default function Step7_CoachSelection() {
 
           {/* Stats */}
           <div style={{
-            display: 'flex', gap: 16, marginBottom: 20,
-            justifyContent: 'center',
+            display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            border: '1px solid #E5E5EA', borderRadius: 14, overflow: 'hidden',
+            marginBottom: 20,
           }}>
-            <div style={{
-              textAlign: 'center',
-              padding: '10px 16px',
-              borderRadius: 8,
-              background: 'rgba(28,176,246,0.1)',
-            }}>
+            <div style={{ padding: '14px 16px', borderInlineEnd: '1px solid #F2F2F7' }}>
               <div style={{
-                fontSize: 18, fontWeight: 800, color: '#1CB0F6',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700,
+                letterSpacing: '-0.02em', lineHeight: 1.1, color: '#0071E3',
               }}>
-                {cvCoach.rating ?? '—'}
+                {cvCoach.rating ?? '\u2014'}
               </div>
               <div style={{
-                fontSize: 11, color: '#94a3b8', marginTop: 2,
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12, fontWeight: 500,
+                color: '#6E6E73', marginTop: 6,
               }}>
                 Rating
               </div>
             </div>
-            <div style={{
-              textAlign: 'center',
-              padding: '10px 16px',
-              borderRadius: 8,
-              background: 'rgba(88,204,2,0.1)',
-            }}>
+            <div style={{ padding: '14px 16px' }}>
               <div style={{
-                fontSize: 18, fontWeight: 800, color: '#58CC02',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700,
+                letterSpacing: '-0.02em', lineHeight: 1.1, color: '#1D1D1F',
               }}>
                 {cvCoach.current_swimmers_count ?? 0}
               </div>
               <div style={{
-                fontSize: 11, color: '#94a3b8', marginTop: 2,
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12, fontWeight: 500,
+                color: '#6E6E73', marginTop: 6,
               }}>
                 Swimmers
               </div>
@@ -680,23 +562,8 @@ export default function Step7_CoachSelection() {
               handleSelectCoach(cvCoach.id);
               setShowCvModal(false);
             }}
-            style={{
-              width: '100%', height: 44, borderRadius: 10,
-              border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-              color: '#060d1f', fontSize: 14, fontWeight: 700,
-              fontFamily: "'DM Sans', sans-serif",
-              boxShadow: '0 2px 8px rgba(45,212,191,0.15)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            className="pl-btn pl-btn-primary"
+            style={{ width: '100%', height: 46 }}
           >
             {t('actions.confirm')}
           </button>

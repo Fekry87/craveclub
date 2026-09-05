@@ -6,13 +6,15 @@ import { getBranches, createBranch, updateBranch, deleteBranch, updateBranchFeat
 import { PageHeader, Button, FormField, Input, TextArea } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
+import { Badge } from '../../components/ui/Badge';
+import { cardStyle, labelStyle } from '../../components/ui/styles';
 
 const KNOWN_FEATURES = [
   { key: 'training_plans', label: 'Training Plans', icon: '\u{1F4CB}' },
   { key: 'skills', label: 'Skills Tracking', icon: '\u{1F3AF}' },
   { key: 'leaderboard', label: 'Leaderboard', icon: '\u{1F3C6}' },
   { key: 'evaluations', label: 'Evaluations', icon: '\u{1F4CA}' },
-  { key: 'coach_portal', label: 'Coach Portal', icon: '\u{1F468}\u200D\u{1F3EB}' },
+  { key: 'coach_portal', label: 'Coach Portal', icon: '\u{1F468}‍\u{1F3EB}' },
 ];
 
 const emptyForm = {
@@ -171,10 +173,10 @@ export default function BranchesPage() {
   if (modal === 'create' || modal === 'edit') {
     return (
       <FormPage
-        title={modal === 'create' ? t('branches.newBranch') : `${t('actions.edit')} \u2014 ${editBranch?.name}`}
+        title={modal === 'create' ? t('branches.newBranch') : `${t('actions.edit')} — ${editBranch?.name}`}
         onBack={closeModal}
         icon={
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         }
@@ -195,7 +197,7 @@ export default function BranchesPage() {
         </FormField>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <FormField label="Working Hours">
-            <Input value={form.working_hours} onChange={e => updateField('working_hours', e.target.value)} placeholder="7am \u2013 10pm" />
+            <Input value={form.working_hours} onChange={e => updateField('working_hours', e.target.value)} placeholder="7am – 10pm" />
           </FormField>
           <FormField label="Capacity">
             <Input type="number" min="1" value={form.capacity} onChange={e => updateField('capacity', e.target.value)} placeholder="100" />
@@ -207,15 +209,14 @@ export default function BranchesPage() {
 
         {/* Active toggle */}
         <div style={{
+          borderRadius: 12,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 14px', borderRadius: 12,
-          background: 'rgba(6,13,31,0.4)',
-          border: '1px solid rgba(51,65,85,0.3)',
+          padding: '14px 16px', background: '#F2F2F7',
           marginBottom: 4,
         }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>Active Status</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#1D1D1F' }}>Active status</div>
+            <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 3 }}>
               {form.is_active ? 'Branch is operational' : 'Branch is inactive'}
             </div>
           </div>
@@ -238,49 +239,53 @@ export default function BranchesPage() {
   if (modal === 'features' && editBranch) {
     return (
       <FormPage
-        title={`Branch Features \u2014 ${editBranch.name}`}
+        title={`Branch features — ${editBranch.name}`}
         onBack={closeModal}
         icon={
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="1.8" strokeLinecap="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
         }
       >
-        <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 18px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 14, color: '#6E6E73', margin: '0 0 18px', lineHeight: 1.5 }}>
           Override which features are available at this branch.
           Features disabled at club level cannot be enabled here.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {KNOWN_FEATURES.map(f => {
+        <div style={{ ...cardStyle, padding: '4px 18px' }}>
+          {KNOWN_FEATURES.map((f, fi) => {
             const clubEnabled = clubFeatureKeys.includes(f.key);
             const branchValue = localFeatures[f.key];
             const effective = branchValue !== undefined ? branchValue : clubEnabled;
 
             return (
               <div key={f.key} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                 padding: '14px 0',
-                borderBottom: '1px solid rgba(51,65,85,0.2)',
-                opacity: !clubEnabled ? 0.4 : 1,
+                borderBottom: fi === KNOWN_FEATURES.length - 1 ? 'none' : '1px solid #F2F2F7',
+                opacity: !clubEnabled ? 0.5 : 1,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 22, lineHeight: 1 }}>{f.icon}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: '#e2e8f0', fontFamily: "'DM Sans', sans-serif" }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 36, height: 36, borderRadius: 10, background: '#F2F2F7',
+                    fontSize: 18, lineHeight: 1, flexShrink: 0,
+                  }}>{f.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, color: '#1D1D1F', fontWeight: 600, lineHeight: 1.3 }}>
                       {f.label}
                     </div>
                     {!clubEnabled && (
-                      <div style={{ fontSize: 12, color: '#fda4af' }}>Disabled at club level</div>
+                      <div style={{ fontSize: 13, color: '#B12A20', marginTop: 2 }}>Disabled at club level</div>
                     )}
                     {clubEnabled && branchValue !== undefined && (
-                      <div style={{ fontSize: 12, color: '#64748b' }}>
+                      <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 2 }}>
                         {branchValue ? 'Enabled for this branch' : 'Disabled for this branch'}
                       </div>
                     )}
                     {clubEnabled && branchValue === undefined && (
-                      <div style={{ fontSize: 12, color: '#64748b' }}>Inherited from club</div>
+                      <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 2 }}>Inherited from club</div>
                     )}
                   </div>
                 </div>
@@ -314,12 +319,11 @@ export default function BranchesPage() {
     return (
       <>
         <PageHeader title={t('branches.title')} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
-              height: 200, borderRadius: 18,
-              background: 'linear-gradient(145deg, rgba(13,31,60,0.5) 0%, rgba(10,22,40,0.3) 100%)',
-              border: '1px solid rgba(34,211,238,0.06)',
+              ...cardStyle,
+              height: 200,
               animation: `pulse 1.5s ease-in-out ${i * 0.2}s infinite`,
             }} />
           ))}
@@ -334,14 +338,17 @@ export default function BranchesPage() {
       <>
         <PageHeader title={t('branches.title')} />
         <div style={{
+          ...cardStyle,
           textAlign: 'center', padding: '60px 20px',
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
-          borderRadius: 18, border: '1px solid rgba(244,63,94,0.15)',
         }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 12 }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
             <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
           </svg>
-          <p style={{ color: '#fda4af', fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{loadError}</p>
+          <p style={{
+            color: '#1D1D1F', fontSize: 20, margin: '0 0 16px',
+            fontFamily: 'var(--font-display)', fontWeight: 600,
+            letterSpacing: '-0.02em', lineHeight: 1.2,
+          }}>{loadError}</p>
           <Button type="button" variant="secondary" onClick={loadBranches} style={undefined}>Retry</Button>
         </div>
       </>
@@ -352,21 +359,11 @@ export default function BranchesPage() {
   return (
     <>
       <PageHeader title={t('branches.title')}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '6px 14px', borderRadius: 8,
-          background: atLimit ? 'rgba(244,63,94,0.1)' : 'rgba(45,212,191,0.1)',
-          border: `1px solid ${atLimit ? 'rgba(244,63,94,0.25)' : 'rgba(45,212,191,0.25)'}`,
-          fontSize: 13, fontWeight: 600,
-          color: atLimit ? '#fda4af' : '#2dd4bf',
-          fontFamily: "'DM Sans', sans-serif",
-          whiteSpace: 'nowrap',
-        }}>
-          {branches.length}/{maxBranches} branches
-          {atLimit && ' \u2014 Limit reached'}
-        </div>
+        <Badge variant={atLimit ? 'danger' : 'neutral'}>
+          {branches.length}/{maxBranches} branches{atLimit ? ' — limit reached' : ''}
+        </Badge>
         <Button type="button" disabled={atLimit} onClick={openCreate}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
           Add Branch
@@ -375,14 +372,17 @@ export default function BranchesPage() {
 
       {branches.length === 0 ? (
         <div style={{
+          ...cardStyle,
           textAlign: 'center', padding: '60px 20px',
-          background: 'linear-gradient(145deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.2) 100%)',
-          borderRadius: 18, border: '1px solid rgba(34,211,238,0.06)',
         }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="1.2" strokeLinecap="round" style={{ marginBottom: 12 }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
             <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 16px' }}>No branches yet</p>
+          <p style={{
+            color: '#1D1D1F', fontSize: 20, margin: '0 0 18px',
+            fontFamily: 'var(--font-display)', fontWeight: 600,
+            letterSpacing: '-0.02em', lineHeight: 1.2,
+          }}>No branches yet</p>
           <Button type="button" onClick={openCreate}>Create your first branch</Button>
         </div>
       ) : (
@@ -414,18 +414,18 @@ export default function BranchesPage() {
           title={`Delete ${editBranch.name}?`}
           onClose={closeModal}
           icon={
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="1.8" strokeLinecap="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
             </svg>
           }
         >
           <div style={{
-            padding: '16px',
-            background: 'rgba(244,63,94,0.06)',
-            border: '1px solid rgba(244,63,94,0.15)',
-            borderRadius: 12, marginBottom: 4,
+            borderRadius: 12,
+            padding: '14px 16px',
+            background: 'rgba(255,59,48,0.08)',
+            marginBottom: 4,
           }}>
-            <p style={{ color: '#fda4af', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+            <p style={{ color: '#B12A20', fontSize: 14, margin: 0, lineHeight: 1.5 }}>
               This cannot be undone. Coaches and swimmers assigned to this branch will become unassigned.
             </p>
           </div>
@@ -454,73 +454,64 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
   return (
     <div
       onClick={() => navigate(`/club/branches/${branch.id}`)}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = branch.is_active ? 'rgba(34,211,238,0.2)' : 'rgba(244,63,94,0.3)';
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3), 0 0 20px rgba(34,211,238,0.04)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = branch.is_active ? 'rgba(34,211,238,0.06)' : 'rgba(244,63,94,0.2)';
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)';
-      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        border: branch.is_active ? '1px solid rgba(34,211,238,0.06)' : '1px solid rgba(244,63,94,0.2)',
-        borderRadius: 18, padding: 20,
+        ...cardStyle,
+        padding: 20,
         position: 'relative',
-        opacity: branch.is_active ? 1 : 0.7,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        opacity: branch.is_active ? 1 : 0.8,
+        transition: 'box-shadow 0.2s ease',
         animation: `fadeInUp 0.4s ease-out ${0.05 + index * 0.06}s both`,
         cursor: 'pointer',
       }}
     >
       {/* Inactive badge */}
       {!branch.is_active && (
-        <div style={{
-          position: 'absolute', top: 14, right: 52,
-          padding: '3px 10px', borderRadius: 20,
-          background: 'rgba(244,63,94,0.12)', color: '#fda4af',
-          fontSize: 11, fontWeight: 600, border: '1px solid rgba(244,63,94,0.2)',
-        }}>
-          Inactive
+        <div style={{ position: 'absolute', top: 16, insetInlineEnd: 56 }}>
+          <Badge variant="danger">Inactive</Badge>
         </div>
       )}
 
       {/* Top row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 17, fontWeight: 700, color: '#f1f5f9',
-            fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            width: 42, height: 42, borderRadius: 10, background: '#F2F2F7', color: '#0071E3',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            {branch.name}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
           </div>
-          {branch.city && (
-            <div style={{ fontSize: 13, color: '#64748b', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              {branch.city}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 17, fontWeight: 600, color: '#1D1D1F',
+              fontFamily: 'var(--font-display)', lineHeight: 1.3,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {branch.name}
             </div>
-          )}
+            {branch.city && (
+              <div style={{
+                ...labelStyle, marginTop: 4,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+                </svg>
+                {branch.city}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Kebab menu */}
         <div style={{ position: 'relative' }} ref={menuOpen ? menuRef : undefined}>
           <button
             type="button"
+            className="pl-icon-btn"
             onClick={(e) => { e.stopPropagation(); onMenuToggle(); }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.2)'; }}
-            style={{
-              background: 'rgba(51,65,85,0.2)', border: '1px solid rgba(51,65,85,0.3)',
-              borderRadius: 8, width: 32, height: 32, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#94a3b8', transition: 'all 0.2s',
-            }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
@@ -529,12 +520,13 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
 
           {menuOpen && (
             <div style={{
-              position: 'absolute', top: 36, right: 0, zIndex: 50,
-              background: 'linear-gradient(145deg, #0d1f3c, #0a1628)',
-              border: '1px solid rgba(34,211,238,0.12)',
-              borderRadius: 12, padding: 4, minWidth: 160,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              animation: 'scaleIn 0.15s ease-out',
+              borderRadius: 12,
+              position: 'absolute', top: 38, insetInlineEnd: 0, zIndex: 50,
+              background: '#FFFFFF',
+              border: '1px solid #E5E5EA',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+              padding: 6, minWidth: 184, overflow: 'hidden',
+              animation: 'fadeIn 0.15s ease-out',
             }}>
               {[
                 { label: 'Edit', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', onClick: onEdit },
@@ -545,18 +537,18 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
                   key={item.label}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); item.onClick(); }}
-                  onMouseEnter={e => { e.currentTarget.style.background = item.danger ? 'rgba(244,63,94,0.1)' : 'rgba(34,211,238,0.08)'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = item.danger ? 'rgba(255,59,48,0.10)' : '#F2F2F7'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '9px 12px', background: 'transparent',
-                    border: 'none', borderRadius: 8, cursor: 'pointer',
-                    color: item.danger ? '#fda4af' : '#c9d1d9',
-                    fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
-                    transition: 'background 0.15s',
+                    padding: '9px 10px', background: 'transparent',
+                    border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'start',
+                    color: item.danger ? '#B12A20' : '#1D1D1F',
+                    fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-body)',
+                    transition: 'background 0.15s ease',
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d={item.icon} />
                     {item.label === 'Manage Features' && <circle cx="12" cy="12" r="3" />}
                   </svg>
@@ -569,24 +561,25 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 14 }}>
+      <div style={{
+        display: 'flex', gap: 0, marginBottom: 14,
+        background: '#F2F2F7', borderRadius: 12, overflow: 'hidden',
+      }}>
         {[
           { value: branch.coaches_count ?? 0, label: 'Coaches' },
           { value: branch.swimmers_count ?? 0, label: 'Swimmers' },
           { value: branch.sessions_count ?? 0, label: 'Sessions' },
         ].map(stat => (
           <div key={stat.label} style={{
-            flex: 1, textAlign: 'center',
-            padding: '10px 0', borderRadius: 10,
-            background: 'rgba(6,13,31,0.4)',
+            flex: 1, textAlign: 'center', padding: '12px 4px', minWidth: 0,
           }}>
             <div style={{
-              fontSize: 20, fontWeight: 800, color: '#22d3ee',
-              fontFamily: "'Outfit', sans-serif", lineHeight: 1.2,
+              fontSize: 22, fontWeight: 700, color: '#1D1D1F',
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
             }}>
               {stat.value}
             </div>
-            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 500, marginTop: 2 }}>{stat.label}</div>
+            <div style={{ ...labelStyle, marginTop: 6 }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -595,14 +588,7 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
       {effectiveFeatures.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {effectiveFeatures.map(f => (
-            <span key={f.key} style={{
-              padding: '3px 10px', borderRadius: 999,
-              background: 'rgba(34,211,238,0.08)',
-              color: '#22d3ee', fontSize: 11, fontWeight: 500,
-              border: '1px solid rgba(34,211,238,0.15)',
-            }}>
-              {f.icon} {f.label}
-            </span>
+            <Badge key={f.key} variant="neutral">{f.icon} {f.label}</Badge>
           ))}
         </div>
       )}
@@ -610,20 +596,20 @@ function BranchCard({ branch, index, clubFeatureKeys, menuOpen, onMenuToggle, me
       {/* Capacity + Working hours footer */}
       {(branch.capacity || branch.working_hours) && (
         <div style={{
-          display: 'flex', gap: 16, marginTop: 12, paddingTop: 12,
-          borderTop: '1px solid rgba(51,65,85,0.2)',
+          display: 'flex', gap: 16, marginTop: 14, paddingTop: 14,
+          borderTop: '1px solid #F2F2F7',
         }}>
           {branch.capacity && (
-            <div style={{ fontSize: 12, color: '#526280', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#526280" strokeWidth="2" strokeLinecap="round">
+            <div style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
               </svg>
               Cap: {branch.capacity}
             </div>
           )}
           {branch.working_hours && (
-            <div style={{ fontSize: 12, color: '#526280', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#526280" strokeWidth="2" strokeLinecap="round">
+            <div style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
               </svg>
               {branch.working_hours}
@@ -646,23 +632,20 @@ function ToggleSwitch({ checked, disabled, onChange }) {
       onClick={onChange}
       style={{
         position: 'relative', display: 'inline-flex',
-        width: 44, height: 24, borderRadius: 12,
-        background: checked
-          ? 'linear-gradient(135deg, #2dd4bf, #14b8a6)'
-          : 'rgba(51,65,85,0.4)',
-        border: checked ? '1px solid rgba(45,212,191,0.3)' : '1px solid rgba(51,65,85,0.5)',
+        width: 44, height: 26, borderRadius: 13,
+        background: checked ? '#34C759' : '#E5E5EA',
+        border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.4 : 1,
-        transition: 'all 0.25s ease',
+        transition: 'background 0.2s ease',
         padding: 0, flexShrink: 0,
       }}
     >
       <span style={{
-        position: 'absolute', top: 2, insetInlineStart: checked ? 22 : 2,
-        width: 18, height: 18, borderRadius: '50%',
-        background: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-        transition: 'left 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        position: 'absolute', top: 2, insetInlineStart: checked ? 20 : 2,
+        width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        transition: 'inset-inline-start 0.2s ease',
       }} />
     </button>
   );
@@ -672,16 +655,16 @@ function ToggleSwitch({ checked, disabled, onChange }) {
 function ErrorBanner({ message }) {
   return (
     <div style={{
-      background: 'rgba(244,63,94,0.08)',
-      border: '1px solid rgba(244,63,94,0.2)',
-      borderRadius: 10, padding: '10px 14px', marginTop: 16,
-      fontSize: 13, color: '#fda4af',
+      background: 'rgba(255,59,48,0.08)',
+      borderRadius: 12,
+      padding: '12px 14px', marginTop: 16,
+      fontSize: 14, color: '#B12A20',
       display: 'flex', alignItems: 'center', gap: 8,
       animation: 'fadeInUp 0.3s ease-out',
     }}>
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-        <circle cx="8" cy="8" r="7" stroke="#f43f5e" strokeWidth="1.5" />
-        <path d="M8 5v3M8 10.5v.5" stroke="#f43f5e" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M8 5v3M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {message}
     </div>

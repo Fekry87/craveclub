@@ -28,77 +28,62 @@ export default class ErrorBoundary extends Component {
       return (
         <div style={{
           minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#060d1f', padding: 24,
+          background: '#F5F5F7', padding: 24,
         }}>
           <div style={{
-            maxWidth: 600, width: '100%', textAlign: 'center',
-            background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-            borderRadius: 20, padding: '48px 32px',
-            border: '1px solid rgba(244,63,94,0.15)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
+            maxWidth: 560, width: '100%', textAlign: 'start',
+            background: '#FFFFFF',
+            padding: 'clamp(24px, 5vw, 36px)',
+            border: '1px solid #E5E5EA',
+            borderRadius: 16,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+            animation: 'fadeInUp 0.3s ease-out both',
           }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 16, margin: '0 auto 20px',
-              background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)',
+              width: 44, height: 44, marginBottom: 18, borderRadius: 12,
+              background: 'rgba(255,59,48,0.12)', color: '#FF3B30',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28,
-            }}>!</div>
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            </div>
             <h2 style={{
-              color: '#f1f5f9', fontFamily: "'Outfit', sans-serif",
-              fontSize: '1.25rem', fontWeight: 700, margin: '0 0 8px',
+              color: '#1D1D1F', fontFamily: 'var(--font-display)',
+              fontSize: 18, fontWeight: 600, lineHeight: 1.3, margin: '0 0 8px',
             }}>Something went wrong</h2>
             <p style={{
-              color: '#64748b', fontSize: '0.875rem', margin: '0 0 16px',
-              fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5,
+              color: '#6E6E73', fontSize: 14, margin: '0 0 20px',
+              fontFamily: 'var(--font-body)', lineHeight: 1.6,
             }}>
               An unexpected error occurred. Please try refreshing the page.
             </p>
 
             {/* Error details (for debugging) */}
             <div style={{
-              background: 'rgba(0,0,0,0.3)', borderRadius: 12,
-              padding: '14px 16px', marginBottom: 20,
-              border: '1px solid rgba(244,63,94,0.1)',
-              textAlign: 'left', maxHeight: 200, overflowY: 'auto',
+              background: '#F2F2F7', padding: '14px 16px', marginBottom: 22,
+              borderRadius: 10,
+              textAlign: 'start', maxHeight: 200, overflowY: 'auto',
             }}>
               <div style={{
-                color: '#f87171', fontSize: 13, fontFamily: 'monospace',
+                color: '#B12A20', fontSize: 12, fontFamily: 'var(--font-code)',
                 wordBreak: 'break-word', lineHeight: 1.5,
               }}>
                 {errorMessage}
               </div>
               {componentStack && (
                 <div style={{
-                  color: '#475569', fontSize: 11, fontFamily: 'monospace',
-                  marginTop: 8, whiteSpace: 'pre-wrap', lineHeight: 1.4,
+                  color: '#86868B', fontSize: 11, fontFamily: 'var(--font-code)',
+                  marginTop: 10, whiteSpace: 'pre-wrap', lineHeight: 1.5,
                 }}>
                   {componentStack.trim().split('\n').slice(0, 6).join('\n')}
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button
-                onClick={this.handleReset}
-                style={{
-                  padding: '10px 24px', borderRadius: 10,
-                  border: '1px solid rgba(34,211,238,0.2)',
-                  background: 'rgba(34,211,238,0.08)',
-                  color: '#22d3ee', fontWeight: 600, fontSize: '0.875rem',
-                  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button type="button" onClick={this.handleReset} className="pl-btn pl-btn-primary">
                 Try Again
               </button>
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: '10px 24px', borderRadius: 10, border: 'none',
-                  background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-                  color: '#060d1f', fontWeight: 600, fontSize: '0.875rem',
-                  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
+              <button type="button" onClick={() => window.location.reload()} className="pl-btn pl-btn-secondary">
                 Refresh Page
               </button>
             </div>
@@ -137,50 +122,49 @@ export class RouteErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', minHeight: 400, gap: 16, padding: 32,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: 400, padding: 32,
         }}>
           <div style={{
-            width: 56, height: 56, borderRadius: 14,
-            background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
-          }}>!</div>
-          <h3 style={{
-            color: '#f1f5f9', fontFamily: "'Outfit', sans-serif",
-            fontSize: 18, fontWeight: 600, margin: 0,
-          }}>Page Error</h3>
-          <p style={{
-            color: '#64748b', fontSize: 13, margin: 0, textAlign: 'center', maxWidth: 360,
+            background: '#FFFFFF', border: '1px solid #E5E5EA', borderRadius: 16,
+            padding: 28, maxWidth: 460, width: '100%',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+            animation: 'fadeIn 0.3s ease-out both',
           }}>
-            This page encountered an error. Other pages should still work.
-          </p>
-
-          {/* Show the error for debugging */}
-          <div style={{
-            background: 'rgba(0,0,0,0.25)', borderRadius: 10,
-            padding: '10px 14px', maxWidth: 480, width: '100%',
-            border: '1px solid rgba(244,63,94,0.1)',
-          }}>
-            <code style={{
-              color: '#f87171', fontSize: 12, fontFamily: 'monospace',
-              wordBreak: 'break-word',
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: 'rgba(255,59,48,0.12)', color: '#FF3B30',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              {this.state.error?.message || 'Unknown error'}
-            </code>
-          </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            </div>
+            <h3 style={{
+              color: '#1D1D1F', fontFamily: 'var(--font-display)',
+              fontSize: 18, fontWeight: 600, lineHeight: 1.3, margin: 0,
+            }}>Page Error</h3>
+            <p style={{
+              color: '#6E6E73', fontSize: 14, margin: 0, textAlign: 'center', maxWidth: 360, lineHeight: 1.55,
+            }}>
+              This page encountered an error. Other pages should still work.
+            </p>
 
-          <button
-            onClick={this.handleRetry}
-            style={{
-              padding: '9px 22px', borderRadius: 10,
-              border: '1px solid rgba(34,211,238,0.2)',
-              background: 'rgba(34,211,238,0.08)',
-              color: '#22d3ee', fontWeight: 600, fontSize: 13,
-              cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            Retry
-          </button>
+            {/* Show the error for debugging */}
+            <div style={{
+              background: '#F2F2F7', padding: '10px 14px', width: '100%',
+              borderRadius: 10, textAlign: 'start',
+            }}>
+              <code style={{
+                color: '#B12A20', fontSize: 12, fontFamily: 'var(--font-code)',
+                wordBreak: 'break-word', lineHeight: 1.5,
+              }}>
+                {this.state.error?.message || 'Unknown error'}
+              </code>
+            </div>
+
+            <button type="button" onClick={this.handleRetry} className="pl-btn pl-btn-primary pl-btn-sm">
+              Retry
+            </button>
+          </div>
         </div>
       );
     }

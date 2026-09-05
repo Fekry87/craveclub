@@ -1,41 +1,28 @@
-import { useTranslation } from 'react-i18next';
-
 export default function WizardProgressBar({ currentStep, totalSteps }) {
-  const { t } = useTranslation();
   const pct = Math.round((currentStep / totalSteps) * 100);
 
   return (
-    <div style={{ marginBottom: 32 }}>
+    <div style={{ marginBottom: 24 }}>
       {/* Step indicator */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 8,
       }}>
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: '#94a3b8',
-          letterSpacing: '0.04em', fontFamily: "'DM Sans', sans-serif",
-        }}>
-          {`Step ${currentStep} of ${totalSteps}`}
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#6E6E73' }}>
+          {`${currentStep} / ${totalSteps}`}
         </span>
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: '#22d3ee',
-          fontFamily: "'DM Sans', sans-serif",
-        }}>
-          {pct}%
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#0071E3' }}>
+          {`${pct}%`}
         </span>
       </div>
 
       {/* Track */}
-      <div style={{
-        height: 6, borderRadius: 3,
-        background: 'rgba(51,65,85,0.4)',
-        overflow: 'hidden',
-      }}>
+      <div style={{ height: 6, borderRadius: 3, background: '#E5E5EA', overflow: 'hidden' }}>
         <div style={{
-          height: '100%', borderRadius: 3,
-          width: `${pct}%`,
-          background: 'linear-gradient(90deg, #22d3ee 0%, #2dd4bf 100%)',
-          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          height: '100%', width: `${pct}%`,
+          borderRadius: 3,
+          background: '#0071E3',
+          transition: 'width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }} />
       </div>
     </div>

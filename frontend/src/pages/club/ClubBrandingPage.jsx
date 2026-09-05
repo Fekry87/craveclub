@@ -2,15 +2,17 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getOwnBranding, updateOwnBranding, uploadOwnBrandingFile } from '../../api/branding';
 import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
+import { Badge } from '../../components/ui/Badge';
+import { cardStyle, inputStyle, inputFocusProps } from '../../components/ui/styles';
 
 const COLOR_PRESETS = ['1A6FB5', 'C0392B', '27AE60', '7D3C98', 'E67E22', '148F77', 'B7950B', '2C3E50'];
 const ASSET_LABEL_KEY = { logo: 'branding.logo', favicon: 'branding.favicon', cover: 'branding.coverImage' };
 
 const sectionCardStyle = (delay = '0.1s') => ({
-  padding: '26px 28px 10px', borderRadius: 18,
-  background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)',
-  border: '1px solid rgba(34,211,238,0.06)', marginBottom: 20,
-  animation: `fadeInUp 0.5s ease-out ${delay} both`,
+  ...cardStyle,
+  padding: '22px 24px 6px',
+  marginBottom: 20,
+  animation: `fadeInUp 0.4s ease-out ${delay} both`,
 });
 
 function BrandingColorPicker({ label, value, onChange }) {
@@ -18,26 +20,15 @@ function BrandingColorPicker({ label, value, onChange }) {
   const isValid = /^[0-9A-Fa-f]{6}$/.test(value || '');
   return (
     <FormField label={label}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 0,
-        background: 'rgba(6,13,31,0.6)',
-        border: `1px solid ${value && !isValid ? '#f43f5e' : 'rgba(51,65,85,0.5)'}`,
-        borderRadius: 12, overflow: 'hidden',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
-          width: 48, height: 44, flexShrink: 0, display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-          borderRight: '1px solid rgba(51,65,85,0.4)', position: 'relative',
+          position: 'relative', width: 32, height: 32, flexShrink: 0,
+          borderRadius: '50%', background: isValid ? `#${value}` : '#E5E5EA',
+          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
         }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: isValid ? `#${value}` : 'rgba(51,65,85,0.5)',
-            boxShadow: isValid ? `0 0 12px #${value}40` : 'none',
-            border: '2px solid rgba(255,255,255,0.15)', transition: 'all 0.3s',
-          }} />
           <input
             type="color"
-            value={isValid ? `#${value}` : '#22d3ee'}
+            value={isValid ? `#${value}` : '#0071E3'}
             onChange={e => onChange(e.target.value.replace('#', ''))}
             style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
           />
@@ -45,29 +36,33 @@ function BrandingColorPicker({ label, value, onChange }) {
         <input
           type="text" value={value || ''} onChange={e => onChange(e.target.value.replace('#', ''))}
           placeholder={t('branding.hexPlaceholder')}
+          {...inputFocusProps}
           style={{
-            flex: 1, minWidth: 0, padding: '0 14px', height: 44,
-            background: 'transparent', border: 'none',
-            color: '#e2e8f0', fontSize: '0.875rem',
-            fontFamily: "'DM Mono', 'DM Sans', monospace",
-            letterSpacing: '0.04em', outline: 'none',
+            ...inputStyle,
+            flex: 1, minWidth: 0,
+            borderColor: value && !isValid ? '#FF3B30' : '#D2D2D7',
           }}
         />
       </div>
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
-        {COLOR_PRESETS.map(color => (
-          <button key={color} type="button" onClick={() => onChange(color)}
-            style={{
-              width: 22, height: 22, borderRadius: 6, background: `#${color}`,
-              border: (value || '').toLowerCase() === color.toLowerCase() ? '2px solid #fff' : '1px solid rgba(255,255,255,0.08)',
-              cursor: 'pointer', transition: 'all 0.2s',
-              transform: (value || '').toLowerCase() === color.toLowerCase() ? 'scale(1.1)' : 'scale(1)',
-            }}
-          />
-        ))}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+        {COLOR_PRESETS.map(color => {
+          const selected = (value || '').toLowerCase() === color.toLowerCase();
+          return (
+            <button key={color} type="button" onClick={() => onChange(color)}
+              style={{
+                width: 28, height: 28, borderRadius: '50%', background: `#${color}`,
+                border: 'none', padding: 0, cursor: 'pointer',
+                transition: 'box-shadow 0.15s ease, transform 0.15s ease',
+                boxShadow: selected
+                  ? '0 0 0 2px #FFFFFF, 0 0 0 4px #0071E3'
+                  : 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+              }}
+            />
+          );
+        })}
       </div>
       {value && !isValid && (
-        <div style={{ color: '#f43f5e', fontSize: 11, marginTop: 4 }}>
+        <div style={{ color: '#B12A20', marginTop: 8, fontSize: 12 }}>
           {t('branding.invalidHex')}
         </div>
       )}
@@ -100,25 +95,30 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+        onMouseEnter={e => { if (!dragOver) e.currentTarget.style.borderColor = '#0071E3'; }}
+        onMouseLeave={e => { if (!dragOver) e.currentTarget.style.borderColor = '#D2D2D7'; }}
         style={{
-          border: `2px dashed ${dragOver ? '#22d3ee' : 'rgba(51,65,85,0.5)'}`,
-          borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer',
-          background: dragOver ? 'rgba(34,211,238,0.08)' : 'rgba(6,13,31,0.6)',
-          transition: 'all 0.2s',
+          border: `2px dashed ${dragOver ? '#0071E3' : '#D2D2D7'}`,
+          borderRadius: 14,
+          padding: 20, textAlign: 'center', cursor: 'pointer',
+          background: '#F2F2F7',
+          transition: 'border-color 0.15s ease, background 0.15s ease',
         }}
       >
         {displayUrl ? (
-          <img src={displayUrl} alt={label} style={{ maxWidth: '100%', objectFit: 'contain', borderRadius: 8, ...previewStyle }} />
+          <img src={displayUrl} alt={label} style={{ maxWidth: '100%', borderRadius: 10, objectFit: 'contain', ...previewStyle }} />
         ) : (
-          <div style={{ color: '#94a3b8', fontSize: 13 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 6, display: 'block', margin: '0 auto 6px' }}>
+          <div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 10px' }}>
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
-            <div>{t('branding.dropFile')}</div>
-            <div style={{ fontSize: 11, marginTop: 4, color: '#64748b' }}>{t('branding.fileTypes')}</div>
+            <div style={{ fontSize: 13, color: '#6E6E73' }}>{t('branding.dropFile')}</div>
+            <div style={{ fontSize: 12, marginTop: 4, color: '#86868B' }}>{t('branding.fileTypes')}</div>
           </div>
         )}
-        {uploading && <div style={{ color: '#22d3ee', fontSize: 12, marginTop: 8 }}>{t('branding.uploading')}</div>}
+        {uploading && (
+          <div style={{ color: '#0071E3', marginTop: 10, fontSize: 12 }}>{t('branding.uploading')}</div>
+        )}
         <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/svg+xml'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
       </div>
     </FormField>
@@ -127,8 +127,8 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
 
 function PhonePreview({ form }) {
   const { t } = useTranslation();
-  const primary = /^[0-9A-Fa-f]{6}$/.test(form.primary_color || '') ? `#${form.primary_color}` : '#1A6FB5';
-  const secondary = /^[0-9A-Fa-f]{6}$/.test(form.secondary_color || '') ? `#${form.secondary_color}` : '#27AE60';
+  const primary = /^[0-9A-Fa-f]{6}$/.test(form.primary_color || '') ? `#${form.primary_color}` : '#515154';
+  const secondary = /^[0-9A-Fa-f]{6}$/.test(form.secondary_color || '') ? `#${form.secondary_color}` : '#34C759';
   const previewTabs = [
     { key: 'home', label: t('nav.home') },
     { key: 'sessions', label: t('nav.sessions') },
@@ -137,66 +137,76 @@ function PhonePreview({ form }) {
 
   return (
     <div style={{ position: 'sticky', top: 24 }}>
-      <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12, textAlign: 'center' }}>
+      <div style={{
+        fontSize: 12, color: '#6E6E73',
+        marginBottom: 14, textAlign: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#0071E3', display: 'inline-block' }} />
         {t('branding.livePreview')}
       </div>
+      {/* Device mock — deliberately renders the CLUB's own brand colours, not the Apple palette */}
       <div style={{
-        width: 280, height: 560, borderRadius: 40,
-        border: '3px solid rgba(51,65,85,0.4)',
-        background: '#0f172a', margin: '0 auto', overflow: 'hidden', position: 'relative',
-        boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05)',
+        width: 292, margin: '0 auto', padding: 6,
+        borderRadius: 36, background: '#FFFFFF',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.16)',
       }}>
-        <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}>
-          <div style={{ width: 80, height: 24, borderRadius: 12, background: '#000' }} />
-        </div>
         <div style={{
-          height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
-          background: form.cover_url ? `url(${form.cover_url}) center/cover` : primary,
-          position: 'relative',
+          width: 280, height: 560, borderRadius: 28,
+          background: '#F5F5F7', overflow: 'hidden', position: 'relative',
         }}>
-          {form.cover_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />}
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-            {form.logo_url ? (
-              <img src={form.logo_url} alt="Logo" style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 14, background: 'rgba(255,255,255,0.1)', padding: 4 }} />
-            ) : (
-              <div style={{ width: 60, height: 60, borderRadius: 14, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+          <div style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}>
+            <div style={{ width: 80, height: 24, borderRadius: 12, background: '#000000' }} />
+          </div>
+          <div style={{
+            height: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12,
+            background: form.cover_url ? `url(${form.cover_url}) center/cover` : primary,
+            position: 'relative',
+          }}>
+            {form.cover_url && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />}
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="Logo" style={{ borderRadius: 14, width: 60, height: 60, objectFit: 'contain', background: 'rgba(255,255,255,0.15)', padding: 4 }} />
+              ) : (
+                <div style={{ borderRadius: 14, width: 60, height: 60, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+              )}
+              <div style={{ color: '#1D1D1F', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-display)', textShadow: '0 1px 4px rgba(0,0,0,0.3)', textAlign: 'center', padding: '0 16px' }}>
+                {form.display_name || form.club_name || t('branding.clubNameFallback')}
               </div>
-            )}
-            <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.3)', textAlign: 'center', padding: '0 16px' }}>
-              {form.display_name || form.club_name || t('branding.clubNameFallback')}
-            </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: 3, background: i === 0 ? '#fff' : 'rgba(255,255,255,0.4)' }} />)}
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === 0 ? '#F5F5F7' : 'rgba(255,255,255,0.4)' }} />)}
+              </div>
             </div>
           </div>
-        </div>
-        <div style={{ height: 48, background: primary, display: 'flex', alignItems: 'center', paddingLeft: 16, gap: 10 }}>
-          <div style={{ width: 6, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.6)' }} />
-          <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
-            {form.app_name || t('branding.appNameFallback')}
-          </div>
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, height: 40, borderRadius: 10, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('branding.primary')}</span>
-          </div>
-          <div style={{ flex: 1, height: 40, borderRadius: 10, background: secondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('branding.secondary')}</span>
-          </div>
-        </div>
-        <div style={{ padding: '8px 20px' }}>
-          {[0.8, 0.6, 0.9, 0.5].map((w, i) => (
-            <div key={i} style={{ height: 10, borderRadius: 5, background: 'rgba(51,65,85,0.3)', marginBottom: 8, width: `${w * 100}%` }} />
-          ))}
-        </div>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 56, background: 'rgba(15,23,42,0.95)', borderTop: '1px solid rgba(51,65,85,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 8px' }}>
-          {previewTabs.map(tab => (
-            <div key={tab.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 18, height: 18, borderRadius: 4, background: tab.key === 'home' ? `${primary}30` : 'rgba(51,65,85,0.3)' }} />
-              <span style={{ fontSize: 9, color: tab.key === 'home' ? primary : '#475569', fontWeight: 500 }}>{tab.label}</span>
+          <div style={{ height: 48, background: primary, display: 'flex', alignItems: 'center', paddingInlineStart: 16, gap: 10 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F5F5F7' }} />
+            <div style={{ color: '#1D1D1F', fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-display)' }}>
+              {form.app_name || t('branding.appNameFallback')}
             </div>
-          ))}
+          </div>
+          <div style={{ padding: '16px 20px', display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1, height: 40, borderRadius: 10, background: primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#1D1D1F', fontSize: 11, fontWeight: 600 }}>{t('branding.primary')}</span>
+            </div>
+            <div style={{ flex: 1, height: 40, borderRadius: 10, background: secondary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#1D1D1F', fontSize: 11, fontWeight: 600 }}>{t('branding.secondary')}</span>
+            </div>
+          </div>
+          <div style={{ padding: '8px 20px' }}>
+            {[0.8, 0.6, 0.9, 0.5].map((w, i) => (
+              <div key={i} style={{ height: 10, borderRadius: 5, background: '#E5E5EA', marginBottom: 8, width: `${w * 100}%` }} />
+            ))}
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, insetInlineStart: 0, insetInlineEnd: 0, height: 56, background: '#FFFFFF', borderTop: '1px solid #E5E5EA', display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 8px' }}>
+            {previewTabs.map(tab => (
+              <div key={tab.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 18, height: 18, borderRadius: 6, background: tab.key === 'home' ? primary : '#515154' }} />
+                <span style={{ fontSize: 9, color: tab.key === 'home' ? primary : '#86868B', fontWeight: 500 }}>{tab.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -205,16 +215,25 @@ function PhonePreview({ form }) {
 
 function SectionHeader({ color, icon, title, subtitle }) {
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 18, paddingBottom: 14, borderBottom: '1px solid #F2F2F7' }}>
       <h4 style={{
-        color: '#f1f5f9', margin: '0 0 4px', fontSize: 11, fontWeight: 600,
-        letterSpacing: '0.06em', textTransform: 'uppercase',
-        display: 'flex', alignItems: 'center', gap: 6,
+        color: '#1D1D1F', margin: 0,
+        fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600,
+        lineHeight: 1.2,
+        display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        {icon}
-        <span style={{ color }}>{title}</span>
+        {icon && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+            background: '#F2F2F7', color: color || '#0071E3',
+          }}>{icon}</span>
+        )}
+        <span>{title}</span>
       </h4>
-      {subtitle && <div style={{ color: '#94a3b8', fontSize: 12 }}>{subtitle}</div>}
+      {subtitle && (
+        <div style={{ marginTop: 8, fontSize: 13, color: '#6E6E73' }}>{subtitle}</div>
+      )}
     </div>
   );
 }
@@ -315,13 +334,13 @@ export default function ClubBrandingPage() {
   };
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#94a3b8' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#6E6E73' }}>
       <div style={{ textAlign: 'center' }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
-          <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(34,211,238,0.2)" strokeWidth="3" />
-          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
+        <svg width="32" height="32" viewBox="0 0 24 24" style={{ animation: 'spin 1.2s linear infinite', marginBottom: 14 }}>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="2" />
+          <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#0071E3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{t('branding.loading')}</div>
+        <div style={{ fontSize: 13, color: '#6E6E73' }}>{t('branding.loading')}</div>
       </div>
     </div>
   );
@@ -330,7 +349,7 @@ export default function ClubBrandingPage() {
     <div>
       <PageHeader title={t('branding.title')}>
         <Button onClick={handleSave} disabled={saving}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
             <path d="M17 21v-8H7v8M7 3v5h8" />
           </svg>
@@ -338,13 +357,13 @@ export default function ClubBrandingPage() {
         </Button>
       </PageHeader>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
+      <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40 }}>
         {/* Left — Form */}
         <div>
           {/* Identity Section */}
           <div style={sectionCardStyle('0.1s')}>
-            <SectionHeader color="#22d3ee" title={t('branding.identity')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+            <SectionHeader title={t('branding.identity')}
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <FormField label={t('branding.displayName')}><Input value={form.display_name} onChange={e => updateForm('display_name', e.target.value)} placeholder={t('branding.displayNamePlaceholder')} /></FormField>
@@ -354,20 +373,12 @@ export default function ClubBrandingPage() {
             {/* Branding Tier — read-only for club managers */}
             <FormField label={t('branding.brandingTier')}>
               <div style={{
-                padding: '10px 14px', borderRadius: 10,
-                background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)',
+                padding: '10px 14px', borderRadius: 12, background: '#F2F2F7',
                 display: 'flex', alignItems: 'center', gap: 10,
               }}>
-                <div style={{
-                  padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                  fontFamily: "'DM Sans', sans-serif", textTransform: 'capitalize',
-                  background: form.branding_tier === 'branded' ? 'rgba(34,211,238,0.12)' : 'rgba(100,116,139,0.12)',
-                  color: form.branding_tier === 'branded' ? '#22d3ee' : '#94a3b8',
-                  border: `1px solid ${form.branding_tier === 'branded' ? 'rgba(34,211,238,0.25)' : 'rgba(100,116,139,0.2)'}`,
-                }}>
-                  {form.branding_tier === 'branded' ? t('branding.tierBranded') : t('branding.tierShared')}
-                </div>
-                <span style={{ color: '#64748b', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>
+                <Badge variant={form.branding_tier === 'branded' ? 'accent' : 'neutral'}
+                  label={form.branding_tier === 'branded' ? t('branding.tierBranded') : t('branding.tierShared')} />
+                <span style={{ color: '#6E6E73', fontSize: 13 }}>
                   {t('branding.managedByAdmin')}
                 </span>
               </div>
@@ -376,8 +387,8 @@ export default function ClubBrandingPage() {
 
           {/* Colors Section */}
           <div style={sectionCardStyle('0.15s')}>
-            <SectionHeader color="#a78bfa" title={t('branding.colors')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
+            <SectionHeader title={t('branding.colors')}
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.49 8.49l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.49-8.49l2.83-2.83" /></svg>}
               subtitle={t('branding.colorsHint')}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -388,8 +399,8 @@ export default function ClubBrandingPage() {
 
           {/* Assets Section */}
           <div style={sectionCardStyle('0.2s')}>
-            <SectionHeader color="#fbbf24" title={t('branding.assets')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>}
+            <SectionHeader title={t('branding.assets')}
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>}
               subtitle={t('branding.assetsHint')}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -404,8 +415,8 @@ export default function ClubBrandingPage() {
 
           {/* Contact & Social Section */}
           <div style={sectionCardStyle('0.25s')}>
-            <SectionHeader color="#2dd4bf" title={t('branding.contactSocial')}
-              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 6l-10 7L2 6" /></svg>}
+            <SectionHeader title={t('branding.contactSocial')}
+              icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="M22 6l-10 7L2 6" /></svg>}
             />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <FormField label={t('branding.supportEmail')}><Input type="email" value={form.support_email} onChange={e => updateForm('support_email', e.target.value)} placeholder="support@club.com" /></FormField>
@@ -421,24 +432,26 @@ export default function ClubBrandingPage() {
           {/* Custom Domain Section — read-only for club managers */}
           {form.custom_domain && (
             <div style={sectionCardStyle('0.3s')}>
-              <SectionHeader color="#818cf8" title={t('branding.customDomain')}
-                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>}
+              <SectionHeader title={t('branding.customDomain')}
+                icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>}
               />
               <div style={{
-                padding: '10px 14px', borderRadius: 10,
-                background: 'rgba(6,13,31,0.6)', border: '1px solid rgba(51,65,85,0.5)',
-                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+                padding: '10px 14px', borderRadius: 12, background: '#F2F2F7',
+                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
               }}>
                 <div style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: form.is_domain_active ? '#34d399' : '#64748b',
-                  boxShadow: form.is_domain_active ? '0 0 8px #34d39960' : 'none',
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: form.is_domain_active ? '#34C759' : '#AEAEB2',
                 }} />
-                <span style={{ color: '#f1f5f9', fontSize: 13, fontFamily: "'DM Mono', monospace" }}>
+                <span style={{
+                  color: '#1D1D1F', fontSize: 13,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {form.custom_domain}
                 </span>
-                <span style={{ color: '#64748b', fontSize: 11, marginInlineStart: 'auto', fontFamily: "'DM Sans', sans-serif" }}>
-                  {t('branding.domainManaged', { status: form.is_domain_active ? t('status.active') : t('status.inactive') })}
+                <span style={{ marginInlineStart: 'auto', display: 'inline-flex' }}>
+                  <Badge variant={form.is_domain_active ? 'success' : 'neutral'}
+                    label={t('branding.domainManaged', { status: form.is_domain_active ? t('status.active') : t('status.inactive') })} />
                 </span>
               </div>
             </div>
@@ -448,12 +461,12 @@ export default function ClubBrandingPage() {
           {error && (
             <div style={{
               padding: '12px 16px', borderRadius: 12,
-              background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.3)',
-              color: '#f43f5e', fontSize: 13, marginBottom: 12, fontFamily: "'DM Sans', sans-serif",
+              background: 'rgba(255,59,48,0.10)', border: '1px solid rgba(255,59,48,0.25)',
+              color: '#B12A20', fontSize: 13, marginBottom: 12,
               display: 'flex', alignItems: 'center', gap: 8,
               animation: 'fadeInUp 0.3s ease-out',
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
               {error}
             </div>
           )}
@@ -468,15 +481,17 @@ export default function ClubBrandingPage() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', bottom: 32, right: 32, padding: '14px 22px',
-          background: 'linear-gradient(135deg, rgba(5,46,22,0.95) 0%, rgba(6,78,59,0.9) 100%)',
-          color: '#34d399', borderRadius: 14, fontSize: 14, fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif",
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(52,211,153,0.15)',
+          position: 'fixed', bottom: 32, insetInlineEnd: 32, padding: '12px 16px',
+          borderRadius: 12,
+          background: 'rgba(29,29,31,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 28px rgba(0,0,0,0.22)',
+          color: '#1D1D1F', fontSize: 14,
           animation: 'fadeInUp 0.3s ease-out', zIndex: 1000,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d39960' }} />
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34C759', flexShrink: 0 }} />
           {toast}
         </div>
       )}

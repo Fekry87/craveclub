@@ -112,28 +112,22 @@ export default function Step1_BasicProfile() {
         <div
           onClick={handleAvatarClick}
           style={{
-            width: 80, height: 80, borderRadius: '50%',
+            width: 84, height: 84, borderRadius: '50%',
             background: avatarPreview
               ? `url(${avatarPreview}) center/cover no-repeat`
-              : 'rgba(51,65,85,0.4)',
+              : '#F2F2F7',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
-            border: '2px dashed rgba(100,116,139,0.4)',
-            transition: 'border-color 0.2s ease, transform 0.15s ease',
+            border: avatarPreview ? '1px solid #E5E5EA' : '1px dashed #C7C7CC',
+            transition: 'border-color 0.15s ease, background 0.15s ease',
             overflow: 'hidden',
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'rgba(34,211,238,0.5)';
-            e.currentTarget.style.transform = 'scale(1.03)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'rgba(100,116,139,0.4)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#0071E3'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = avatarPreview ? '#E5E5EA' : '#C7C7CC'; }}
         >
           {!avatarPreview && (
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-              stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="#86868B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
@@ -146,14 +140,11 @@ export default function Step1_BasicProfile() {
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />
-        <span style={{
-          fontSize: 12, color: '#64748b', marginTop: 8,
-          fontFamily: "'DM Sans', sans-serif",
-        }}>
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#6E6E73', marginTop: 10 }}>
           Tap to add photo
         </span>
         {avatarError && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{avatarError}</span>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4 }}>{avatarError}</span>
         )}
       </div>
 
@@ -165,7 +156,7 @@ export default function Step1_BasicProfile() {
           onChange={e => { setFullName(e.target.value); clearError('fullName'); }}
         />
         {errors.fullName && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.fullName}
           </span>
         )}
@@ -180,7 +171,7 @@ export default function Step1_BasicProfile() {
           onChange={e => { setPhone(e.target.value); clearError('phone'); }}
         />
         {errors.phone && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.phone}
           </span>
         )}
@@ -188,45 +179,38 @@ export default function Step1_BasicProfile() {
 
       {/* ── Gender ─────────────────────────────────────────────── */}
       <FormField label="Gender">
-        <div style={{ display: 'flex', gap: 8 }}>
-          {['male', 'female'].map(g => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => { setGender(g); clearError('gender'); }}
-              style={{
-                flex: 1, height: 52,
-                borderRadius: 8,
-                border: gender === g
-                  ? '2px solid #1CB0F6'
-                  : '2px solid rgba(51,65,85,0.5)',
-                background: gender === g ? 'rgba(28,176,246,0.1)' : 'rgba(6,13,31,0.6)',
-                color: gender === g ? '#1CB0F6' : '#94a3b8',
-                fontWeight: 600, cursor: 'pointer',
-                textTransform: 'capitalize',
-                fontSize: 14,
-                fontFamily: "'DM Sans', sans-serif",
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                if (gender !== g) {
-                  e.currentTarget.style.borderColor = 'rgba(28,176,246,0.4)';
-                  e.currentTarget.style.background = 'rgba(28,176,246,0.05)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (gender !== g) {
-                  e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)';
-                  e.currentTarget.style.background = 'rgba(6,13,31,0.6)';
-                }
-              }}
-            >
-              {g}
-            </button>
-          ))}
+        <div style={{
+          display: 'flex', gap: 4, padding: 4,
+          background: '#F2F2F7', borderRadius: 12,
+        }}>
+          {['male', 'female'].map((g) => {
+            const active = gender === g;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => { setGender(g); clearError('gender'); }}
+                style={{
+                  flex: 1, height: 38,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  border: 'none',
+                  borderRadius: 9,
+                  background: active ? '#FFFFFF' : 'transparent',
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
+                  color: active ? '#1D1D1F' : '#6E6E73',
+                  cursor: 'pointer',
+                  fontSize: 14, fontWeight: active ? 600 : 500,
+                  textTransform: 'capitalize',
+                  transition: 'background 0.18s var(--ease-spring), color 0.15s ease, box-shadow 0.18s ease',
+                }}
+              >
+                {g}
+              </button>
+            );
+          })}
         </div>
         {errors.gender && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.gender}
           </span>
         )}
@@ -240,50 +224,29 @@ export default function Step1_BasicProfile() {
           onChange={e => { setBirthDate(e.target.value); clearError('birthDate'); }}
         />
         {birthDate && age !== null && age >= 0 && (
-          <span style={{
-            fontSize: 12, color: '#64748b', marginTop: 6, display: 'block',
-            fontFamily: "'DM Sans', sans-serif",
-          }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: '#6E6E73', marginTop: 8, display: 'block' }}>
             Age: {age} years
           </span>
         )}
         {errors.birthDate && (
-          <span style={{ fontSize: 12, color: '#f87171', marginTop: 4, display: 'block' }}>
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.birthDate}
           </span>
         )}
       </FormField>
 
       {/* ── Continue Button ────────────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
         <button
           type="button"
           onClick={handleContinue}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-            color: '#060d1f', fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: '0 2px 8px rgba(45,212,191,0.15)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {t('actions.next')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg className="rtl-flip" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </button>
       </div>

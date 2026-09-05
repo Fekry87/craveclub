@@ -1,54 +1,64 @@
+// Shared inline style primitives — Apple-style system look:
+// white rounded surfaces, hairline separators, SF-style type, single blue accent.
+
 export const inputStyle = {
   width: '100%',
-  padding: '0.625rem 0.875rem',
-  background: 'rgba(6,13,31,0.6)',
-  border: '1px solid rgba(51,65,85,0.5)',
+  height: 42,
+  padding: '0 14px',
+  background: '#FFFFFF',
+  border: '1px solid #D2D2D7',
   borderRadius: 12,
-  color: '#e2e8f0',
-  fontSize: '0.875rem',
+  color: '#1D1D1F',
+  fontSize: 14,
   boxSizing: 'border-box',
-  fontFamily: "'DM Sans', sans-serif",
-  transition: 'all 0.25s ease',
+  fontFamily: 'var(--font-body)',
+  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   outline: 'none',
 };
 
 export const inputFocusProps = {
-  onFocus: (e) => {
-    e.target.style.borderColor = 'rgba(34,211,238,0.4)';
-    e.target.style.background = 'linear-gradient(135deg, rgba(34,211,238,0.06) 0%, rgba(6,182,212,0.03) 100%)';
-    e.target.style.boxShadow = '0 0 0 3px rgba(34,211,238,0.08), 0 2px 8px rgba(34,211,238,0.06)';
-  },
-  onBlur: (e) => {
-    e.target.style.borderColor = 'rgba(51,65,85,0.5)';
-    e.target.style.background = 'rgba(6,13,31,0.6)';
-    e.target.style.boxShadow = 'none';
-  },
+  onFocus: (e) => { e.target.style.borderColor = '#0071E3'; e.target.style.boxShadow = '0 0 0 4px rgba(0,113,227,0.15)'; },
+  onBlur: (e) => { e.target.style.borderColor = '#D2D2D7'; e.target.style.boxShadow = 'none'; },
 };
 
 export const btnStyle = {
-  padding: '0.625rem 1.125rem',
-  border: 'none',
-  borderRadius: 10,
+  height: 40,
+  padding: '0 18px',
+  border: '1px solid transparent',
+  borderRadius: 12,
   cursor: 'pointer',
-  fontSize: '0.8125rem',
-  fontWeight: 600,
-  fontFamily: "'DM Sans', sans-serif",
-  transition: 'all 0.2s ease',
+  fontSize: 14,
+  fontWeight: 500,
+  fontFamily: 'var(--font-body)',
+  letterSpacing: '-0.005em',
+  transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 6,
+  gap: 8,
   whiteSpace: 'nowrap',
-  height: 40,
   boxSizing: 'border-box',
 };
 
+export const labelStyle = {
+  fontFamily: 'var(--font-body)',
+  fontSize: 12,
+  fontWeight: 500,
+  color: '#6E6E73',
+};
+
+export const cardStyle = {
+  background: '#FFFFFF',
+  border: '1px solid #E5E5EA',
+  borderRadius: 16,
+};
+
+// Avatar tiles: soft system tints with legible text.
 export const avatarCardColors = [
-  { bg: 'linear-gradient(135deg, #06b6d4, #22d3ee)', text: '#060d1f', accent: '#22d3ee' },
-  { bg: 'linear-gradient(135deg, #14b8a6, #2dd4bf)', text: '#060d1f', accent: '#2dd4bf' },
-  { bg: 'linear-gradient(135deg, #0ea5e9, #38bdf8)', text: '#060d1f', accent: '#38bdf8' },
-  { bg: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', text: '#fff', accent: '#a78bfa' },
-  { bg: 'linear-gradient(135deg, #f59e0b, #fbbf24)', text: '#060d1f', accent: '#fbbf24' },
-  { bg: 'linear-gradient(135deg, #ec4899, #f472b6)', text: '#fff', accent: '#f472b6' },
-  { bg: 'linear-gradient(135deg, #10b981, #34d399)', text: '#060d1f', accent: '#34d399' },
-  { bg: 'linear-gradient(135deg, #f97316, #fb923c)', text: '#060d1f', accent: '#fb923c' },
+  { bg: '#E8F0FE', text: '#0058B3', accent: '#0071E3' },
+  { bg: '#E9F7EE', text: '#1E7A3B', accent: '#34C759' },
+  { bg: '#FFF1E0', text: '#A35A00', accent: '#FF9500' },
+  { bg: '#F0EAFB', text: '#5B2FA8', accent: '#7D57C2' },
+  { bg: '#FFE9E7', text: '#B12A20', accent: '#FF3B30' },
+  { bg: '#E6F6F9', text: '#0A6E82', accent: '#32ADE6' },
+  { bg: '#F2F2F7', text: '#1D1D1F', accent: '#86868B' },
 ];

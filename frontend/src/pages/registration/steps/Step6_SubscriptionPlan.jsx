@@ -68,19 +68,12 @@ export default function Step6_SubscriptionPlan() {
   // ── Shimmer skeleton ──────────────────────────────────────────
   const renderLoading = () => (
     <>
-      <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
       {[1, 2, 3].map(i => (
         <div key={i} style={{
-          width: '100%', height: 88,
-          borderRadius: 10, marginBottom: 10,
-          background: 'linear-gradient(90deg, rgba(51,65,85,0.15) 25%, rgba(51,65,85,0.25) 50%, rgba(51,65,85,0.15) 75%)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.4s infinite',
+          width: '100%', height: 92,
+          marginBottom: 10, borderRadius: 14,
+          background: '#F2F2F7',
+          border: '1px solid #E5E5EA',
         }} />
       ))}
     </>
@@ -92,32 +85,19 @@ export default function Step6_SubscriptionPlan() {
       textAlign: 'center', padding: '40px 0',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
     }}>
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-        stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="#FF3B30" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
       <p style={{
-        color: '#f87171', fontSize: 14,
-        fontFamily: "'DM Sans', sans-serif", margin: 0,
+        color: '#FF3B30', fontSize: 13,
+        fontFamily: 'var(--font-body)', margin: 0,
       }}>
         {loadError}
       </p>
-      <button
-        type="button"
-        onClick={fetchPlans}
-        style={{
-          padding: '8px 24px', borderRadius: 8,
-          border: '1px solid rgba(51,65,85,0.5)',
-          background: 'rgba(51,65,85,0.3)',
-          color: '#e2e8f0', fontSize: 14, fontWeight: 600,
-          cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.5)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,85,0.3)'; }}
-      >
+      <button type="button" onClick={fetchPlans} className="pl-btn pl-btn-secondary pl-btn-sm">
         Retry
       </button>
     </div>
@@ -127,11 +107,11 @@ export default function Step6_SubscriptionPlan() {
   const renderEmpty = () => (
     <div style={{
       textAlign: 'center', padding: '40px 0',
-      color: '#94a3b8', fontSize: 14,
-      fontFamily: "'DM Sans', sans-serif",
+      color: '#515154', fontSize: 14,
+      fontFamily: 'var(--font-body)',
     }}>
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-        stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+        stroke="#86868B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
         style={{ display: 'block', margin: '0 auto 12px' }}>
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
         <line x1="16" y1="2" x2="16" y2="6" />
@@ -145,29 +125,11 @@ export default function Step6_SubscriptionPlan() {
   // ── Plan card ───────────────────────────────────────────────────
   const renderPlans = () => (
     <>
-      {plans.map(plan => {
+      {plans.map((plan) => {
         const isSelected = selected === plan.id;
+        const popular = !!plan.is_popular;
         return (
-          <div
-            key={plan.id}
-            style={{ position: 'relative', marginBottom: 10 }}
-          >
-            {/* Most Popular Banner */}
-            {plan.is_popular && (
-              <div style={{
-                background: '#FFC800',
-                borderRadius: '10px 10px 0 0',
-                padding: '4px 0',
-                textAlign: 'center',
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#1A202C',
-                fontFamily: "'DM Sans', sans-serif",
-              }}>
-                Most Popular
-              </div>
-            )}
-            {/* Card */}
+          <div key={plan.id} style={{ position: 'relative', marginBottom: 10 }}>
             <div
               onClick={() => {
                 setSelected(plan.id);
@@ -177,86 +139,87 @@ export default function Step6_SubscriptionPlan() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                gap: 12,
                 padding: '16px',
-                borderRadius: plan.is_popular
-                  ? '0 0 10px 10px'
-                  : '10px',
-                border: isSelected
-                  ? '2px solid #58CC02'
-                  : '2px solid rgba(51,65,85,0.3)',
-                background: isSelected
-                  ? 'rgba(88,204,2,0.1)'
-                  : 'rgba(6,13,31,0.6)',
+                borderRadius: 14,
+                border: isSelected || popular ? '2px solid #0071E3' : '1px solid #E5E5EA',
+                background: isSelected ? 'rgba(0,113,227,0.06)' : '#FFFFFF',
                 cursor: 'pointer',
-                transition: 'all 150ms ease',
+                transition: 'border-color 0.15s ease, background 0.15s ease',
                 position: 'relative',
               }}
               onMouseEnter={e => {
-                if (!isSelected) {
-                  e.currentTarget.style.borderColor = 'rgba(88,204,2,0.4)';
-                  e.currentTarget.style.background = 'rgba(88,204,2,0.05)';
-                }
+                if (!isSelected && !popular) e.currentTarget.style.borderColor = '#D2D2D7';
               }}
               onMouseLeave={e => {
-                if (!isSelected) {
-                  e.currentTarget.style.borderColor = 'rgba(51,65,85,0.3)';
-                  e.currentTarget.style.background = 'rgba(6,13,31,0.6)';
-                }
+                if (!isSelected && !popular) e.currentTarget.style.borderColor = '#E5E5EA';
               }}
             >
               {/* Left */}
-              <div>
+              <div style={{ minWidth: 0 }}>
+                {popular && (
+                  <span style={{
+                    display: 'inline-block',
+                    background: '#0071E3', color: '#1D1D1F',
+                    borderRadius: 980, padding: '3px 10px',
+                    fontSize: 11, fontWeight: 600,
+                    marginBottom: 8,
+                  }}>
+                    Most popular
+                  </span>
+                )}
                 <div style={{
-                  fontWeight: 700,
-                  color: isSelected ? '#58CC02' : '#e2e8f0',
-                  fontSize: 16,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600,
+                  letterSpacing: '-0.01em', lineHeight: 1.2,
+                  color: '#1D1D1F',
                 }}>
                   {plan.name}
                 </div>
-                <div style={{
-                  fontSize: 13, color: '#94a3b8', marginTop: 2,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}>
+                <div style={{ fontSize: 13, color: '#6E6E73', marginTop: 4 }}>
                   {plan.duration_months} Month{plan.duration_months > 1 ? 's' : ''}
+                  {plan.discount_percent > 0 && (
+                    <span style={{
+                      marginInlineStart: 8,
+                      display: 'inline-block',
+                      background: 'rgba(52,199,89,0.14)', color: '#1E7A3B',
+                      borderRadius: 980, padding: '2px 8px',
+                      fontSize: 11, fontWeight: 600,
+                    }}>
+                      Save {plan.discount_percent}%
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Right */}
-              <div style={{ textAlign: 'right' }}>
-                <div style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: isSelected ? '#58CC02' : '#e2e8f0',
-                  fontFamily: "'DM Sans', sans-serif",
-                }}>
-                  {Number(plan.price).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
-                </div>
-                {plan.duration_months > 1 && (
+              <div style={{ textAlign: 'end', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div>
                   <div style={{
-                    fontSize: 12, color: '#94a3b8',
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+                    letterSpacing: '-0.02em', lineHeight: 1.1,
+                    color: '#1D1D1F',
                   }}>
-                    = {Math.round(plan.price / plan.duration_months)} {t('common.currency', { defaultValue: 'SAR' })}{t('subscriptions.perMonthShort', { defaultValue: '/mo' })}
+                    {Number(plan.price).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
                   </div>
-                )}
-              </div>
-              {/* Discount Badge */}
-              {plan.discount_percent > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  background: '#58CC02',
-                  color: '#FFFFFF',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: 999,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}>
-                  Save {plan.discount_percent}%
+                  {plan.duration_months > 1 && (
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#6E6E73', marginTop: 4 }}>
+                      = {Math.round(plan.price / plan.duration_months)} {t('common.currency', { defaultValue: 'SAR' })}{t('subscriptions.perMonthShort', { defaultValue: '/mo' })}
+                    </div>
+                  )}
                 </div>
-              )}
+                <span style={{
+                  width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                  background: isSelected ? '#0071E3' : 'transparent',
+                  border: isSelected ? 'none' : '1px solid #D2D2D7',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {isSelected && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                      stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
         );
@@ -283,9 +246,9 @@ export default function Step6_SubscriptionPlan() {
       {/* ── Price Summary Box ────────────────────────────────────── */}
       {selected && plans && (
         <div style={{
-          background: 'rgba(28,176,246,0.08)',
-          border: '1px solid rgba(28,176,246,0.3)',
-          borderRadius: 10,
+          borderRadius: 14,
+          background: '#F2F2F7',
+          border: '1px solid #E5E5EA',
           padding: '14px 16px',
           marginTop: 8,
           display: 'flex',
@@ -293,23 +256,22 @@ export default function Step6_SubscriptionPlan() {
           alignItems: 'center',
         }}>
           <span style={{
-            color: '#94a3b8', fontSize: 14,
-            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12, fontWeight: 500, color: '#6E6E73',
           }}>
             Total Amount
           </span>
           <span style={{
-            color: '#1CB0F6', fontSize: 20, fontWeight: 800,
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
+            letterSpacing: '-0.02em', lineHeight: 1.1,
+            color: '#1D1D1F',
           }}>
             {Number(selectedPlanPrice).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
           </span>
         </div>
       )}
       <p style={{
-        textAlign: 'center', fontSize: 12,
-        color: '#64748b', marginTop: 6, margin: '6px 0 0',
-        fontFamily: "'DM Sans', sans-serif",
+        fontSize: 12, fontWeight: 500,
+        color: '#86868B', textAlign: 'start', margin: '8px 0 0',
       }}>
         Billed as a single payment
       </p>
@@ -317,53 +279,27 @@ export default function Step6_SubscriptionPlan() {
       {/* ── Error ────────────────────────────────────────────────── */}
       {errors.plan && (
         <p style={{
-          color: '#f87171', fontSize: 13,
-          textAlign: 'center', margin: '8px 0 0',
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#FF3B30', fontSize: 13,
+          textAlign: 'start', margin: '8px 0 0',
+          fontFamily: 'var(--font-body)',
         }}>
           {errors.plan}
         </p>
       )}
 
       {/* ── Continue Button ──────────────────────────────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F2F2F7' }}>
         <button
           type="button"
           onClick={handleContinue}
           disabled={plans === null}
-          style={{
-            width: '100%', height: 48, borderRadius: 10,
-            border: 'none', cursor: plans === null ? 'not-allowed' : 'pointer',
-            background: plans === null
-              ? 'rgba(51,65,85,0.3)'
-              : 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-            color: plans === null ? '#64748b' : '#060d1f',
-            fontSize: 15, fontWeight: 700,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: plans === null ? 'none' : '0 2px 8px rgba(45,212,191,0.15)',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            opacity: plans === null ? 0.5 : 1,
-          }}
-          onMouseEnter={e => {
-            if (plans !== null) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }
-          }}
-          onMouseLeave={e => {
-            if (plans !== null) {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }
-          }}
+          className="pl-btn pl-btn-primary"
+          style={{ width: '100%', height: 46 }}
         >
           {t('actions.next')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
+          <svg className="rtl-flip" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </button>
       </div>

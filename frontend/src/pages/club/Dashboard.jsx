@@ -6,7 +6,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useIsMobile } from '../../components/CrudTable';
 import { StatCard } from '../../components/ui/Cards';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Badge } from '../../components/ui/Badge';
+import { labelStyle } from '../../components/ui/styles';
 import { dateLocale } from '../../lib/dates';
+
+const DISPLAY = {
+  fontFamily: 'var(--font-display)', fontWeight: 700,
+  letterSpacing: '-0.02em', lineHeight: 1.1,
+};
 
 /* ─────── Session Row ─────── */
 function SessionRow({ session, index, t }) {
@@ -17,39 +24,37 @@ function SessionRow({ session, index, t }) {
 
   return (
     <div
+      className="session-card"
       style={{
         display: 'flex', alignItems: 'center', gap: 14,
         padding: '11px 14px',
-        background: 'rgba(13,31,60,0.4)',
+        background: '#FFFFFF',
+        border: '1px solid #E5E5EA',
         borderRadius: 12,
-        border: '1px solid rgba(34,211,238,0.06)',
-        transition: 'all 0.2s ease',
-        animation: `fadeInUp 0.4s ease-out ${0.1 + index * 0.05}s both`,
+        animation: `fadeInUp 0.3s ease-out ${0.05 + index * 0.04}s both`,
       }}
     >
       {/* Date badge */}
       <div style={{
         width: 48, height: 52, borderRadius: 10,
-        background: 'rgba(34,211,238,0.06)',
-        border: '1px solid rgba(34,211,238,0.08)',
+        background: '#F2F2F7',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <div style={{ color: '#22d3ee', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{dayName}</div>
-        <div style={{ color: '#f1f5f9', fontSize: 18, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.1 }}>{dayNum}</div>
-        <div style={{ color: '#64748b', fontSize: 8, fontWeight: 600, textTransform: 'uppercase' }}>{month}</div>
+        <div style={{ ...labelStyle, fontSize: 11, color: '#0071E3' }}>{dayName}</div>
+        <div style={{ ...DISPLAY, color: '#1D1D1F', fontSize: 18, margin: '1px 0' }}>{dayNum}</div>
+        <div style={{ ...labelStyle, fontSize: 11, color: '#86868B' }}>{month}</div>
       </div>
 
       {/* Session info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          color: '#f1f5f9', fontSize: 14, fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif",
+          color: '#1D1D1F', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-display)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{session.group?.name || t('sessions.trainingSession')}</div>
         {session.location && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748b', fontSize: 12, marginTop: 2 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#6E6E73', fontSize: 12, marginTop: 5 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
             {session.location}
@@ -57,12 +62,9 @@ function SessionRow({ session, index, t }) {
         )}
       </div>
 
-      {/* Time badge */}
+      {/* Time */}
       <div style={{
-        padding: '4px 10px', borderRadius: 8,
-        background: 'rgba(34,211,238,0.06)',
-        border: '1px solid rgba(34,211,238,0.1)',
-        color: '#22d3ee', fontSize: 12, fontWeight: 600,
+        color: '#515154', fontSize: 13, fontWeight: 500,
         whiteSpace: 'nowrap', flexShrink: 0,
       }}>
         {session.start_time?.slice(0, 5)} – {session.end_time?.slice(0, 5)}
@@ -75,23 +77,16 @@ function SessionRow({ session, index, t }) {
 function DashCard({ children, delay = 0, style: extraStyle }) {
   return (
     <div
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.15)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(34,211,238,0.04)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(34,211,238,0.06)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)';
-      }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
       style={{
-        background: 'linear-gradient(145deg, rgba(13,31,60,0.6) 0%, rgba(10,22,40,0.4) 100%)',
-        borderRadius: 18,
+        background: '#FFFFFF',
         padding: '22px 24px',
-        border: '1px solid rgba(34,211,238,0.06)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(6,13,31,0.3)',
-        animation: `fadeInUp 0.4s ease-out ${delay}s both`,
-        position: 'relative', overflow: 'hidden',
-        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        border: '1px solid #E5E5EA',
+        borderRadius: 16,
+        animation: `fadeInUp 0.3s ease-out ${delay}s both`,
+        position: 'relative',
+        transition: 'box-shadow 0.2s ease',
         ...extraStyle,
       }}
     >
@@ -103,24 +98,23 @@ function DashCard({ children, delay = 0, style: extraStyle }) {
 /* ─────── Section Header ─────── */
 function SectionHeader({ icon, title, badge }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 10,
-          background: 'rgba(34,211,238,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#94a3b8',
-        }}>{icon}</div>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+      marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #F2F2F7',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 26, height: 26, borderRadius: 8,
+          background: 'rgba(0,113,227,0.1)', color: '#0071E3', flexShrink: 0,
+        }}>{icon}</span>
         <h3 style={{
-          margin: 0, color: '#f1f5f9', fontSize: 14, fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.01em',
+          margin: 0, fontFamily: 'var(--font-display)', fontWeight: 600,
+          color: '#1D1D1F', fontSize: 16, letterSpacing: '-0.01em',
         }}>{title}</h3>
       </div>
       {badge !== undefined && (
-        <span style={{
-          padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 500,
-          background: 'rgba(148,163,184,0.08)', color: '#94a3b8',
-        }}>{badge}</span>
+        <span style={{ ...labelStyle, flexShrink: 0, whiteSpace: 'nowrap' }}>{badge}</span>
       )}
     </div>
   );
@@ -142,13 +136,13 @@ export default function ClubDashboard() {
 
   if (!data) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#94a3b8' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: '#6E6E73' }}>
         <div style={{ textAlign: 'center' }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 10 }}>
-            <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#22d3ee" strokeWidth="3" strokeLinecap="round" />
+          <svg width="36" height="36" viewBox="0 0 24 24" style={{ animation: 'spin 1.5s linear infinite', marginBottom: 12 }}>
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#E5E5EA" strokeWidth="2" />
+            <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="#0071E3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500 }}>{t('dashboard.loadingDashboard')}</div>
+          <div style={{ ...labelStyle }}>{t('dashboard.loadingDashboard')}</div>
         </div>
       </div>
     );
@@ -156,8 +150,8 @@ export default function ClubDashboard() {
 
   /* ── Attendance ring maths ── */
   const attendanceRate = data.attendance_rate_7d || 0;
-  const rateColor = attendanceRate >= 80 ? '#34d399' : attendanceRate >= 60 ? '#fbbf24' : '#f87171';
-  const ringStrokeColor = attendanceRate >= 80 ? '#10B981' : attendanceRate >= 60 ? '#F59E0B' : '#EF4444';
+  const rateColor = attendanceRate >= 80 ? '#34C759' : attendanceRate >= 60 ? '#FF9500' : '#FF3B30';
+  const ringStrokeColor = rateColor;
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (attendanceRate / 100) * circumference;
@@ -169,55 +163,39 @@ export default function ClubDashboard() {
 
   return (
     <div>
-      {/* ── Page Header ── */}
-      <div style={{
-        marginBottom: 24, padding: '20px 24px', borderRadius: 16,
-        background: 'linear-gradient(135deg, rgba(13,31,60,0.5) 0%, rgba(6,13,31,0.3) 100%)',
-        border: '1px solid rgba(34,211,238,0.06)',
-        position: 'relative', overflow: 'hidden',
+      {/* ── Welcome hero ── */}
+      <div className="welcome-hero" style={{
+        marginBottom: 22, padding: '24px 28px',
+        background: '#FFFFFF', color: '#1D1D1F',
+        border: '1px solid #E5E5EA',
+        borderRadius: 16,
+        display: 'flex', alignItems: isMobile ? 'stretch' : 'center',
+        justifyContent: 'space-between', gap: 18,
+        flexDirection: isMobile ? 'column' : 'row',
+        animation: 'fadeIn 0.25s ease-out',
       }}>
-        <div style={{
-          position: 'absolute', top: -40, right: -40, width: 120, height: 120,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(34,211,238,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-          <div>
-            <h1 style={{
-              margin: '0 0 4px',
-              fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 700,
-              color: '#f1f5f9', letterSpacing: '-0.02em',
-            }}>
-              {greeting}, <span style={{ color: '#22d3ee' }}>{firstName}</span>
-            </h1>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: 14 }}>
-              {t('dashboard.subtitle')}
-            </p>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{
+            margin: 0, ...DISPLAY, fontSize: isMobile ? 26 : 32,
+            color: '#1D1D1F', lineHeight: 1.15,
+          }}>
+            {greeting}, <span style={{ color: '#0071E3' }}>{firstName}</span>
+          </h1>
+          <div style={{ color: '#6E6E73', fontSize: 15, marginTop: 6 }}>
+            {t('dashboard.subtitle')}
           </div>
-          <button
-            onClick={() => navigate('/club/analytics')}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.12)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.06)'; }}
-            style={{
-              background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.15)',
-              color: '#22d3ee', cursor: 'pointer',
-              fontSize: 13, fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 16px', borderRadius: 10,
-              fontFamily: "'DM Sans', sans-serif",
-              transition: 'all 0.2s ease', whiteSpace: 'nowrap',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            {t('actions.viewFullAnalytics')}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </button>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate('/club/analytics')}
+          className="pl-btn pl-btn-primary"
+          style={{ flexShrink: 0 }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          {t('actions.viewFullAnalytics')}
+        </button>
       </div>
 
       {/* ── Stat Cards Row ── */}
@@ -229,9 +207,9 @@ export default function ClubDashboard() {
         <StatCard
           label={t('dashboard.swimmers')}
           value={data.swimmers_count}
-          accentColor="#10B981"
+          index={0}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18"/><circle cx="12" cy="8" r="3" />
             </svg>
           }
@@ -239,9 +217,9 @@ export default function ClubDashboard() {
         <StatCard
           label={t('dashboard.coaches')}
           value={data.coaches_count}
-          accentColor="#3B82F6"
+          index={1}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           }
@@ -249,9 +227,9 @@ export default function ClubDashboard() {
         <StatCard
           label={t('dashboard.groups')}
           value={data.groups_count}
-          accentColor="#14B8A6"
+          index={2}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           }
@@ -259,9 +237,9 @@ export default function ClubDashboard() {
         <StatCard
           label={t('dashboard.sessions')}
           value={data.sessions_count || 0}
-          accentColor="#F59E0B"
+          index={3}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           }
@@ -269,17 +247,17 @@ export default function ClubDashboard() {
       </div>
 
       {/* ── Main Grid: 3 columns ── */}
-      <div style={{
+      <div className="dashboard-bottom-grid" style={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
         gap: 18,
       }}>
 
         {/* ── Col 1: Attendance ── */}
-        <DashCard delay={0.25}>
+        <DashCard delay={0.05}>
           <SectionHeader
             icon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
@@ -288,13 +266,13 @@ export default function ClubDashboard() {
           />
 
           {/* Attendance ring */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 12px' }}>
+          <div className="attendance-ring" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 12px' }}>
             <div style={{ position: 'relative', width: 104, height: 104, marginBottom: 16 }}>
               <svg width="104" height="104" viewBox="0 0 104 104" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="52" cy="52" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                <circle cx="52" cy="52" r={radius} fill="none" stroke="#E5E5EA" strokeWidth="6" />
                 <circle
                   cx="52" cy="52" r={radius}
-                  fill="none" stroke={ringStrokeColor} strokeWidth="7"
+                  fill="none" stroke={ringStrokeColor} strokeWidth="6"
                   strokeDasharray={circumference} strokeDashoffset={offset}
                   strokeLinecap="round"
                   style={{ transition: 'stroke-dashoffset 1s ease-out' }}
@@ -305,67 +283,46 @@ export default function ClubDashboard() {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               }}>
                 <div style={{
-                  fontSize: 26, fontWeight: 700, fontFamily: "'DM Sans', sans-serif",
-                  color: '#f1f5f9', lineHeight: 1,
+                  ...DISPLAY, fontSize: 30, color: '#1D1D1F',
                 }}>{attendanceRate}%</div>
-                <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{t('dashboard.rate')}</div>
+                <div style={{ ...labelStyle, marginTop: 5 }}>{t('dashboard.rate')}</div>
               </div>
             </div>
 
             {/* Status badge */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '5px 14px', borderRadius: 8,
-              background: attendanceRate >= 80
-                ? 'rgba(52,211,153,0.12)'
-                : attendanceRate >= 60
-                  ? 'rgba(251,191,36,0.12)'
-                  : 'rgba(244,63,94,0.12)',
-              color: rateColor,
-              fontSize: 12, fontWeight: 600,
-            }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                {attendanceRate >= 60 ? <path d="M18 15l-6-6-6 6" /> : <path d="M6 9l6 6 6-6" />}
-              </svg>
+            <Badge variant={attendanceRate >= 80 ? 'success' : attendanceRate >= 60 ? 'warning' : 'danger'}>
               {attendanceRate >= 80 ? t('status.excellent') : attendanceRate >= 60 ? t('status.good') : t('status.needsWork')}
-            </div>
+            </Badge>
           </div>
 
           {/* Quick counts strip */}
-          <div style={{
+          <div className="quick-stats-bar" style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-            gap: 1, marginTop: 14,
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: 12, overflow: 'hidden',
-            border: '1px solid rgba(34,211,238,0.06)',
+            marginTop: 14,
+            borderRadius: 12,
+            background: '#F2F2F7',
           }}>
             {[
-              { val: data.groups_count,   lbl: t('dashboard.groups'),   color: '#14B8A6' },
-              { val: data.swimmers_count, lbl: t('dashboard.swimmers'),  color: '#10B981' },
-              { val: data.coaches_count,  lbl: t('dashboard.coaches'),   color: '#3B82F6' },
+              { val: data.groups_count,   lbl: t('dashboard.groups') },
+              { val: data.swimmers_count, lbl: t('dashboard.swimmers') },
+              { val: data.coaches_count,  lbl: t('dashboard.coaches') },
             ].map((item, i) => (
               <div key={i} style={{
-                textAlign: 'center', padding: '12px 8px',
-                background: 'rgba(10,22,40,0.6)',
+                textAlign: 'center', padding: '14px 8px', minWidth: 0,
+                borderInlineStart: i > 0 ? '1px solid #E5E5EA' : 'none',
               }}>
-                <div style={{
-                  color: item.color, fontSize: 18, fontWeight: 700,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}>{item.val}</div>
-                <div style={{
-                  color: '#64748b', fontSize: 9, fontWeight: 600,
-                  textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2,
-                }}>{item.lbl}</div>
+                <div style={{ ...DISPLAY, color: '#1D1D1F', fontSize: 22 }}>{item.val}</div>
+                <div style={{ ...labelStyle, marginTop: 6 }}>{item.lbl}</div>
               </div>
             ))}
           </div>
         </DashCard>
 
         {/* ── Col 2: Upcoming Sessions ── */}
-        <DashCard delay={0.3}>
+        <DashCard delay={0.1}>
           <SectionHeader
             icon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             }
@@ -381,7 +338,7 @@ export default function ClubDashboard() {
             ) : (
               <EmptyState
                 icon={
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 }
@@ -393,10 +350,10 @@ export default function ClubDashboard() {
         </DashCard>
 
         {/* ── Col 3: Top Swimmers (Leaderboard) ── */}
-        <DashCard delay={0.35}>
+        <DashCard delay={0.15}>
           <SectionHeader
             icon={
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             }
@@ -404,52 +361,43 @@ export default function ClubDashboard() {
             badge={t('dashboard.xpLeaderboard')}
           />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {data.top_swimmers?.length > 0 ? (
               data.top_swimmers.map((swimmer, i) => {
-                const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                const isMedal = i < 3;
+                const isLead = i === 0;
                 return (
                   <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 14px',
-                    background: isMedal
-                      ? `${medalColors[i]}10`
-                      : 'rgba(13,31,60,0.4)',
-                    borderRadius: 12,
-                    border: `1px solid ${isMedal ? `${medalColors[i]}28` : 'rgba(34,211,238,0.06)'}`,
-                    animation: `fadeInUp 0.3s ease-out ${0.15 + i * 0.05}s both`,
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '12px 0',
+                    borderTop: i > 0 ? '1px solid #F2F2F7' : 'none',
+                    animation: `fadeInUp 0.3s ease-out ${0.1 + i * 0.04}s both`,
                   }}>
-                    {/* Rank badge */}
+                    {/* Rank */}
                     <div style={{
-                      width: 26, height: 26, borderRadius: 8,
-                      background: isMedal ? `${medalColors[i]}18` : 'rgba(10,22,40,0.6)',
-                      border: `1px solid ${isMedal ? `${medalColors[i]}30` : 'rgba(34,211,238,0.06)'}`,
+                      width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: isMedal ? medalColors[i] : '#94a3b8',
-                      fontSize: 12, fontWeight: 700, fontFamily: "'DM Sans', sans-serif",
-                      flexShrink: 0,
+                      background: isLead ? 'rgba(0,113,227,0.1)' : '#F2F2F7',
+                      color: isLead ? '#0071E3' : '#6E6E73',
+                      fontSize: 12, fontWeight: 600,
                     }}>{i + 1}</div>
-
-                    {/* Level icon */}
-                    <div style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }}>{swimmer.level_icon || '⭐'}</div>
 
                     {/* Info */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        color: '#f1f5f9', fontSize: 14, fontWeight: 600,
+                        color: '#1D1D1F', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-display)',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>{swimmer.name}</div>
-                      <div style={{ color: swimmer.level_color, fontSize: 10, fontWeight: 600 }}>{swimmer.level_name}</div>
+                      {swimmer.level_name && (
+                        <div style={{ ...labelStyle, marginTop: 3 }}>{swimmer.level_name}</div>
+                      )}
                     </div>
 
                     {/* XP */}
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'end', flexShrink: 0 }}>
                       <div style={{
-                        color: '#f1f5f9', fontSize: 14, fontWeight: 700,
-                        fontFamily: "'DM Sans', sans-serif", lineHeight: 1,
+                        ...DISPLAY, color: isLead ? '#0071E3' : '#1D1D1F', fontSize: 20,
                       }}>{swimmer.total_xp}</div>
-                      <div style={{ color: '#64748b', fontSize: 9, fontWeight: 600 }}>XP</div>
+                      <div style={{ ...labelStyle, marginTop: 3 }}>XP</div>
                     </div>
                   </div>
                 );
@@ -457,7 +405,7 @@ export default function ClubDashboard() {
             ) : (
               <EmptyState
                 icon={
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
                 }

@@ -2,32 +2,29 @@ export function EmptyState({ title, description, icon, action }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', padding: '40px 20px', textAlign: 'center',
+      justifyContent: 'center', padding: '48px 20px', textAlign: 'center',
+      background: '#FFFFFF', border: '1px dashed #D2D2D7', borderRadius: 16,
     }}>
       {icon && (
         <div style={{
-          width: 56, height: 56, borderRadius: 16,
-          background: 'var(--color-surface-2, rgba(255,255,255,0.05))',
+          width: 52, height: 52, borderRadius: 14,
+          background: '#F2F2F7', color: '#6E6E73',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--color-text-muted, #64748b)',
-          marginBottom: 16,
+          marginBottom: 14,
         }}>
           {icon}
         </div>
       )}
       {title && (
         <h4 style={{
-          margin: '0 0 6px', color: 'var(--color-text, #e2e8f0)',
-          fontSize: 15, fontWeight: 600,
+          margin: '0 0 6px', color: '#1D1D1F',
+          fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em',
         }}>{title}</h4>
       )}
       {description && (
-        <p style={{
-          margin: 0, color: 'var(--color-text-muted, #64748b)',
-          fontSize: 13, maxWidth: 300, lineHeight: 1.5,
-        }}>{description}</p>
+        <p style={{ margin: 0, color: '#6E6E73', fontSize: 13, maxWidth: 320, lineHeight: 1.5 }}>{description}</p>
       )}
-      {action && <div style={{ marginTop: 16 }}>{action}</div>}
+      {action && <div style={{ marginTop: 18 }}>{action}</div>}
     </div>
   );
 }

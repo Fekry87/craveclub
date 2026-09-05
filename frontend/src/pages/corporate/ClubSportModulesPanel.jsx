@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getClubSportModules, assignToClub, removeFromClub } from '../../api/sportModules';
+import { Badge } from '../../components/ui/Badge';
+
+const labelStyle = {
+  fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: '#6E6E73',
+};
 
 export default function ClubSportModulesPanel({ clubId }) {
   const { t } = useTranslation();
@@ -33,65 +38,77 @@ export default function ClubSportModulesPanel({ clubId }) {
   if (!modules.length) return null;
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, rgba(13,31,60,0.4) 0%, rgba(10,22,40,0.3) 100%)', borderRadius: 18, padding: '24px 26px', border: '1px solid rgba(43,108,176,0.12)', marginTop: 24, animation: 'fadeInUp 0.5s ease-out 0.3s both' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(43,108,176,0.1)', border: '1px solid rgba(43,108,176,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" /></svg>
-        </div>
-        <h2 style={{ margin: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>Sport Modules</h2>
+    <div style={{
+      borderRadius: 16, background: '#FFFFFF', padding: '22px 24px',
+      border: '1px solid #E5E5EA', marginTop: 24, animation: 'fadeInUp 0.5s ease-out 0.3s both',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10,
+        paddingBottom: 14, marginBottom: 16, borderBottom: '1px solid #F2F2F7',
+      }}>
+        <h2 style={{
+          margin: 0, color: '#1D1D1F', fontSize: 17, fontWeight: 600, fontFamily: 'var(--font-display)',
+          letterSpacing: '-0.02em', lineHeight: 1.2,
+        }}>Sport Modules</h2>
+        <span style={labelStyle}>{modules.length}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-        {modules.map(mod => {
+        {modules.map((mod) => {
           const isLoading = loadingId === mod.id;
           const isActive = mod.is_active && mod.is_assigned;
           return (
             <div key={mod.id} style={{
-              padding: '18px 16px', borderRadius: 14,
-              background: isActive ? 'rgba(88,204,2,0.03)' : 'rgba(51,65,85,0.08)',
-              border: `1px solid ${isActive ? 'rgba(88,204,2,0.12)' : 'rgba(51,65,85,0.15)'}`,
-              opacity: isLoading ? 0.6 : 1, transition: 'all 0.2s',
+              padding: 16, background: '#FFFFFF', borderRadius: 14,
+              border: `1px solid ${isActive ? '#D2D2D7' : '#E5E5EA'}`,
+              boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+              opacity: isLoading ? 0.6 : 1,
+              transition: 'opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: mod.color || '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0, boxShadow: `0 2px 8px ${mod.color || '#475569'}30` }}>
-                  {mod.icon ? mod.icon.charAt(0).toUpperCase() : '?'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{
+                  borderRadius: 10,
+                  width: 36, height: 36, flexShrink: 0,
+                  background: isActive ? 'rgba(0,113,227,0.1)' : '#F2F2F7',
+                  color: isActive ? '#0058B3' : '#6E6E73',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15,
+                }}>
+                  {mod.name ? mod.name.charAt(0).toUpperCase() : '?'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#f1f5f9', fontSize: 14, fontWeight: 600 }}>{mod.name}</div>
-                  <span style={{
-                    display: 'inline-block', marginTop: 3,
-                    padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 600,
-                    background: isActive ? 'rgba(88,204,2,0.1)' : 'rgba(51,65,85,0.25)',
-                    color: isActive ? '#58CC02' : '#64748b',
-                    border: `1px solid ${isActive ? 'rgba(88,204,2,0.2)' : 'rgba(51,65,85,0.3)'}`,
-                  }}>
-                    {isActive ? 'Active' : 'Not assigned'}
-                  </span>
+                  <div style={{
+                    color: '#1D1D1F', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-display)',
+                    letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>{mod.name}</div>
+                  <div style={{ marginTop: 6 }}>
+                    <Badge variant={isActive ? 'success' : 'neutral'} label={isActive ? 'Active' : 'Not assigned'} />
+                  </div>
                 </div>
               </div>
 
               {confirmRemove === mod.id ? (
                 <div>
-                  <div style={{ color: '#fc8181', fontSize: 12, marginBottom: 8 }}>Remove {mod.name} from this club?</div>
+                  <div style={{ color: '#B12A20', fontSize: 13, marginBottom: 10 }}>Remove {mod.name} from this club?</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button type="button" onClick={() => handleRemove(mod.id)} disabled={isLoading}
-                      style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1px solid rgba(229,62,62,0.3)', background: 'rgba(229,62,62,0.1)', color: '#fc8181', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <button type="button" className="pl-btn pl-btn-danger pl-btn-sm" style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => handleRemove(mod.id)} disabled={isLoading}>
                       {isLoading ? '...' : t('actions.confirm')}
                     </button>
-                    <button type="button" onClick={() => setConfirmRemove(null)}
-                      style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1px solid rgba(51,65,85,0.3)', background: 'rgba(51,65,85,0.15)', color: '#94a3b8', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <button type="button" className="pl-btn pl-btn-ghost pl-btn-sm" style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => setConfirmRemove(null)}>
                       {t('actions.cancel')}
                     </button>
                   </div>
                 </div>
               ) : isActive ? (
-                <button type="button" onClick={() => setConfirmRemove(mod.id)} disabled={isLoading}
-                  style={{ width: '100%', padding: '7px 0', borderRadius: 8, border: '1px solid rgba(229,62,62,0.2)', background: 'rgba(229,62,62,0.05)', color: '#fc8181', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                <button type="button" className="pl-btn pl-btn-danger pl-btn-sm" style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => setConfirmRemove(mod.id)} disabled={isLoading}>
                   Remove
                 </button>
               ) : (
-                <button type="button" onClick={() => handleAssign(mod.id)} disabled={isLoading}
-                  style={{ width: '100%', padding: '7px 0', borderRadius: 8, border: '1px solid rgba(88,204,2,0.2)', background: 'rgba(88,204,2,0.05)', color: '#58CC02', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => handleAssign(mod.id)} disabled={isLoading}>
                   {isLoading ? 'Assigning...' : 'Assign'}
                 </button>
               )}

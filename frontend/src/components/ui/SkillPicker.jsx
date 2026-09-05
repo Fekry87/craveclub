@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createSkill } from '../../api/skills';
 import { inputStyle } from './styles';
 
+// Soft system tints per skill type — used for the option row's trailing pill.
 const TYPE_COLORS = {
-  SKILL: { bg: 'rgba(34,211,238,0.08)', border: 'rgba(34,211,238,0.15)', color: '#22d3ee' },
-  SWIM_TYPE: { bg: 'rgba(45,212,191,0.08)', border: 'rgba(45,212,191,0.15)', color: '#2dd4bf' },
-  TECHNIQUE: { bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.15)', color: '#fbbf24' },
+  SKILL: { bg: 'rgba(0,113,227,0.1)', color: '#0058B3' },
+  SWIM_TYPE: { bg: 'rgba(52,199,89,0.14)', color: '#1E7A3B' },
+  TECHNIQUE: { bg: 'rgba(255,149,0,0.16)', color: '#A35A00' },
 };
 
 const TYPE_LABELS = { SKILL: 'Skill', SWIM_TYPE: 'Swim Type', TECHNIQUE: 'Technique' };
@@ -149,16 +150,16 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
         onKeyDown={handleKeyDown}
         style={{
           ...inputStyle,
-          paddingRight: 30,
+          paddingInlineEnd: 34,
         }}
       />
       {/* Dropdown chevron */}
       <svg
-        width="12" height="12" viewBox="0 0 24 24" fill="none"
-        stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        width="13" height="13" viewBox="0 0 24 24" fill="none"
+        stroke="#86868B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         style={{
-          position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-          pointerEvents: 'none', opacity: 0.6,
+          position: 'absolute', insetInlineEnd: 12, top: '50%', transform: 'translateY(-50%)',
+          pointerEvents: 'none',
         }}
       >
         <path d="M6 9l6 6 6-6" />
@@ -166,18 +167,24 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
 
       {open && (skills.length > 0 || search) && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0,
-          marginTop: 4, zIndex: 9999,
-          background: 'rgba(10,18,36,0.98)',
-          border: '1px solid rgba(51,65,85,0.5)',
-          borderRadius: 12, overflow: 'hidden',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(51,65,85,0.2)',
+          position: 'absolute', top: '100%', insetInlineStart: 0, insetInlineEnd: 0,
+          marginTop: 6, zIndex: 9999,
+          background: '#FFFFFF',
+          border: '1px solid #E5E5EA',
+          borderRadius: 14,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.14)',
+          overflow: 'hidden',
           maxHeight: 280, overflowY: 'auto',
+          animation: 'fadeIn 0.15s ease-out both',
         }}>
           <div ref={listRef}>
             {/* No results message */}
             {filtered.length === 0 && !showCreateOption && !creating && (
-              <div style={{ padding: '14px 16px', color: '#64748b', fontSize: 12, textAlign: 'center' }}>
+              <div style={{
+                padding: '16px', textAlign: 'center',
+                fontFamily: 'var(--font-body)', fontSize: 13,
+                color: '#86868B',
+              }}>
                 No skills found
               </div>
             )}
@@ -192,10 +199,9 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
                 <div key={type}>
                   {/* Type group header */}
                   <div style={{
-                    padding: '6px 14px', fontSize: 10, fontWeight: 700,
-                    color: tc.color, textTransform: 'uppercase', letterSpacing: '0.5px',
-                    background: tc.bg, borderBottom: `1px solid ${tc.border}`,
-                    fontFamily: "'DM Sans', sans-serif",
+                    padding: '8px 14px 4px',
+                    fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
+                    color: '#6E6E73',
                   }}>
                     {TYPE_LABELS[type]}
                   </div>
@@ -208,24 +214,21 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
                         onMouseDown={(e) => { e.preventDefault(); selectSkill(skill.name); }}
                         onMouseEnter={() => setHighlightIdx(idx)}
                         style={{
-                          padding: '8px 14px',
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          cursor: 'pointer', fontSize: 13,
-                          color: isHighlighted ? '#f1f5f9' : '#cbd5e1',
-                          background: isHighlighted ? 'rgba(34,211,238,0.08)' : 'transparent',
-                          transition: 'background 0.1s',
-                          fontFamily: "'DM Sans', sans-serif",
+                          margin: '0 6px', padding: '9px 8px',
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          cursor: 'pointer', fontSize: 14,
+                          color: '#1D1D1F',
+                          borderRadius: 8,
+                          background: isHighlighted ? '#F2F2F7' : 'transparent',
+                          transition: 'background 0.12s ease',
+                          fontFamily: 'var(--font-body)',
                         }}
                       >
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{skill.name}</span>
                         <span style={{
-                          width: 6, height: 6, borderRadius: '50%',
-                          background: tc.color, flexShrink: 0, opacity: 0.7,
-                        }} />
-                        <span style={{ flex: 1 }}>{skill.name}</span>
-                        <span style={{
-                          fontSize: 10, color: tc.color, opacity: 0.6,
-                          padding: '1px 6px', borderRadius: 4,
-                          background: tc.bg,
+                          fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, lineHeight: '16px',
+                          color: tc.color, background: tc.bg,
+                          padding: '3px 9px', borderRadius: 980, flexShrink: 0,
                         }}>
                           {TYPE_LABELS[type]}
                         </span>
@@ -245,19 +248,26 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
                   onMouseDown={(e) => { e.preventDefault(); setCreating(true); }}
                   onMouseEnter={() => setHighlightIdx(idx)}
                   style={{
-                    padding: '10px 14px',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                    color: '#22d3ee',
-                    background: isHighlighted ? 'rgba(34,211,238,0.06)' : 'transparent',
-                    borderTop: filtered.length > 0 ? '1px solid rgba(51,65,85,0.3)' : 'none',
-                    transition: 'background 0.1s',
-                    fontFamily: "'DM Sans', sans-serif",
+                    marginTop: filtered.length > 0 ? 6 : 0,
+                    borderTop: filtered.length > 0 ? '1px solid #F2F2F7' : 'none',
+                    padding: '11px 14px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', fontSize: 14, fontWeight: 500,
+                    color: '#0071E3',
+                    background: isHighlighted ? '#F2F2F7' : 'transparent',
+                    transition: 'background 0.12s ease',
+                    fontFamily: 'var(--font-body)',
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: 8, flexShrink: 0,
+                    background: 'rgba(0,113,227,0.1)',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0071E3" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
                   <span>Create &ldquo;{search.trim()}&rdquo; as new skill</span>
                 </div>
               );
@@ -268,28 +278,30 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
               <div
                 onMouseDown={(e) => e.stopPropagation()}
                 style={{
-                  padding: '10px 12px',
-                  borderTop: '1px solid rgba(34,211,238,0.15)',
-                  background: 'rgba(34,211,238,0.03)',
+                  padding: '12px 14px',
+                  borderTop: '1px solid #F2F2F7',
+                  background: '#FFFFFF',
                 }}
               >
                 <div style={{
-                  fontSize: 11, color: '#22d3ee', fontWeight: 600, marginBottom: 8,
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
+                  color: '#6E6E73', marginBottom: 8,
                 }}>
-                  New Skill: {search.trim()}
+                  New skill: {search.trim()}
                 </div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value)}
                     style={{
                       flex: 1,
-                      padding: '6px 8px',
-                      background: 'rgba(6,13,31,0.8)',
-                      border: '1px solid rgba(51,65,85,0.5)',
-                      borderRadius: 8, color: '#e2e8f0', fontSize: 12,
-                      fontFamily: "'DM Sans', sans-serif",
+                      height: 36,
+                      padding: '0 10px',
+                      background: '#FFFFFF',
+                      border: '1px solid #D2D2D7',
+                      borderRadius: 10,
+                      color: '#1D1D1F', fontSize: 14,
+                      fontFamily: 'var(--font-body)',
                       outline: 'none',
                     }}
                   >
@@ -301,28 +313,14 @@ export default function SkillPicker({ value, onChange, skills = [], onSkillCreat
                     type="button"
                     disabled={saving}
                     onClick={handleCreateSave}
-                    style={{
-                      padding: '6px 14px',
-                      background: saving ? 'rgba(34,211,238,0.15)' : 'linear-gradient(135deg, #06b6d4, #22d3ee)',
-                      border: 'none', borderRadius: 8,
-                      color: saving ? '#94a3b8' : '#060d1f',
-                      fontSize: 12, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-                      fontFamily: "'DM Sans', sans-serif",
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s',
-                    }}
+                    className="pl-btn pl-btn-primary pl-btn-sm"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setCreating(false)}
-                    style={{
-                      padding: '6px 8px',
-                      background: 'none', border: '1px solid rgba(51,65,85,0.4)',
-                      borderRadius: 8, color: '#94a3b8', fontSize: 12,
-                      cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-                    }}
+                    className="pl-btn pl-btn-ghost pl-btn-sm"
                   >
                     Cancel
                   </button>

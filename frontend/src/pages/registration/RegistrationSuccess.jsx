@@ -32,8 +32,12 @@ export default function RegistrationSuccess() {
     }
   }, []);
 
-  // ── Summary pills ──────────────────────────────────────────────
-  const pills = [branchName, coachName, planName].filter(Boolean);
+  // ── Summary rows ───────────────────────────────────────────────
+  const rows = [
+    { label: 'Branch', value: branchName },
+    { label: 'Coach', value: coachName },
+    { label: 'Plan', value: planName },
+  ].filter(r => r.value);
 
   return (
     <div style={{
@@ -41,182 +45,115 @@ export default function RegistrationSuccess() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(180deg, #060d1f 0%, #0a1628 50%, #0d1f3c 100%)',
-      padding: 24,
+      background: '#F5F5F7',
+      color: '#1D1D1F',
+      padding: 'clamp(20px, 5vw, 48px)',
+      fontFamily: 'var(--font-body)',
     }}>
-      {/* ── Animations ───────────────────────────────────────────── */}
-      <style>{`
-        @keyframes checkIn {
-          0%   { transform: scale(0); opacity: 0; }
-          60%  { transform: scale(1.2); opacity: 1; }
-          80%  { transform: scale(0.9); }
-          100% { transform: scale(1); }
-        }
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
       <div style={{
         maxWidth: 480,
         width: '100%',
-        background: 'rgba(6,13,31,0.8)',
-        border: '1px solid rgba(51,65,85,0.3)',
-        borderRadius: 16,
-        padding: '40px 32px',
         textAlign: 'center',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 60px rgba(88,204,2,0.04)',
+        animation: 'fadeInUp 0.35s ease-out',
       }}>
-        {/* ── Animated Checkmark ──────────────────────────────────── */}
+        {/* ── Check mark ──────────────────────────────────────────── */}
         <div style={{
-          width: 80,
-          height: 80,
+          width: 88,
+          height: 88,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #58CC02 0%, #46A302 100%)',
+          background: 'rgba(52,199,89,0.14)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           margin: '0 auto 24px',
-          boxShadow: '0 8px 24px rgba(88,204,2,0.3)',
-          animation: 'checkIn 0.6s cubic-bezier(0.34,1.56,0.64,1)',
         }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-            stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none"
+            stroke="#34C759" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
 
-        {/* ── Heading ────────────────────────────────────────────── */}
-        <h2 style={{
-          fontSize: 26,
-          fontWeight: 800,
-          color: '#f1f5f9',
-          margin: '0 0 8px',
-          fontFamily: "'DM Sans', sans-serif",
-          animation: 'fadeSlideUp 0.4s ease 0.2s both',
+        {/* ── Heading ─────────────────────────────────────────────── */}
+        <h1 style={{
+          margin: 0,
+          fontFamily: 'var(--font-display)',
+          fontSize: 28, fontWeight: 700,
+          letterSpacing: '-0.02em', lineHeight: 1.15,
+          color: '#1D1D1F',
         }}>
-          Registration Submitted!
-        </h2>
+          Registration submitted
+        </h1>
 
         {/* ── Welcome line ───────────────────────────────────────── */}
         <p style={{
-          color: '#94a3b8',
-          fontSize: 16,
-          margin: '0 0 20px',
-          fontFamily: "'DM Sans', sans-serif",
-          animation: 'fadeSlideUp 0.4s ease 0.3s both',
+          color: '#6E6E73',
+          fontSize: 14,
+          lineHeight: 1.6,
+          margin: '10px auto 0',
+          maxWidth: 400,
         }}>
-          Welcome, <strong style={{ color: '#e2e8f0' }}>{swimmerName || 'Swimmer'}</strong>!
+          Welcome, <strong style={{ color: '#1D1D1F', fontWeight: 600 }}>{swimmerName || 'Swimmer'}</strong>.
+          The swimmer will be contacted within 24 hours to confirm the session
+          schedule and complete payment.
         </p>
 
-        {/* ── Summary pills ──────────────────────────────────────── */}
-        {pills.length > 0 && (
+        {/* ── Summary card ───────────────────────────────────────── */}
+        {rows.length > 0 && (
           <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: 8,
-            marginBottom: 20,
-            animation: 'fadeSlideUp 0.4s ease 0.4s both',
+            marginTop: 24,
+            background: '#FFFFFF',
+            border: '1px solid #E5E5EA',
+            borderRadius: 16,
+            padding: '4px 16px',
+            textAlign: 'start',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.05)',
           }}>
-            {pills.map((label, i) => (
-              <span key={i} style={{
-                background: 'rgba(51,65,85,0.3)',
-                border: '1px solid rgba(51,65,85,0.5)',
-                borderRadius: 999,
-                padding: '4px 12px',
-                fontSize: 13,
-                color: '#94a3b8',
-                fontFamily: "'DM Sans', sans-serif",
+            {rows.map((row, i) => (
+              <div key={row.label} style={{
+                display: 'flex', alignItems: 'baseline',
+                justifyContent: 'space-between', gap: 12,
+                padding: '13px 0',
+                borderBottom: i < rows.length - 1 ? '1px solid #F2F2F7' : 'none',
               }}>
-                {label}
-              </span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#86868B' }}>
+                  {row.label}
+                </span>
+                <span style={{
+                  fontSize: 14, fontWeight: 500, color: '#1D1D1F',
+                  textAlign: 'end',
+                }}>
+                  {row.value}
+                </span>
+              </div>
             ))}
           </div>
         )}
 
-        {/* ── Info box ───────────────────────────────────────────── */}
-        <div style={{
-          background: 'rgba(28,176,246,0.08)',
-          border: '1px solid rgba(28,176,246,0.3)',
-          borderRadius: 10,
-          padding: '14px 16px',
-          marginBottom: 24,
-          fontSize: 14,
-          color: '#1CB0F6',
-          lineHeight: 1.6,
-          fontFamily: "'DM Sans', sans-serif",
-          animation: 'fadeSlideUp 0.4s ease 0.5s both',
-        }}>
-          The swimmer will be contacted within 24 hours
-          to confirm the session schedule and complete payment.
-        </div>
-
         {/* ── Action buttons ─────────────────────────────────────── */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
+          flexWrap: 'wrap',
           gap: 10,
-          animation: 'fadeSlideUp 0.4s ease 0.6s both',
+          marginTop: 24,
         }}>
-          {/* Primary — Register Another */}
           <button
             type="button"
             onClick={() => navigate('/club/registration')}
-            style={{
-              width: '100%', height: 48, borderRadius: 10,
-              border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-              color: '#060d1f', fontSize: 15, fontWeight: 700,
-              fontFamily: "'DM Sans', sans-serif",
-              boxShadow: '0 2px 8px rgba(45,212,191,0.15)',
-              transition: 'all 0.2s ease',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #0e9f8e 0%, #2dd4bf 100%)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(45,212,191,0.25)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(45,212,191,0.15)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            className="pl-btn pl-btn-primary"
+            style={{ flex: '1 1 220px', height: 46 }}
           >
-            Register Another Swimmer
+            Register another swimmer
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
 
-          {/* Secondary — Dashboard */}
           <button
             type="button"
             onClick={() => navigate('/club')}
-            style={{
-              width: '100%', height: 48, borderRadius: 10,
-              background: 'transparent',
-              border: '2px solid rgba(51,65,85,0.5)',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: 15,
-              color: '#94a3b8',
-              fontFamily: "'DM Sans', sans-serif",
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(51,65,85,0.8)';
-              e.currentTarget.style.background = 'rgba(51,65,85,0.15)';
-              e.currentTarget.style.color = '#e2e8f0';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(51,65,85,0.5)';
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#94a3b8';
-            }}
+            className="pl-btn pl-btn-secondary"
+            style={{ flex: '1 1 180px', height: 46 }}
           >
             {t('actions.goToDashboard')}
           </button>
