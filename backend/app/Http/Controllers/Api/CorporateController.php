@@ -10,9 +10,11 @@ use App\Models\ClubFeature;
 use App\Models\CorporateSetting;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class CorporateController extends Controller
@@ -40,6 +42,51 @@ class CorporateController extends Controller
         }
 
         return response()->json(CorporateSetting::allSettings());
+    }
+
+    /**
+     * Upload the platform splash image (centered logo shown on app launch).
+     * Mirrors the club-branding upload: content-type validated, hashed name,
+     * S3 in prod / public disk in dev. Saves the URL into CorporateSetting.
+     */
+    public function uploadSplashImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $allowedMimes = [
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+        ];
+        $mime = $file->getMimeType();
+        abort_if(! isset($allowedMimes[$mime]), 422, 'Invalid file type');
+
+        $uploadKey = 'corporate_splash_uploads';
+        $uploads = SafeCache::get($uploadKey, 0);
+        if ($uploads >= 20) {
+            abort(429, 'Upload limit exceeded. Try again later.');
+        }
+        SafeCache::put($uploadKey, $uploads + 1, now()->addHour());
+
+        $ext = $allowedMimes[$mime];
+        $hash = substr(md5_file($file->getRealPath()), 0, 8);
+        $storagePath = "corporate/splash-{$hash}.{$ext}";
+
+        $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
+        $disk = Storage::disk($diskName);
+        $options = $diskName === 's3'
+            ? ['visibility' => 'public', 'ContentType' => $mime, 'CacheControl' => 'public, max-age=31536000, immutable']
+            : ['visibility' => 'public'];
+
+        $disk->put($storagePath, file_get_contents($file->getRealPath()), $options);
+        $url = $disk->url($storagePath);
+
+        CorporateSetting::set('splash_image_url', $url);
+
+        return response()->json(['url' => $url, 'splash_image_url' => $url]);
     }
 
     // ── Enhanced Metrics ────────────────────────────────────

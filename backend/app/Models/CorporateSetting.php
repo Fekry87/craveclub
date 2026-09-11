@@ -43,6 +43,8 @@ class CorporateSetting extends Model
             'primary_color',
             'secondary_color',
             'tagline',
+            'splash_background_color',
+            'splash_image_url',
         ];
     }
 }
