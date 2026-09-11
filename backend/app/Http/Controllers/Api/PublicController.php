@@ -70,6 +70,8 @@ class PublicController extends Controller
             'primary_color' => $settings['primary_color'] ?? '#8b5cf6',
             'secondary_color' => $settings['secondary_color'] ?? '#22d3ee',
             'tagline' => $settings['tagline'] ?? 'Club Management Platform',
+            'splash_background_color' => $settings['splash_background_color'] ?? ($settings['primary_color'] ?? '#6C4CF5'),
+            'splash_image_url' => $settings['splash_image_url'] ?? ($settings['platform_logo_url'] ?? null),
         ]);
     }
 }

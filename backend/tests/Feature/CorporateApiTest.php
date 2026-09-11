@@ -99,6 +99,40 @@ class CorporateApiTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_set_splash_and_it_appears_in_public_branding(): void
+    {
+        $this->seedCorporateSettings();
+
+        $this->withHeaders($this->authHeader($this->admin))
+            ->putJson('/api/v1/corporate/settings', [
+                'settings' => [
+                    'splash_background_color' => '#123456',
+                    'splash_image_url' => 'https://cdn.example.com/splash.png',
+                ],
+            ])->assertOk();
+
+        // Public (no auth) branding surfaces the splash config to the app
+        $this->getJson('/api/v1/public/branding')
+            ->assertOk()
+            ->assertJsonPath('splash_background_color', '#123456')
+            ->assertJsonPath('splash_image_url', 'https://cdn.example.com/splash.png');
+    }
+
+    public function test_admin_can_upload_splash_image(): void
+    {
+        $this->seedCorporateSettings();
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $file = \Illuminate\Http\Testing\File::image('splash.png', 512, 512);
+
+        $this->withHeaders($this->authHeader($this->admin))
+            ->postJson('/api/v1/corporate/settings/splash-image', ['file' => $file])
+            ->assertOk()
+            ->assertJsonStructure(['url', 'splash_image_url']);
+
+        $this->assertDatabaseHas('corporate_settings', ['key' => 'splash_image_url']);
+    }
+
     // ── Club Listing ────────────────────────────────────────
 
     public function test_admin_can_list_clubs(): void

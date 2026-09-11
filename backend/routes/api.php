@@ -242,6 +242,7 @@ Route::prefix('v1')->group(function () {
             // Corporate settings
             Route::get('/settings', [CorporateController::class, 'settings']);
             Route::put('/settings', [CorporateController::class, 'updateSettings']);
+            Route::post('/settings/splash-image', [CorporateController::class, 'uploadSplashImage']);
 
             // Enhanced metrics
             Route::get('/metrics', [CorporateController::class, 'metrics']);

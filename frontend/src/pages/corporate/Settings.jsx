@@ -93,10 +93,13 @@ export default function CorporateSettings() {
     primary_color: '#0071E3',
     secondary_color: '#0071E3',
     tagline: '',
+    splash_background_color: '#6C4CF5',
+    splash_image_url: '',
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [uploadingSplash, setUploadingSplash] = useState(false);
 
   useEffect(() => {
     api.get('/corporate/settings').then(r => {
@@ -106,9 +109,35 @@ export default function CorporateSettings() {
         primary_color: r.data.primary_color || '#0071E3',
         secondary_color: r.data.secondary_color || '#0071E3',
         tagline: r.data.tagline || '',
+        splash_background_color: r.data.splash_background_color || '#6C4CF5',
+        splash_image_url: r.data.splash_image_url || '',
       });
     });
   }, []);
+
+  const handleSplashUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSplash(true);
+    setSaveError(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await api.post('/corporate/settings/splash-image', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setForm(f => ({ ...f, splash_image_url: r.data.url || r.data.splash_image_url }));
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setUploadingSplash(false);
+      e.target.value = '';
+    }
+  };
+
+  const splashBg = /^#?[0-9A-Fa-f]{6}$/.test(form.splash_background_color || '')
+    ? (form.splash_background_color.startsWith('#') ? form.splash_background_color : `#${form.splash_background_color}`)
+    : '#6C4CF5';
 
   const handleSave = async () => {
     // A bare await here dropped every 422/500: no confirmation, no error, and the
@@ -154,6 +183,53 @@ export default function CorporateSettings() {
           </FormField>
           <FormField label="Secondary color">
             <ColorPicker value={form.secondary_color} onChange={v => setForm({ ...form, secondary_color: v })} />
+          </FormField>
+        </div>
+
+        {/* App splash screen */}
+        <div style={sectionCardStyle('0.18s')}>
+          <SectionTitle>App splash screen</SectionTitle>
+          <div style={{ ...labelStyle, marginTop: -4, marginBottom: 16, color: '#86868B', fontWeight: 400 }}>
+            Shown when the mobile app launches, before the club list. Pick a background color and upload a centered logo.
+          </div>
+          <FormField label="Background color">
+            <ColorPicker value={form.splash_background_color} onChange={v => setForm({ ...form, splash_background_color: v })} />
+          </FormField>
+          <FormField label="Center logo image">
+            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div>
+                <label
+                  className="pl-btn pl-btn-secondary pl-btn-sm"
+                  style={{ cursor: uploadingSplash ? 'default' : 'pointer', opacity: uploadingSplash ? 0.6 : 1 }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
+                  {uploadingSplash ? 'Uploading…' : 'Upload image'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    style={{ display: 'none' }}
+                    onChange={handleSplashUpload}
+                    disabled={uploadingSplash}
+                  />
+                </label>
+                <div style={{ ...labelStyle, marginTop: 8, color: '#86868B', fontWeight: 400 }}>
+                  PNG (transparent), square, 512–1024px, ≤ 2MB
+                </div>
+              </div>
+
+              {/* Phone preview */}
+              <div style={{
+                width: 150, height: 300, borderRadius: 28, overflow: 'hidden',
+                background: splashBg, border: '1px solid rgba(0,0,0,0.10)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                {form.splash_image_url ? (
+                  <img src={form.splash_image_url} alt="Splash logo" style={{ width: '58%', height: 'auto', objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, fontFamily: 'var(--font-body)' }}>Your logo here</span>
+                )}
+              </div>
+            </div>
           </FormField>
         </div>
 
