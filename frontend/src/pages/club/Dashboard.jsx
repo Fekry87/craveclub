@@ -156,6 +156,15 @@ export default function ClubDashboard() {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (attendanceRate / 100) * circumference;
 
+  // The backend rounds to one decimal, so this label runs from "0%" to "85.7%" to
+  // "100%". The ring's usable inner width is ~76px; at a fixed 30px the five-character
+  // form renders ~88px and spills over the stroke. Scale the type to the value instead.
+  const rateText = `${attendanceRate}%`;
+  const rateFontSize = rateText.length >= 6 ? 20
+    : rateText.length === 5 ? 23
+      : rateText.length === 4 ? 26
+        : 30;
+
   /* ── Greeting ── */
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('dashboard.goodMorning') : hour < 17 ? t('dashboard.goodAfternoon') : t('dashboard.goodEvening');
@@ -281,10 +290,14 @@ export default function ClubDashboard() {
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                // Inset past the stroke so the label can never sit on top of the ring.
+                padding: 14, boxSizing: 'border-box',
               }}>
                 <div style={{
-                  ...DISPLAY, fontSize: 30, color: '#1D1D1F',
-                }}>{attendanceRate}%</div>
+                  ...DISPLAY, fontSize: rateFontSize, color: '#1D1D1F',
+                  fontVariantNumeric: 'tabular-nums',
+                  whiteSpace: 'nowrap', maxWidth: '100%',
+                }}>{rateText}</div>
                 <div style={{ ...labelStyle, marginTop: 5 }}>{t('dashboard.rate')}</div>
               </div>
             </div>
