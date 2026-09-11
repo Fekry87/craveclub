@@ -81,10 +81,14 @@ class CorporateController extends Controller
             ? ['visibility' => 'public', 'ContentType' => $mime, 'CacheControl' => 'public, max-age=31536000, immutable']
             : ['visibility' => 'public'];
 
-        $disk->put($storagePath, file_get_contents($file->getRealPath()), $options);
+        $bytes = file_get_contents($file->getRealPath());
+        $disk->put($storagePath, $bytes, $options);
 
-        // The bucket is private — serve the image through our public proxy.
+        // The storage bucket is private (read-denied), so keep the image bytes
+        // in the DB and serve them through our public proxy.
         CorporateSetting::set('splash_image_path', $storagePath);
+        CorporateSetting::set('splash_image_data', base64_encode($bytes));
+        CorporateSetting::set('splash_image_mime', $mime);
         $proxyUrl = rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/splash-image?v='.$hash;
         CorporateSetting::set('splash_image_url', $proxyUrl);
 
