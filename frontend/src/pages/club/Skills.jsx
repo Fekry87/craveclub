@@ -4,6 +4,7 @@ import { getSkills, createSkill, updateSkill, deleteSkill } from '../../api/skil
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 export default function Skills() {
   const { t } = useTranslation();
@@ -12,6 +13,8 @@ export default function Skills() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', type: 'SKILL', description: '' });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => getSkills({ search })
     .then(r => setSkills(r.data.data || []))
@@ -19,9 +22,19 @@ export default function Skills() {
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    if (editId) await updateSkill(editId, form);
-    else await createSkill(form);
-    setShowModal(false); setEditId(null); load();
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (editId) await updateSkill(editId, form);
+      else await createSkill(form);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (s) => { setEditId(s.id); setForm({ name: s.name, type: s.type, description: s.description || '' }); setShowModal(true); };
@@ -51,6 +64,14 @@ export default function Skills() {
         <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
         <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }]} /></FormField>
         <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
           <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

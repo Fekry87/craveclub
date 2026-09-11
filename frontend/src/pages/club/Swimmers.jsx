@@ -5,6 +5,7 @@ import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHead
 import { CardActions, CardInfoRow } from '../../components/ui/Cards';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle, cardStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 const levelConfig = {
   'Beginner':     { color: '#0071E3', variant: 'accent' },
@@ -114,6 +115,8 @@ export default function Swimmers() {
   const [loginFilter, setLoginFilter] = useState('All');
   const [pendingDeletion, setPendingDeletion] = useState([]);
   const [form, setForm] = useState({ first_name: '', last_name: '', level: '', date_of_birth: '', guardian_name: '', guardian_phone: '', guardian_email: '', medical_notes: '', create_login: false, email: '', password: '' });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => api.get('/club/swimmers', { params: { search } })
     .then(r => setSwimmers(r.data.data || []))
@@ -127,9 +130,19 @@ export default function Swimmers() {
   }, []);
 
   const handleSave = async () => {
-    if (editId) await api.put(`/club/swimmers/${editId}`, form);
-    else await api.post('/club/swimmers', form);
-    setShowModal(false); setEditId(null); load();
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (editId) await api.put(`/club/swimmers/${editId}`, form);
+      else await api.post('/club/swimmers', form);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (s) => {
@@ -199,6 +212,14 @@ export default function Swimmers() {
             )}
           </div>
         )}
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
           <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { FormField, Input, Button, PageHeader } from '../../components/CrudTable';
 import { inputStyle, inputFocusProps } from '../../components/ui/styles';
 import { useTranslation } from 'react-i18next';
+import { apiErrorMessage } from '../../lib/apiError';
 
 const labelStyle = {
   fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: '#6E6E73',
@@ -95,6 +96,7 @@ export default function CorporateSettings() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
     api.get('/corporate/settings').then(r => {
@@ -109,12 +111,20 @@ export default function CorporateSettings() {
   }, []);
 
   const handleSave = async () => {
-    setSaving(true);
-    await api.put('/corporate/settings', { settings: form });
-    await checkAuth(); // Refresh corporate branding in context
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    // A bare await here dropped every 422/500: no confirmation, no error, and the
+    // page looked as if the save had simply been ignored.
+    setSaveError(null);
+    try {
+      setSaving(true);
+      await api.put('/corporate/settings', { settings: form });
+      await checkAuth(); // Refresh corporate branding in context
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+      setSaving(false);
+    }
   };
 
   return (

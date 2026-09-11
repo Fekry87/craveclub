@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { labelStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 export default function Groups() {
   const { t } = useTranslation();
@@ -16,6 +17,8 @@ export default function Groups() {
   const [selectedSwimmers, setSelectedSwimmers] = useState([]);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', coach_user_id: '' });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => {
     api.get('/club/groups', { params: { search } }).then(r => setGroups(r.data.data || [])).catch(() => {});
@@ -25,9 +28,19 @@ export default function Groups() {
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    if (editId) await api.put(`/club/groups/${editId}`, form);
-    else await api.post('/club/groups', form);
-    setShowModal(false); setEditId(null); load();
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (editId) await api.put(`/club/groups/${editId}`, form);
+      else await api.post('/club/groups', form);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (g) => {
@@ -74,6 +87,14 @@ export default function Groups() {
             options={coaches.map(c => ({ value: c.user_id, label: c.user?.name }))} />
         </FormField>
         <FormField label={t('groups.description')}><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
           <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

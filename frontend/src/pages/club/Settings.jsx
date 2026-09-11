@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import { FormField, Input, TextArea, Button, PageHeader, useIsMobile } from '../../components/CrudTable';
 import { labelStyle } from '../../components/ui/styles';
 import { useTranslation } from 'react-i18next';
+import { apiErrorMessage } from '../../lib/apiError';
 
 function SettingsSection({ title, icon, children, description }) {
   return (
@@ -71,6 +72,7 @@ export default function Settings() {
   const [form, setForm] = useState({ name: '', logo_url: '', theme_color: '', about: '', contact_email: '', contact_phone: '' });
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -84,9 +86,16 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
-    await api.put('/club/settings', form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    // A bare await here dropped every 422/500: no confirmation, no error, and the
+    // page looked as if the save had simply been ignored.
+    setSaveError(null);
+    try {
+      await api.put('/club/settings', form);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    }
   };
 
   if (loading) {
