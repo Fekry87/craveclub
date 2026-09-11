@@ -108,8 +108,12 @@ class SwimmerApiController extends Controller
         // Subscription — derived the same way as notifications:subscription-reminders
         $subscription = null;
         if ($registration && $registration->plan && $registration->plan->duration_months) {
-            $start = $registration->updated_at->copy()->startOfDay();
-            $end = $start->copy()->addMonths($registration->plan->duration_months);
+            $start = $registration->subscription_started_at
+                ? $registration->subscription_started_at->copy()->startOfDay()
+                : $registration->updated_at->copy()->startOfDay();
+            $end = $registration->subscription_ends_at
+                ? $registration->subscription_ends_at->copy()->startOfDay()
+                : $start->copy()->addMonths($registration->plan->duration_months);
             $today = now()->startOfDay();
             $daysLeft = (int) $today->diffInDays($end, false);
             $totalDays = max(1, $start->diffInDays($end));

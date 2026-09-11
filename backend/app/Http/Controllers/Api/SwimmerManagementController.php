@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SwimmerManagementController extends Controller
 {
@@ -135,6 +136,43 @@ class SwimmerManagementController extends Controller
         ]));
 
         return response()->json($swimmer->load('user'));
+    }
+
+    /**
+     * Regenerate a temporary password for a swimmer and return the credentials
+     * to the manager to relay. Revokes the swimmer's existing tokens.
+     */
+    public function resetPassword(SwimmerProfile $swimmer): JsonResponse
+    {
+        if ($swimmer->club_id !== app('current_club_id')) {
+            abort(404);
+        }
+
+        $user = $swimmer->user;
+        if (! $user) {
+            return response()->json(['message' => 'This swimmer does not have a login account yet.'], 422);
+        }
+
+        $tempPassword = Str::upper(Str::random(2))
+            .rand(10, 99)
+            .Str::random(4)
+            .str_shuffle('!@#$')[0];
+
+        $user->password = $tempPassword;
+        $user->save();
+        $user->tokens()->delete();
+
+        AuditService::log('swimmer.password_reset', SwimmerProfile::class, $swimmer->id, [
+            'swimmer_name' => $swimmer->full_name,
+        ]);
+
+        return response()->json([
+            'message' => 'Password reset. Share these credentials with the swimmer.',
+            'credentials' => [
+                'email' => $user->email,
+                'temp_password' => $tempPassword,
+            ],
+        ]);
     }
 
     public function swimmerDestroy(SwimmerProfile $swimmer): JsonResponse

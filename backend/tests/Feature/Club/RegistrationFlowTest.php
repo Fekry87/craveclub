@@ -97,6 +97,25 @@ class RegistrationFlowTest extends TestCase
         ]);
     }
 
+    public function test_approving_registration_stamps_subscription_window(): void
+    {
+        $registration = $this->createPendingRegistration();
+
+        $this->actingAs($this->manager, 'sanctum')
+            ->patchJson("/api/v1/club/registrations/{$registration->id}/status", [
+                'status' => 'approved',
+            ])->assertOk();
+
+        $registration->refresh();
+        $this->assertNotNull($registration->subscription_started_at, 'subscription_started_at should be set on approval');
+        $this->assertNotNull($registration->subscription_ends_at, 'subscription_ends_at should be set on approval');
+
+        // ends_at = started_at + plan.duration_months
+        $expected = $registration->subscription_started_at->copy()
+            ->addMonths((int) $registration->plan->duration_months)->toDateString();
+        $this->assertEquals($expected, $registration->subscription_ends_at->toDateString());
+    }
+
     public function test_approving_registration_creates_user_and_swimmer_profile(): void
     {
         $registration = $this->createPendingRegistration();

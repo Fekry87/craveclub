@@ -20,6 +20,7 @@ class Registration extends Model
         'medical_notes', 'sport_ids', 'experience_level', 'years_experience',
         'competed', 'primary_goal', 'weekly_frequency', 'preferred_time',
         'payment_method', 'status', 'total_amount', 'notes',
+        'subscription_started_at', 'subscription_ends_at',
     ];
 
     protected function casts(): array
@@ -31,6 +32,8 @@ class Registration extends Model
             'prior_experience' => 'boolean',
             'competed' => 'boolean',
             'total_amount' => 'decimal:2',
+            'subscription_started_at' => 'date',
+            'subscription_ends_at' => 'date',
             'height_cm' => 'integer',
             'weight_kg' => 'integer',
         ];
