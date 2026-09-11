@@ -82,11 +82,13 @@ class CorporateController extends Controller
             : ['visibility' => 'public'];
 
         $disk->put($storagePath, file_get_contents($file->getRealPath()), $options);
-        $url = $disk->url($storagePath);
 
-        CorporateSetting::set('splash_image_url', $url);
+        // The bucket is private — serve the image through our public proxy.
+        CorporateSetting::set('splash_image_path', $storagePath);
+        $proxyUrl = rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/splash-image?v='.$hash;
+        CorporateSetting::set('splash_image_url', $proxyUrl);
 
-        return response()->json(['url' => $url, 'splash_image_url' => $url]);
+        return response()->json(['url' => $proxyUrl, 'splash_image_url' => $proxyUrl]);
     }
 
     // ── Enhanced Metrics ────────────────────────────────────
