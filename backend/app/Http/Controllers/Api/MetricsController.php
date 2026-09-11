@@ -25,7 +25,9 @@ class MetricsController extends Controller
         // Authenticate via secret key header
         $expectedKey = config('app.metrics_secret_key');
 
-        if (! $expectedKey || $request->header('X-Metrics-Key') !== $expectedKey) {
+        // hash_equals, not !==: a plain comparison short-circuits on the first differing
+        // byte and leaks the secret's prefix to an attacker timing the responses.
+        if (! $expectedKey || ! hash_equals((string) $expectedKey, (string) $request->header('X-Metrics-Key', ''))) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

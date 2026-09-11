@@ -119,7 +119,7 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
         {uploading && (
           <div style={{ color: '#0071E3', marginTop: 10, fontSize: 12 }}>{t('branding.uploading')}</div>
         )}
-        <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/svg+xml'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+        <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/webp'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
       </div>
     </FormField>
   );

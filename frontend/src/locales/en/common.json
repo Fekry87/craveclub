@@ -387,7 +387,7 @@
     "favicon": "Favicon",
     "coverImage": "Cover Image",
     "dropFile": "Drop file or click to upload",
-    "fileTypes": "PNG, JPG, SVG — max 2MB",
+    "fileTypes": "PNG, JPG, WebP — max 2MB",
     "fileTooLarge": "File must be under 2MB",
     "uploading": "Uploading...",
     "uploaded": "{{name}} uploaded",

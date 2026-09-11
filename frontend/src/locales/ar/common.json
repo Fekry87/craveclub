@@ -387,7 +387,7 @@
     "favicon": "أيقونة الموقع",
     "coverImage": "صورة الغلاف",
     "dropFile": "أسقط الملف هنا أو انقر للرفع",
-    "fileTypes": "PNG أو JPG أو SVG — بحد أقصى 2 ميجابايت",
+    "fileTypes": "PNG أو JPG أو WebP — بحد أقصى 2 ميجابايت",
     "fileTooLarge": "يجب أن يكون حجم الملف أقل من 2 ميجابايت",
     "uploading": "جارٍ الرفع...",
     "uploaded": "تم رفع {{name}}",

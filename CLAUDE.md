@@ -124,7 +124,7 @@
 - Frontend ESLint is NOT in CI. It has pre-existing `react-hooks` / `react-refresh` errors (e.g. `Cards.jsx` non-component export, `Date.now` in wizard steps) — don't be alarmed, and don't try to fix them as part of unrelated work.
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (244 tests)
+- `cd backend && php artisan test` — run all tests (265 tests)
 - `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
 - `cd backend && composer audit` — must be clean before a release (dependency CVEs)
 - `cd frontend && npm audit fix` — fix frontend dependency CVEs (npm's advisory endpoint is flaky from this machine; retry on timeout)
@@ -144,6 +144,7 @@
 - Demo club slug is `future-academy` — use `/future-academy` to login (manager@futureacademy.com / Password123!)
 
 ## Key Patterns
+- **`App\Support\SafeCache` is the only way to touch the cache for defensive counters** (login lockout, registration throttle, branding upload quota). Bare `Cache::get/put` there turns a Redis blip into a 500 on every login and locks the whole tenant out. It catches `Throwable` (a missing predis class raises an `Error`, not an `Exception`) and falls back to the default on read / drops the write. `SafeCache::remember()` still runs the callback on failure, so callers always get real data.
 - Club-scoped controllers: always query with `->where('club_id', app('current_club_id'))` and `abort(404)` if record's `club_id` doesn't match
 - `BelongsToClub` trait auto-scopes via global scope + auto-fills `club_id` on create — used on older models (CoachProfile, SwimmerProfile, etc.)
 - New CRUD controllers (Branch, Sport, SubscriptionPlan): manual scoping pattern without the trait — scope in controller, not model
@@ -239,6 +240,9 @@
 - `frontend/src/api/subscriptionPlans.js` — subscription plans API module
 - `frontend/src/components/ui/FormPage.jsx` — FormPage and FormPageActions components (full-page replacement for Modal on create/edit)
 - `backend/app/Services/AuditService.php` — audit logging service (daily log channel, 90-day retention)
+- `backend/app/Support/SafeCache.php` — cache access that degrades instead of 500-ing when Redis is unreachable (get/put/forget/remember)
+- `backend/app/Exceptions/RegistrationNotPendingException.php` — sentinel thrown inside the approval transaction when the locked row is no longer pending (→ 422, not 500)
+- `backend/tests/Feature/Security/HardeningAuditTest.php` — 15 regression tests for the backend security audit (deletion-status oracle, cache outage, branding escalation, SVG upload, extension spoofing, metrics key, approval race, soft-deleted email, sport module resolution, push-token claim cap)
 - `backend/app/Http/Controllers/Api/ClubBrandingController.php` — public/corporate/club branding endpoints with caching
 - `backend/app/Http/Controllers/Api/CoachManagementController.php` — coach CRUD (split from ClubController)
 - `backend/app/Http/Controllers/Api/SwimmerManagementController.php` — swimmer CRUD (split from ClubController)
@@ -355,6 +359,18 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 
 ## Gotchas
 - Never stack `throttle` middleware on nested route groups — parent already has `throttle:by_user`, causes premature 429 errors
+- `/auth/login` must check the password BEFORE disclosing `pending_deletion`. Answering first turns login into the account-existence + status oracle that `/account/deletion-status` was hardened against. Soft-deleted users never pass `Auth::attempt` (the SoftDeletingScope excludes them), so the check is an explicit `Hash::check` against the `withTrashed()` row.
+- `/account/reactivate` is a login endpoint in everything but name — it verifies a password and returns a live 30-day token — so it carries the same `throttle:10,1` as `/auth/login`. Never move it outside a throttle group. `/account/deletion-status` is `throttle:20,1`, `/metrics` is `throttle:30,1`.
+- Secret comparison uses `hash_equals`, never `!==` — a plain compare short-circuits on the first differing byte and leaks the secret's prefix to a timing attack (`MetricsController`).
+- Branding uploads **do NOT accept SVG**. An SVG is an executable document; served same-origin it is stored XSS, and the portal keeps its Sanctum token in `localStorage`. Accepted: png/jpg/jpeg/webp. The stored extension is derived from the validated `getMimeType()`, never `getClientOriginalExtension()` (client-controlled).
+- `ClubBrandingController` has TWO rulesets: `brandingRules()` (corporate) and `clubManagerBrandingRules()` (a strict subset). A CLUB_MANAGER must never be able to set `branding_tier`, `custom_domain` or `is_domain_active` — those are billing/namespace decisions. `updateOwn()` uses the club-manager set; do not "simplify" the two back into one.
+- `RegistrationController::approveRegistration` re-reads the row with `lockForUpdate()` inside the transaction and re-asserts `pending`, throwing `RegistrationNotPendingException` (→ 422) otherwise. The check before the transaction is only a cheap pre-filter; on its own a double-click creates two users, two profiles and two memberships.
+- The swimmer-email uniqueness loop uses `User::withTrashed()` — `users.email` is UNIQUE at the DB level and soft deletes leave the row, so skipping trashed matches collides on insert and 500s for the full 30-day window.
+- Registration rate-limit keys hash `normalizePhone()` output, not the raw string: digits only, `00` prefix stripped, leading `966` folded to `0`. Otherwise the limit is bypassed by reformatting. The counter increments AFTER `validate()` so five typos don't burn an honest applicant's hourly quota.
+- `PublicRegistrationController::resolveSportModuleId()` matches the applicant's `sport_ids` against the club's active modules (by slug or id) and otherwise falls back to the first module ordered by `sort_order, id`. A bare `->value('sport_module_id')` has no ORDER BY and files multi-sport applicants under an arbitrary sport.
+- `NotificationService::registerPushToken` still transfers a token claimed by a different user (device handover — leaving it bound would deliver the old owner's notifications to the new user's screen), but the claim is capped at 3/hour per user and every transfer is audit-logged. Push tokens are never returned by any API response, so there is no in-band way to learn another user's token.
+- `AuditService::log()` resolves the club via `app()->bound('current_club_id')` with a fallback to `auth()->user()?->club_id`. `current_club_id` is only bound by ClubContext, so a blind `app('current_club_id')` throws on authenticated-but-not-club-scoped routes (push-token registration) and in console/queue contexts — audit logging must never be able to fail the operation it records.
+- Dockerfile nginx: `location ~ \.php$` MUST keep `try_files $uri =404`, and PHP MUST keep `cgi.fix_pathinfo = 0`. Without both, `/uploads/x.png/y.php` executes `x.png` as PHP. `client_max_body_size 8m` is also required — nginx's 1MB default silently rejects the 2MB uploads the validator advertises, with an HTML 413 the SPA cannot parse.
 - API state initialized as `null` will crash React render if accessed before load completes — always add null guards
 - `async onClick` handlers with bare `await` (no try/catch) silently swallow errors — buttons appear broken
 - `Button` component spreads `{...props}` AFTER `style` — never pass `style` prop directly, it overrides internal styles

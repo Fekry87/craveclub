@@ -170,8 +170,11 @@ Route::prefix('v1')->group(function () {
     // App Version Check (public, no auth — used by mobile for force-update)
     Route::get('/app/version-check', [AppVersionController::class, 'check']);
 
-    // Metrics (protected by X-Metrics-Key header)
-    Route::get('/metrics', [MetricsController::class, 'index']);
+    // Metrics (protected by X-Metrics-Key header + throttled so the shared secret
+    // can't be brute-forced from an unauthenticated endpoint)
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::get('/metrics', [MetricsController::class, 'index']);
+    });
 
     // API Documentation
     Route::get('/docs', [ApiDocController::class, 'docs']);
@@ -203,9 +206,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/login', [AuthController::class, 'login']);
     });
 
-    // Account reactivation + deletion status (unauthenticated — user has no token after deletion)
-    Route::post('/account/reactivate', [AccountDeletionController::class, 'reactivate']);
-    Route::get('/account/deletion-status', [AccountDeletionController::class, 'status']);
+    // Account reactivation + deletion status (unauthenticated — user has no token after
+    // deletion). `reactivate` verifies a password and hands back a live 30-day token, so
+    // it is a login endpoint in everything but name and carries the same throttle:10,1.
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/account/reactivate', [AccountDeletionController::class, 'reactivate']);
+    });
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::get('/account/deletion-status', [AccountDeletionController::class, 'status']);
+    });
 
     // Authenticated routes
     Route::middleware(['auth:sanctum', 'throttle:by_user', 'request.log'])->group(function () {

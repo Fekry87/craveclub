@@ -6,10 +6,11 @@ use App\Http\Controllers\Api\Concerns\BuildsUserPayload;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\User;
+use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -23,9 +24,12 @@ class AuthController extends Controller
             'club_slug' => 'nullable|string',
         ]);
 
-        // Brute-force lockout: 5 failed attempts → 15-minute lockout
+        // Brute-force lockout: 5 failed attempts → 15-minute lockout.
+        // SafeCache, not Cache: this counter sits on top of the route's throttle:10,1,
+        // so a Redis outage must degrade it to "no extra lockout" rather than 500 every
+        // login request and lock every tenant out of the product.
         $lockoutKey = 'login_attempts_'.$request->ip();
-        $attempts = Cache::get($lockoutKey, 0);
+        $attempts = SafeCache::get($lockoutKey, 0);
 
         if ($attempts >= 5) {
             return response()->json([
@@ -40,6 +44,16 @@ class AuthController extends Controller
             ->first();
 
         if ($pendingUser && $pendingUser->isPendingDeletion()) {
+            // Disclose the pending-deletion state ONLY to someone who proves they own
+            // the account. Answering before the password check would turn /auth/login
+            // into the account-existence + status oracle that /account/deletion-status
+            // was deliberately hardened against.
+            if (! Hash::check($request->password, $pendingUser->password)) {
+                SafeCache::put($lockoutKey, $attempts + 1, now()->addMinutes(15));
+
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
             return response()->json([
                 'status' => 'pending_deletion',
                 'days_remaining' => $pendingUser->daysUntilPurge(),
@@ -48,13 +62,13 @@ class AuthController extends Controller
         }
 
         if (! Auth::attempt($request->only('email', 'password'))) {
-            Cache::put($lockoutKey, $attempts + 1, now()->addMinutes(15));
+            SafeCache::put($lockoutKey, $attempts + 1, now()->addMinutes(15));
 
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         // Reset lockout counter on successful login
-        Cache::forget($lockoutKey);
+        SafeCache::forget($lockoutKey);
 
         $user = Auth::user();
 

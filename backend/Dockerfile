@@ -57,8 +57,11 @@ RUN composer dump-autoload --optimize --no-dev \
 RUN echo "log_errors = On" >> /usr/local/etc/php/conf.d/error-logging.ini \
     && echo "error_log = /proc/self/fd/2" >> /usr/local/etc/php/conf.d/error-logging.ini
 
-# Don't advertise the PHP version (X-Powered-By) to clients
-RUN echo "expose_php = Off" >> /usr/local/etc/php/conf.d/hardening.ini
+# Don't advertise the PHP version (X-Powered-By) to clients.
+# cgi.fix_pathinfo=0: with the default (1) PHP walks the path backwards looking for an
+# existing file, so a request for /uploads/evil.png/x.php executes evil.png as PHP.
+# nginx's try_files below is the first line of defence; this is the second.
+RUN printf 'expose_php = Off\ncgi.fix_pathinfo = 0\n' > /usr/local/etc/php/conf.d/hardening.ini
 
 # php-fpm: capture worker output
 RUN echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf \
@@ -79,12 +82,18 @@ events { worker_connections 1024; }\n\
 http {\n\
     include mime.types;\n\
     server_tokens off;\n\
+    # Branding uploads validate at 2MB; nginx defaults to 1m and would reject them\n\
+    # with an HTML 413 the SPA cannot parse. Keep this above the app-level limit.\n\
+    client_max_body_size 8m;\n\
     server {\n\
         listen PORT_PLACEHOLDER;\n\
         root /var/www/public;\n\
         index index.php;\n\
         location / { try_files $uri $uri/ /index.php?$query_string; }\n\
+        # Never hand a path to php-fpm unless that exact file exists. Without this,\n\
+        # /uploads/evil.png/x.php reaches PHP and gets executed as evil.png.\n\
         location ~ \\.php$ {\n\
+            try_files $uri =404;\n\
             fastcgi_pass 127.0.0.1:9000;\n\
             fastcgi_index index.php;\n\
             include fastcgi_params;\n\

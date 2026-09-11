@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\UserRole;
+use App\Exceptions\RegistrationNotPendingException;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\Group;
@@ -52,7 +53,9 @@ class RegistrationController extends Controller
             'status' => 'required|string|in:approved,cancelled',
         ]);
 
-        // Guard: only pending registrations can be approved/cancelled
+        // Cheap pre-check for the common case. The authoritative check is re-run inside
+        // the transaction under a row lock (see approveRegistration) — this one alone
+        // races: two clicks both read 'pending' and both create a swimmer account.
         if ($registration->status !== 'pending') {
             return response()->json([
                 'message' => 'Only pending registrations can be updated.',
@@ -72,6 +75,18 @@ class RegistrationController extends Controller
 
         try {
             $result = DB::transaction(function () use ($registration, $clubId) {
+                // 0. Re-read the row under a write lock and re-assert `pending`. A double
+                //    submit otherwise passes the pre-check twice and creates two users,
+                //    two profiles and two memberships for the same applicant.
+                $locked = Registration::where('id', $registration->id)
+                    ->where('club_id', $clubId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $locked || $locked->status !== 'pending') {
+                    throw new RegistrationNotPendingException;
+                }
+
                 // 1. Split full_name into first/last
                 $nameParts = explode(' ', trim($registration->full_name), 2);
                 $firstName = $nameParts[0];
@@ -81,7 +96,10 @@ class RegistrationController extends Controller
                 $baseEmail = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'@club'.$clubId.'.craveclubs.local';
                 $email = $baseEmail;
                 $counter = 1;
-                while (User::where('email', $email)->exists()) {
+                // withTrashed(): `users.email` is UNIQUE at the database level and soft
+                // deletes leave the row in place, so a skipped trashed match would collide
+                // on insert and surface as an opaque 500 for the whole 30-day window.
+                while (User::withTrashed()->where('email', $email)->exists()) {
                     $email = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'_'.$counter.'@club'.$clubId.'.craveclubs.local';
                     $counter++;
                 }
@@ -137,11 +155,12 @@ class RegistrationController extends Controller
                     }
                 }
 
-                // 7. Update registration status
-                $registration->update(['status' => 'approved']);
+                // 7. Update registration status (through the locked row, which is the
+                //    instance returned to the caller so the response reflects the write)
+                $locked->update(['status' => 'approved']);
 
                 return [
-                    'registration' => $registration,
+                    'registration' => $locked,
                     'swimmer' => [
                         'user_id' => $user->id,
                         'profile_id' => $swimmerProfile->id,
@@ -182,6 +201,11 @@ class RegistrationController extends Controller
                 'swimmer' => $result['swimmer'],
                 'message' => 'Registration approved. Swimmer account created successfully.',
             ]);
+        } catch (RegistrationNotPendingException $e) {
+            // Lost the race to a concurrent approval — not an error, just already done.
+            return response()->json([
+                'message' => 'Only pending registrations can be updated.',
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Registration approval failed', ['error' => $e->getMessage(), 'registration_id' => $registration->id]);
 
