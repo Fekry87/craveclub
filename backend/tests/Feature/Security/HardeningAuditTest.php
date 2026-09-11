@@ -424,6 +424,64 @@ class HardeningAuditTest extends TestCase
         }
     }
 
+    // ── Subscription discount: the portal advertises it, so billing must apply it ──
+
+    public function test_registration_is_billed_the_discounted_price(): void
+    {
+        $this->registrationPayload();
+
+        $plan = SubscriptionPlan::where('club_id', $this->club->id)->firstOrFail();
+        $plan->update(['price' => 500, 'discount_percent' => 10]);
+
+        $this->assertSame(450.0, $plan->fresh()->final_price);
+
+        $this->postJson('/api/v1/registrations', array_merge($this->registrationPayload(), [
+            'phone' => '0551110001',
+        ]), ['X-Club-Slug' => $this->club->slug])->assertStatus(201);
+
+        // The member is billed what every screen quotes, not the list price.
+        $this->assertSame(
+            '450.00',
+            (string) Registration::where('phone', '0551110001')->value('total_amount'),
+        );
+    }
+
+    public function test_plan_without_a_discount_is_billed_the_list_price(): void
+    {
+        $this->registrationPayload();
+
+        SubscriptionPlan::where('club_id', $this->club->id)
+            ->firstOrFail()
+            ->update(['price' => 500, 'discount_percent' => 0]);
+
+        $this->postJson('/api/v1/registrations', array_merge($this->registrationPayload(), [
+            'phone' => '0551110002',
+        ]), ['X-Club-Slug' => $this->club->slug])->assertStatus(201);
+
+        $this->assertSame(
+            '500.00',
+            (string) Registration::where('phone', '0551110002')->value('total_amount'),
+        );
+    }
+
+    public function test_public_plans_expose_the_price_members_actually_pay(): void
+    {
+        $this->registrationPayload();
+
+        SubscriptionPlan::where('club_id', $this->club->id)
+            ->firstOrFail()
+            ->update(['price' => 1200, 'discount_percent' => 20]);
+
+        $response = $this->getJson('/api/v1/subscription-plans', ['X-Club-Slug' => $this->club->slug]);
+
+        $response->assertOk()
+            ->assertJsonPath('0.price', '1200.00')
+            ->assertJsonPath('0.discount_percent', 20);
+
+        // JSON collapses 960.0 to 960, so compare numerically rather than identically.
+        $this->assertEqualsWithDelta(960.0, (float) $response->json('0.final_price'), 0.001);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────
 
     private function registrationPayload(): array

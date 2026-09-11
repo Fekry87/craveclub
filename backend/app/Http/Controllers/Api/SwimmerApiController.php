@@ -122,7 +122,13 @@ class SwimmerApiController extends Controller
             $subscription = [
                 'plan_name' => $registration->plan->name,
                 'duration_months' => $registration->plan->duration_months,
+                // `price` is the plan's list price; `amount_paid` is what this member was
+                // actually billed, taken from their own registration rather than
+                // recomputed, so a later change to the plan cannot rewrite their history.
                 'price' => (float) $registration->plan->price,
+                'discount_percent' => (int) ($registration->plan->discount_percent ?? 0),
+                'final_price' => $registration->plan->final_price,
+                'amount_paid' => (float) $registration->total_amount,
                 'started_at' => $start->toDateString(),
                 'ends_at' => $end->toDateString(),
                 'days_left' => $daysLeft,

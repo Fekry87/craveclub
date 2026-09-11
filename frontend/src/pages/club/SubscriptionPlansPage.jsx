@@ -159,7 +159,9 @@ export default function SubscriptionPlansPage() {
 
   const updateField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
-  // Computed: live price preview
+  // Live preview of an UNSAVED form, so there is no server value to use yet. This is the
+  // one place the discount is legitimately computed client-side; everywhere a saved plan
+  // is displayed must use the server's final_price instead.
   const computedPrice = form.price && form.discount_percent > 0
     ? (Number(form.price) * (1 - Number(form.discount_percent) / 100)).toFixed(2)
     : null;
@@ -461,8 +463,11 @@ export default function SubscriptionPlansPage() {
 /* ── Plan Card ──────────────────────────────────────── */
 function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, onMoveDown }) {
   const { t } = useTranslation();
+  // Use the server's final_price rather than deriving it here. The two used to be
+  // computed independently and only the portal applied the discount, so this card
+  // advertised 450 while the registration recorded — and billed — the full 500.
   const discountedPrice = plan.discount_percent > 0
-    ? (plan.price * (1 - plan.discount_percent / 100)).toFixed(2)
+    ? Number(plan.final_price ?? plan.price * (1 - plan.discount_percent / 100)).toFixed(2)
     : null;
 
   // The "popular" plan is highlighted with a blue border, not a dark card.
