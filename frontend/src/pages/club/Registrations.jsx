@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { createEcho } from '../../lib/echo';
+import { createEcho, reverbConfigError } from '../../lib/echo';
 import { formatDate } from '../../lib/dates';
 import api from '../../api/axios';
 import { Modal, ModalActions } from '../../components/ui/Modal';
@@ -95,6 +95,17 @@ export default function Registrations() {
   // ── Reverb subscription ───────────────────────────────
   useEffect(() => {
     if (!user?.club_id) return;
+
+    // A missing or placeholder app key can never connect — Reverb closes the socket
+    // during the handshake. Without this the UI just says "offline" forever and gives
+    // whoever is deploying nothing to act on.
+    const configError = reverbConfigError();
+    if (configError) {
+      console.error(`[realtime] Reverb is not configured: ${configError}`);
+      setLiveState('offline');
+
+      return;
+    }
 
     const echo = createEcho();
     echoRef.current = echo;
