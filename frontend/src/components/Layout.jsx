@@ -93,7 +93,7 @@ export function NotificationBell({ navigate, onDark = false }) {
         {unreadCount > 0 && (
           <div style={{
             position: 'absolute', top: -3, insetInlineEnd: -3, minWidth: 17, height: 17, borderRadius: 9,
-            background: '#FF3B30', border: '2px solid #F5F5F7',
+            background: '#FF3B30', border: '2px solid #FFFFFF',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 9, fontWeight: 700, color: '#fff', padding: '0 3px',
           }}>{unreadCount > 9 ? '9+' : unreadCount}</div>
@@ -102,7 +102,11 @@ export function NotificationBell({ navigate, onDark = false }) {
 
       {open && (
         <div className="notification-dropdown" style={{
-          position: 'absolute', top: 44, right: 0, width: 'min(340px, calc(100vw - 32px))', maxHeight: 420,
+          // insetInlineEnd, not right: in RTL the bell sits at the far left of the header,
+          // so anchoring to the physical right pushes the panel off the viewport. An inline
+          // `right` also beats the html[dir="rtl"] stylesheet rule that used to correct it.
+          position: 'absolute', top: 44, insetInlineEnd: 0,
+          width: 'min(340px, calc(100vw - 32px))', maxHeight: 420,
           background: '#FFFFFF', color: '#1D1D1F', borderRadius: 16,
           border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 16px 48px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.06)',
           zIndex: 100, overflow: 'hidden',
@@ -307,9 +311,11 @@ export default function Layout() {
     </NavLink>
   );
 
+  // Chrome surface: sidebar, mobile top bar and content header all share it.
+  // Opaque white against the #F5F5F7 canvas — no backdrop-filter, since nothing shows
+  // through an opaque fill and the blur would only cost compositing.
   const sidebarSurface = {
-    background: 'rgba(246,246,248,0.86)',
-    backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+    background: '#FFFFFF',
   };
 
   return (
