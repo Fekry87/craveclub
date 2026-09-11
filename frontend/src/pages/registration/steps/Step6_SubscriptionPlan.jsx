@@ -5,6 +5,18 @@ import WizardLayout from '../components/WizardLayout';
 import { useRegistration } from '../../../contexts/RegistrationContext';
 import { getPlans } from '../../../api/registration';
 
+/**
+ * The price a member actually pays.
+ *
+ * The server sends `final_price` (list price minus `discount_percent`); the fallback
+ * only covers an older API that predates the field.
+ */
+function planPrice(plan) {
+  if (!plan) return 0;
+  if (plan.final_price != null) return Number(plan.final_price);
+  return Number(plan.price) * (1 - Number(plan.discount_percent || 0) / 100);
+}
+
 export default function Step6_SubscriptionPlan() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -59,7 +71,7 @@ export default function Step6_SubscriptionPlan() {
     const selectedPlan = plans?.find(p => p.id === selected);
     if (selectedPlan) {
       dispatch({ type: 'SET_PLAN_NAME', payload: selectedPlan.name });
-      dispatch({ type: 'SET_PLAN_PRICE', payload: selectedPlan.price });
+      dispatch({ type: 'SET_PLAN_PRICE', payload: planPrice(selectedPlan) });
     }
     dispatch({ type: 'SET_STEP', payload: 7 });
     navigate('/club/registration/coach');
@@ -193,16 +205,24 @@ export default function Step6_SubscriptionPlan() {
               {/* Right */}
               <div style={{ textAlign: 'end', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div>
+                  {/* Show what the member pays. This used to render the list price beside a
+                      "Save N%" badge, so the wizard quoted 500 while the plans page quoted
+                      450 for the same plan. final_price comes from the server. */}
                   <div style={{
                     fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700,
                     letterSpacing: '-0.02em', lineHeight: 1.1,
                     color: '#1D1D1F',
                   }}>
-                    {Number(plan.price).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
+                    {Number(planPrice(plan)).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
                   </div>
+                  {plan.discount_percent > 0 && (
+                    <div style={{ fontSize: 12, color: '#86868B', marginTop: 2, textDecoration: 'line-through' }}>
+                      {Number(plan.price).toLocaleString()} {t('common.currency', { defaultValue: 'SAR' })}
+                    </div>
+                  )}
                   {plan.duration_months > 1 && (
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#6E6E73', marginTop: 4 }}>
-                      = {Math.round(plan.price / plan.duration_months)} {t('common.currency', { defaultValue: 'SAR' })}{t('subscriptions.perMonthShort', { defaultValue: '/mo' })}
+                      = {Math.round(planPrice(plan) / plan.duration_months)} {t('common.currency', { defaultValue: 'SAR' })}{t('subscriptions.perMonthShort', { defaultValue: '/mo' })}
                     </div>
                   )}
                 </div>
@@ -228,7 +248,7 @@ export default function Step6_SubscriptionPlan() {
   );
 
   // ── Selected plan price ─────────────────────────────────────────
-  const selectedPlanPrice = plans?.find(p => p.id === selected)?.price ?? 0;
+  const selectedPlanPrice = planPrice(plans?.find(p => p.id === selected)) ?? 0;
 
   return (
     <WizardLayout

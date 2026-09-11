@@ -68,6 +68,8 @@ class PublicRegistrationController extends Controller
             ->orderBy('duration_months')
             ->get(['id', 'name', 'duration_months', 'price', 'discount_percent', 'is_popular']);
 
+        // `final_price` rides along via $appends — clients render it instead of each
+        // re-deriving the discount and drifting apart.
         return response()->json($plans);
     }
 
@@ -247,7 +249,10 @@ class PublicRegistrationController extends Controller
                     'reference_code' => 'REG-'.strtoupper(\Illuminate\Support\Str::random(8)),
                     'club_id' => $clubId,
                     'sport_module_id' => $sportModuleId,
-                    'total_amount' => $plan->price,
+                    // final_price, not price: `price` is the list price and the portal
+                    // advertises the discounted figure, so billing the list price charged
+                    // members a number no screen ever showed them.
+                    'total_amount' => $plan->final_price,
                     'status' => 'pending',
                     'consent_given_at' => $consentGivenAt,
                 ]));
