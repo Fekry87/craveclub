@@ -44,6 +44,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\ApiVersionMiddleware::class);
 
         $middleware->alias([
+            // Overrides Laravel's `throttle` so a cache outage degrades rate limiting
+            // instead of 500-ing every throttled route (login included).
+            'throttle' => \App\Http\Middleware\ResilientThrottleRequests::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'club.context' => \App\Http\Middleware\ClubContext::class,
             'club.header' => \App\Http\Middleware\ResolveClubFromHeader::class,

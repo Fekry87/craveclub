@@ -124,7 +124,7 @@
 - Frontend ESLint is NOT in CI. It has pre-existing `react-hooks` / `react-refresh` errors (e.g. `Cards.jsx` non-component export, `Date.now` in wizard steps) — don't be alarmed, and don't try to fix them as part of unrelated work.
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (265 tests)
+- `cd backend && php artisan test` — run all tests (268 tests)
 - `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
 - `cd backend && composer audit` — must be clean before a release (dependency CVEs)
 - `cd frontend && npm audit fix` — fix frontend dependency CVEs (npm's advisory endpoint is flaky from this machine; retry on timeout)
@@ -241,8 +241,10 @@
 - `frontend/src/components/ui/FormPage.jsx` — FormPage and FormPageActions components (full-page replacement for Modal on create/edit)
 - `backend/app/Services/AuditService.php` — audit logging service (daily log channel, 90-day retention)
 - `backend/app/Support/SafeCache.php` — cache access that degrades instead of 500-ing when Redis is unreachable (get/put/forget/remember)
+- `backend/app/Http/Middleware/ResilientThrottleRequests.php` — `throttle` that fails open when the rate-limiter cache is unreachable (aliased over Laravel's in `bootstrap/app.php`)
+- `backend/tests/Support/ThrowingCacheStore.php` — cache store where every call throws, for simulating a Redis outage in tests
 - `backend/app/Exceptions/RegistrationNotPendingException.php` — sentinel thrown inside the approval transaction when the locked row is no longer pending (→ 422, not 500)
-- `backend/tests/Feature/Security/HardeningAuditTest.php` — 15 regression tests for the backend security audit (deletion-status oracle, cache outage, branding escalation, SVG upload, extension spoofing, metrics key, approval race, soft-deleted email, sport module resolution, push-token claim cap)
+- `backend/tests/Feature/Security/HardeningAuditTest.php` — 18 regression tests for the backend security audit (deletion-status oracle, cache outage, branding escalation, SVG upload, extension spoofing, metrics key, approval race, soft-deleted email, sport module resolution, push-token claim cap)
 - `backend/app/Http/Controllers/Api/ClubBrandingController.php` — public/corporate/club branding endpoints with caching
 - `backend/app/Http/Controllers/Api/CoachManagementController.php` — coach CRUD (split from ClubController)
 - `backend/app/Http/Controllers/Api/SwimmerManagementController.php` — swimmer CRUD (split from ClubController)
@@ -359,6 +361,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 
 ## Gotchas
 - Never stack `throttle` middleware on nested route groups — parent already has `throttle:by_user`, causes premature 429 errors
+- The `throttle` alias is overridden to `App\Http\Middleware\ResilientThrottleRequests` in `bootstrap/app.php`. Laravel's own `ThrottleRequests` keeps its counters in the cache, so with `CACHE_STORE=redis` a Redis outage 500s EVERY throttled route, login included — staging demonstrated exactly this. The wrapper fails open on a cache error, still raises genuine 429s, and never swallows a downstream application exception (it tracks whether `$next` already ran; the parent touches the cache on both sides of it). Mocking the `Cache` facade does NOT exercise this — `RateLimiter` is built with a concrete `Repository`, so tests inject `Tests\Support\ThrowingCacheStore` instead.
 - `/auth/login` must check the password BEFORE disclosing `pending_deletion`. Answering first turns login into the account-existence + status oracle that `/account/deletion-status` was hardened against. Soft-deleted users never pass `Auth::attempt` (the SoftDeletingScope excludes them), so the check is an explicit `Hash::check` against the `withTrashed()` row.
 - `/account/reactivate` is a login endpoint in everything but name — it verifies a password and returns a live 30-day token — so it carries the same `throttle:10,1` as `/auth/login`. Never move it outside a throttle group. `/account/deletion-status` is `throttle:20,1`, `/metrics` is `throttle:30,1`.
 - Secret comparison uses `hash_equals`, never `!==` — a plain compare short-circuits on the first differing byte and leaks the secret's prefix to a timing attack (`MetricsController`).

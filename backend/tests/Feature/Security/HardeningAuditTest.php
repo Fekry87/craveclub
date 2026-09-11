@@ -13,12 +13,15 @@ use App\Models\SportModule;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\NotificationService;
+use Illuminate\Cache\RateLimiter;
+use Illuminate\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\ThrowingCacheStore;
 use Tests\TestCase;
 
 /**
@@ -127,6 +130,65 @@ class HardeningAuditTest extends TestCase
                 'email' => 'swimmer@hardening.test',
                 'password' => "guess-{$i}",
             ])->assertStatus(401);
+        }
+
+        $this->postJson('/api/v1/account/reactivate', [
+            'email' => 'swimmer@hardening.test',
+            'password' => 'guess-11',
+        ])->assertStatus(429);
+    }
+
+    // ── Finding 1 (framework half): throttled routes survive a cache outage ──
+
+    public function test_throttled_routes_still_work_when_the_rate_limiter_cache_is_down(): void
+    {
+        // Laravel's ThrottleRequests keeps its counters in the cache. With
+        // CACHE_STORE=redis an outage otherwise 500s every throttled route.
+        $this->breakTheRateLimiterCache();
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'manager@hardening.test',
+            'password' => 'Password123!',
+        ])->assertOk();
+    }
+
+    public function test_an_application_error_is_not_swallowed_by_the_resilient_throttle(): void
+    {
+        // The wrapper must not convert a downstream failure into a silent retry.
+        \Illuminate\Support\Facades\Route::middleware(['api', 'throttle:10,1'])
+            ->get('/__throttle_probe', fn () => throw new \RuntimeException('downstream boom'));
+
+        $this->withoutExceptionHandling();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('downstream boom');
+
+        $this->getJson('/__throttle_probe');
+    }
+
+    /**
+     * Point the framework's RateLimiter at a store where every call fails.
+     *
+     * Mocking the Cache facade does NOT reach it — RateLimiter is built with a concrete
+     * Repository, so it never goes through the facade.
+     */
+    private function breakTheRateLimiterCache(): void
+    {
+        $this->app->instance(
+            RateLimiter::class,
+            new RateLimiter(new Repository(new ThrowingCacheStore)),
+        );
+    }
+
+    public function test_a_genuine_rate_limit_still_returns_429(): void
+    {
+        $this->actingAs($this->swimmer)->postJson('/api/v1/account/delete')->assertOk();
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/v1/account/reactivate', [
+                'email' => 'swimmer@hardening.test',
+                'password' => "guess-{$i}",
+            ]);
         }
 
         $this->postJson('/api/v1/account/reactivate', [
