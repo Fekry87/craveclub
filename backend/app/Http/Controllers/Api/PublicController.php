@@ -92,48 +92,35 @@ class PublicController extends Controller
     {
         $path = CorporateSetting::get('splash_image_path');
 
-        if ($request->query('debug') === 'crave123') {
-            $out = ['path' => $path, 's3_bucket' => config('filesystems.disks.s3.bucket')];
+        // Prefer the DB-stored bytes (the storage bucket is read-denied).
+        $data = CorporateSetting::get('splash_image_data');
+        $contents = $data ? base64_decode($data, true) : null;
+
+        // Fallback: try reading from storage disks by path.
+        if ($contents === null || $contents === false) {
+            abort_if(! $path, 404);
             foreach (['b2', 's3', 'public'] as $diskName) {
-                $row = [];
                 try {
-                    $c = \Illuminate\Support\Facades\Storage::disk($diskName)->get($path);
-                    $row['get_bytes'] = $c === null ? null : strlen($c);
+                    $contents = Storage::disk($diskName)->get($path);
+                    if ($contents !== null) {
+                        break;
+                    }
                 } catch (\Throwable $e) {
-                    $row['get_error'] = substr($e->getMessage(), 0, 200);
+                    // try next disk
                 }
-                $out['disk_'.$diskName] = $row;
-            }
-
-            return response()->json($out);
-        }
-
-        abort_if(! $path, 404);
-
-        // Try the properly-configured Backblaze disk first (path-style), then the
-        // generic s3 disk, then the local public disk. Read via get() (not
-        // exists(), which does a HEAD some S3-compatible backends deny).
-        $candidates = config('filesystems.disks.s3.bucket') ? ['b2', 's3'] : ['public'];
-        $contents = null;
-        foreach ($candidates as $diskName) {
-            try {
-                $contents = Storage::disk($diskName)->get($path);
-                if ($contents !== null) {
-                    break;
-                }
-            } catch (\Throwable $e) {
-                // try next disk
             }
         }
-        abort_if($contents === null, 404);
+        abort_if(! $contents, 404);
 
-        // Infer mime from the file extension (no extra network call).
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $mime = match ($ext) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'webp' => 'image/webp',
-            default => 'image/png',
-        };
+        $mime = CorporateSetting::get('splash_image_mime');
+        if (! $mime) {
+            $ext = strtolower(pathinfo((string) $path, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            };
+        }
 
         return response($contents, 200, [
             'Content-Type' => $mime,
