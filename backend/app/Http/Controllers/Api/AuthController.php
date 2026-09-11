@@ -19,10 +19,15 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|string',
             'password' => 'required|string',
             'club_slug' => 'nullable|string',
         ]);
+
+        // Accept a phone number in place of the generated login email. Swimmers
+        // never see their internal swimmer_<phone>@club<N>.craveclubs.local address,
+        // so resolve a phone (within the club context) to that account's email.
+        $loginEmail = $this->resolveLoginIdentifier($request);
 
         // Brute-force lockout: 5 failed attempts → 15-minute lockout.
         // SafeCache, not Cache: this counter sits on top of the route's throttle:10,1,
@@ -39,7 +44,7 @@ class AuthController extends Controller
 
         // Check if account is pending deletion (soft-deleted users won't pass Auth::attempt)
         $pendingUser = User::withTrashed()
-            ->where('email', $request->email)
+            ->where('email', $loginEmail)
             ->whereNotNull('deletion_requested_at')
             ->first();
 
@@ -61,7 +66,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::guard('web')->attempt(['email' => $loginEmail, 'password' => $request->password])) {
             SafeCache::put($lockoutKey, $attempts + 1, now()->addMinutes(15));
 
             return response()->json(['message' => 'Invalid credentials'], 401);
@@ -70,7 +75,7 @@ class AuthController extends Controller
         // Reset lockout counter on successful login
         SafeCache::forget($lockoutKey);
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
 
         // Validate club membership when logging in from a club portal
         if ($request->filled('club_slug') && $user->club_id) {
@@ -96,6 +101,70 @@ class AuthController extends Controller
             'token' => $token,
             'user' => $this->buildUserPayload($user),
         ]);
+    }
+
+    /**
+     * Resolve the login identifier to an email address. A valid email is used
+     * as-is; a phone number is mapped to the swimmer's generated login email
+     * within the current club (falls back to the raw input, which fails auth).
+     */
+    private function resolveLoginIdentifier(Request $request): string
+    {
+        $identifier = trim((string) $request->input('email'));
+
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return $identifier;
+        }
+
+        $digits = preg_replace('/[^0-9]/', '', $identifier);
+        if ($digits === '' || ! $request->filled('club_slug')) {
+            return $identifier;
+        }
+
+        $club = Club::where('slug', $request->club_slug)->first();
+        if (! $club) {
+            return $identifier;
+        }
+
+        $user = User::where('club_id', $club->id)
+            ->where(function ($q) use ($digits, $club) {
+                $q->where('email', 'swimmer_'.$digits.'@club'.$club->id.'.craveclubs.local')
+                    ->orWhere('email', 'like', 'swimmer_'.$digits.'\\_%@club'.$club->id.'.craveclubs.local');
+            })
+            ->orderBy('id')
+            ->first();
+
+        return $user?->email ?? $identifier;
+    }
+
+    /**
+     * Change the authenticated user's password. Revokes every other token so a
+     * leaked temp password stops working everywhere else.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Current password is incorrect'], 422);
+        }
+
+        if (Hash::check($request->new_password, $user->password)) {
+            return response()->json(['message' => 'New password must be different from the current one'], 422);
+        }
+
+        $user->password = $request->new_password;
+        $user->save();
+
+        $currentTokenId = optional($request->user()->currentAccessToken())->id;
+        $user->tokens()->when($currentTokenId, fn ($q) => $q->where('id', '!=', $currentTokenId))->delete();
+
+        return response()->json(['message' => 'Password changed successfully']);
     }
 
     public function logout(Request $request): JsonResponse

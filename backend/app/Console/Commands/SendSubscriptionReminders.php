@@ -47,7 +47,9 @@ class SendSubscriptionReminders extends Command
                     continue;
                 }
 
-                $endDate = $reg->updated_at->copy()->addMonths($reg->plan->duration_months);
+                $endDate = $reg->subscription_ends_at
+                    ? $reg->subscription_ends_at->copy()
+                    : $reg->updated_at->copy()->addMonths($reg->plan->duration_months);
                 $daysLeft = (int) now()->startOfDay()->diffInDays($endDate->startOfDay(), false);
 
                 if (! in_array($daysLeft, [14, 7, 1])) {

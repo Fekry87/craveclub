@@ -155,9 +155,18 @@ class RegistrationController extends Controller
                     }
                 }
 
-                // 7. Update registration status (through the locked row, which is the
-                //    instance returned to the caller so the response reflects the write)
-                $locked->update(['status' => 'approved']);
+                // 7. Update registration status + stamp the subscription window
+                //    (through the locked row, which is the instance returned to the
+                //    caller so the response reflects the write)
+                $approvedAt = now();
+                $subscriptionEnds = ($locked->plan && $locked->plan->duration_months)
+                    ? $approvedAt->copy()->addMonths((int) $locked->plan->duration_months)->toDateString()
+                    : null;
+                $locked->update([
+                    'status' => 'approved',
+                    'subscription_started_at' => $approvedAt->toDateString(),
+                    'subscription_ends_at' => $subscriptionEnds,
+                ]);
 
                 return [
                     'registration' => $locked,
