@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { DataTable, Modal, ModalActions, FormField, Input, TextArea, Button, PageHeader, CardActions, getAvatarColor, MobileCardWrapper } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
+import { apiErrorMessage } from '../../lib/apiError';
 
 const labelStyle = {
   fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: '#6E6E73',
@@ -24,20 +25,32 @@ export default function Clubs() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', slug: '', about: '', contact_email: '', contact_phone: '', theme_color: '#0071E3', manager_name: '', manager_email: '', manager_password: '' });
   const [editId, setEditId] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => api.get('/platform/clubs', { params: { search } }).then(r => setClubs(r.data.data || [])).catch(() => {});
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    if (editId) {
-      await api.put(`/platform/clubs/${editId}`, form);
-    } else {
-      await api.post('/platform/clubs', form);
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (editId) {
+        await api.put(`/platform/clubs/${editId}`, form);
+      } else {
+        await api.post('/platform/clubs', form);
+      }
+      setShowModal(false);
+      setEditId(null);
+      setForm({ name: '', slug: '', about: '', contact_email: '', contact_phone: '', theme_color: '#0071E3', manager_name: '', manager_email: '', manager_password: '' });
+      load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
-    setEditId(null);
-    setForm({ name: '', slug: '', about: '', contact_email: '', contact_phone: '', theme_color: '#0071E3', manager_name: '', manager_email: '', manager_password: '' });
-    load();
   };
 
   const handleEdit = (club) => {
@@ -200,6 +213,14 @@ export default function Clubs() {
               </div>
             </div>
           )}
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
           <ModalActions>
             <Button variant="secondary" onClick={() => setShowModal(false)}>{t('actions.cancel')}</Button>
             <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

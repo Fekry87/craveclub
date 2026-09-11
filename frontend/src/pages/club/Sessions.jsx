@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 import { dateLocale } from '../../lib/dates';
 import { labelStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 export default function Sessions() {
   const { t } = useTranslation();
@@ -13,6 +14,8 @@ export default function Sessions() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ group_id: '', plan_id: '', date: '', start_time: '', end_time: '', location: '', notes: '' });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => {
     api.get('/club/sessions').then(r => setSessions(r.data.data || [])).catch(() => {});
@@ -22,10 +25,20 @@ export default function Sessions() {
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {
-    const payload = { ...form, plan_id: form.plan_id || null };
-    if (editId) await api.put(`/club/sessions/${editId}`, payload);
-    else await api.post('/club/sessions', payload);
-    setShowModal(false); setEditId(null); load();
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const payload = { ...form, plan_id: form.plan_id || null };
+      if (editId) await api.put(`/club/sessions/${editId}`, payload);
+      else await api.post('/club/sessions', payload);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (s) => {
@@ -62,6 +75,14 @@ export default function Sessions() {
         </div>
         <FormField label={t('sessions.location')}><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></FormField>
         <FormField label={t('sessions.notes')}><TextArea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></FormField>
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
           <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

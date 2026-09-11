@@ -163,7 +163,7 @@
 - Rate limits: env-configurable via `RATE_LIMIT_AUTH` (default 60) and `RATE_LIMIT_GUEST` (default 20) in AppServiceProvider — useful for load testing without code changes
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
-- All `async` form handlers (handleSave, handleDelete, etc.) MUST use try/catch with error state — bare `await` silently fails on 422/500
+- All `async` form handlers (handleSave, handleDelete, etc.) MUST use try/catch with error state — bare `await` silently fails on 422/500. Use `apiErrorMessage(err)` from `frontend/src/lib/apiError.js` — it unpacks Laravel's `{errors: {field: [...]}}` into one readable line and covers the no-response/403/404/429 cases. Render it in a `role="alert"` banner above the actions and disable the submit while saving. Nine pages shipped without this and every one of them looked like a dead button on any validation failure.
 - `Button` component supports `disabled` prop — use with `saving` state to prevent double-submit
 - Show Laravel 422 validation errors: `Object.values(err.response.data.errors).map(arr => arr[0])`
 - ErrorBoundary hierarchy: top-level ErrorBoundary + RouteErrorBoundary per-page (wraps `<Outlet />`)

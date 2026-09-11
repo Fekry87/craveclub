@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 const emptyItem = { sort_order: 0, stroke: '', drill: '', distance: '', reps: '', interval: '', notes: '' };
 
@@ -14,6 +15,8 @@ export default function Plans() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ title: '', level: '', description: '', items: [] });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => api.get('/club/plans', { params: { search } })
     .then(r => setPlans(r.data.data || []))
@@ -21,10 +24,20 @@ export default function Plans() {
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    const payload = { ...form, items: form.items.map((item, i) => ({ ...item, sort_order: i + 1 })) };
-    if (editId) await api.put(`/club/plans/${editId}`, payload);
-    else await api.post('/club/plans', payload);
-    setShowModal(false); setEditId(null); load();
+    // Without this, a 422 threw out of the handler: the form never closed, the
+    // list never reloaded, and the button looked broken with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const payload = { ...form, items: form.items.map((item, i) => ({ ...item, sort_order: i + 1 })) };
+      if (editId) await api.put(`/club/plans/${editId}`, payload);
+      else await api.post('/club/plans', payload);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (plan) => {
@@ -90,6 +103,14 @@ export default function Plans() {
             </div>
           ))}
         </div>
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
           <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
           <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>

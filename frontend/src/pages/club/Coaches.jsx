@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader } from '../../components/CrudTable';
 import { CardActions, CardInfoRow, getAvatarColor } from '../../components/ui/Cards';
 import { labelStyle } from '../../components/ui/styles';
+import { apiErrorMessage } from '../../lib/apiError';
 
 function getInitials(name) {
   if (!name) return '?';
@@ -80,6 +81,8 @@ export default function Coaches() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', bio: '', specialization: '', phone: '' });
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = () => api.get('/club/coaches', { params: { search } })
     .then(r => setCoaches(r.data.data || []))
@@ -87,19 +90,38 @@ export default function Coaches() {
   useEffect(() => { load(); }, [search]);
 
   const handleSave = async () => {
-    if (editId) await api.put(`/club/coaches/${editId}`, form);
-    else await api.post('/club/coaches', form);
-    setShowModal(false); setEditId(null); load();
+    // A bare await here swallowed every 422 — the handler threw, the form never closed,
+    // and the Create button simply appeared dead with nothing explaining why.
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (editId) await api.put(`/club/coaches/${editId}`, form);
+      else await api.post('/club/coaches', form);
+      setShowModal(false); setEditId(null); load();
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (c) => {
+    setSaveError(null);
     setEditId(c.id);
     setForm({ name: c.user?.name || '', email: '', password: '', bio: c.bio || '', specialization: c.specialization || '', phone: c.phone || '' });
     setShowModal(true);
   };
-  const handleDelete = async (c) => { if (confirm('Delete?')) { await api.delete(`/club/coaches/${c.id}`); load(); } };
+  const handleDelete = async (c) => {
+    if (!confirm(t('actions.confirmDelete', { defaultValue: 'Delete?' }))) return;
+    try {
+      await api.delete(`/club/coaches/${c.id}`);
+      load();
+    } catch (err) {
+      alert(apiErrorMessage(err));
+    }
+  };
 
-  const closeForm = () => { setShowModal(false); setEditId(null); };
+  const closeForm = () => { setShowModal(false); setEditId(null); setSaveError(null); };
 
   if (showModal) {
     return (
@@ -113,9 +135,19 @@ export default function Coaches() {
         <FormField label={t('coaches.specialization')}><Input value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })} /></FormField>
         <FormField label={t('coaches.phone')}><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FormField>
         <FormField label={t('coaches.bio')}><TextArea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} /></FormField>
+        {saveError && (
+          <div role="alert" style={{
+            marginTop: 16, padding: '10px 14px', borderRadius: 10,
+            background: 'rgba(255,59,48,0.1)', color: '#B12A20',
+            fontSize: 13, lineHeight: 1.45,
+          }}>{saveError}</div>
+        )}
+
         <FormPageActions>
-          <Button variant="secondary" onClick={closeForm}>{t('actions.cancel')}</Button>
-          <Button onClick={handleSave}>{editId ? t('actions.update') : t('actions.create')}</Button>
+          <Button variant="secondary" onClick={closeForm} disabled={saving}>{t('actions.cancel')}</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? t('actions.saving', { defaultValue: 'Saving…' }) : (editId ? t('actions.update') : t('actions.create'))}
+          </Button>
         </FormPageActions>
       </FormPage>
     );
