@@ -184,6 +184,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
     Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
+    Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
 
     // ── Public Registration API (club resolved via X-Club-Slug header) ──

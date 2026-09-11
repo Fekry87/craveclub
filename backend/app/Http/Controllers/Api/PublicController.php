@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\CorporateSetting;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PublicController extends Controller
 {
@@ -60,9 +62,15 @@ class PublicController extends Controller
     /**
      * Public corporate branding — no auth required.
      */
-    public function corporateBranding(): JsonResponse
+    public function corporateBranding(Request $request): JsonResponse
     {
         $settings = CorporateSetting::allSettings();
+
+        // Serve the splash image through our own public proxy (the storage bucket
+        // is private), so it loads without exposing the bucket.
+        $splashUrl = ($settings['splash_image_path'] ?? null)
+            ? rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/splash-image?v='.substr(md5($settings['splash_image_path']), 0, 8)
+            : ($settings['splash_image_url'] ?? ($settings['platform_logo_url'] ?? null));
 
         return response()->json([
             'platform_name' => $settings['platform_name'] ?? 'CraveClubs',
@@ -71,7 +79,34 @@ class PublicController extends Controller
             'secondary_color' => $settings['secondary_color'] ?? '#22d3ee',
             'tagline' => $settings['tagline'] ?? 'Club Management Platform',
             'splash_background_color' => $settings['splash_background_color'] ?? ($settings['primary_color'] ?? '#6C4CF5'),
-            'splash_image_url' => $settings['splash_image_url'] ?? ($settings['platform_logo_url'] ?? null),
+            'splash_image_url' => $splashUrl,
+        ]);
+    }
+
+    /**
+     * Public proxy for the corporate splash image. The asset lives on a private
+     * bucket, so we stream it (with the backend's credentials) instead of
+     * handing out a bucket URL that would 401 for app users.
+     */
+    public function splashImage()
+    {
+        $path = CorporateSetting::get('splash_image_path');
+        abort_if(! $path, 404);
+
+        $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
+        $disk = Storage::disk($diskName);
+        abort_if(! $disk->exists($path), 404);
+
+        $mime = 'image/png';
+        try {
+            $mime = $disk->mimeType($path) ?: 'image/png';
+        } catch (\Throwable $e) {
+            // Some drivers can't infer mime — default to png
+        }
+
+        return response($disk->get($path), 200, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'public, max-age=86400',
         ]);
     }
 }

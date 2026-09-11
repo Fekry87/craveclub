@@ -130,7 +130,16 @@ class CorporateApiTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['url', 'splash_image_url']);
 
-        $this->assertDatabaseHas('corporate_settings', ['key' => 'splash_image_url']);
+        $this->assertDatabaseHas('corporate_settings', ['key' => 'splash_image_path']);
+
+        // Public branding returns the proxy URL, and the proxy streams the image
+        $this->getJson('/api/v1/public/branding')
+            ->assertOk()
+            ->assertJsonPath('splash_image_url', fn ($u) => is_string($u) && str_contains($u, '/api/v1/public/branding/splash-image'));
+
+        $this->get('/api/v1/public/branding/splash-image')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
     }
 
     // ── Club Listing ────────────────────────────────────────
