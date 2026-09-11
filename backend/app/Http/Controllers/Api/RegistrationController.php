@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class RegistrationController extends Controller
 {
@@ -105,10 +104,7 @@ class RegistrationController extends Controller
                 }
 
                 // 3. Generate temporary password
-                $tempPassword = Str::upper(Str::random(2))
-                    .rand(10, 99)
-                    .Str::random(4)
-                    .str_shuffle('!@#$')[0];
+                $tempPassword = \App\Support\TempPassword::generate();
 
                 // 4. Create User account
                 $user = User::create([

@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class SwimmerManagementController extends Controller
 {
@@ -153,10 +152,7 @@ class SwimmerManagementController extends Controller
             return response()->json(['message' => 'This swimmer does not have a login account yet.'], 422);
         }
 
-        $tempPassword = Str::upper(Str::random(2))
-            .rand(10, 99)
-            .Str::random(4)
-            .str_shuffle('!@#$')[0];
+        $tempPassword = \App\Support\TempPassword::generate();
 
         $user->password = $tempPassword;
         $user->save();
