@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Jobs\SendPushNotification;
 use App\Models\Notification;
 use App\Models\PushToken;
+use App\Models\User;
+use App\Support\SafeCache;
+use Illuminate\Validation\ValidationException;
 
 class NotificationService
 {
@@ -99,23 +102,41 @@ class NotificationService
     /**
      * Register or update a push token for a user.
      *
-     * Scoped to (token, user_id): a token already registered to a DIFFERENT user
-     * is reassigned to the current user (device handed over / account switch on the
-     * same physical device) rather than silently leaving it bound to the old owner.
-     * This closes the "re-bind by token string" cross-user hijack — the actor must
-     * hold both the (high-entropy) token AND an authenticated session as themselves.
+     * A token already registered to a DIFFERENT user is reassigned to the caller. That
+     * transfer is required, not optional: when someone hands a phone over and a second
+     * account signs in, Expo hands back the same device token, and leaving it bound to
+     * the previous owner would deliver THEIR notifications to the new user's screen.
+     *
+     * The server cannot attest device ownership, so the residual risk is that an actor
+     * who obtains someone else's token can claim it. Two controls bound that: the claim
+     * is capped (see MAX_TOKEN_CLAIMS_PER_HOUR) so it cannot be used to harvest tokens
+     * in bulk, and every transfer is audit-logged so a targeted claim is detectable.
+     * Push tokens are never returned by any API response, so there is no in-band way to
+     * learn another user's token in the first place.
      */
+    private const MAX_TOKEN_CLAIMS_PER_HOUR = 3;
+
     public function registerPushToken(int $userId, string $token, string $platform = 'expo'): PushToken
     {
         $existing = PushToken::where('token', $token)->first();
 
         if ($existing && $existing->user_id !== $userId) {
+            $this->guardTokenClaimRate($userId);
+
+            $previousOwnerId = $existing->user_id;
+
             // Same device now used by a different account: transfer ownership,
             // refresh timestamps so it isn't treated as stale.
             $existing->update([
                 'user_id' => $userId,
                 'platform' => $platform,
                 'updated_at' => now(),
+            ]);
+
+            AuditService::log('push_token.reassigned', PushToken::class, $existing->id, [
+                'previous_user_id' => $previousOwnerId,
+                'new_user_id' => $userId,
+                'platform' => $platform,
             ]);
 
             return $existing;
@@ -125,5 +146,29 @@ class NotificationService
             ['token' => $token, 'user_id' => $userId],
             ['platform' => $platform],
         );
+    }
+
+    /**
+     * Cap how many tokens one account may claim from other users per hour.
+     *
+     * A genuine device handover claims one token. Anything beyond a handful an hour is
+     * someone walking a list of stolen tokens, so it is refused outright.
+     */
+    private function guardTokenClaimRate(int $userId): void
+    {
+        $key = "push_token_claims_{$userId}";
+        $claims = SafeCache::get($key, 0);
+
+        if ($claims >= self::MAX_TOKEN_CLAIMS_PER_HOUR) {
+            AuditService::log('push_token.claim_blocked', User::class, $userId, [
+                'claims_in_window' => $claims,
+            ]);
+
+            throw ValidationException::withMessages([
+                'token' => 'Too many device transfers. Please try again later.',
+            ]);
+        }
+
+        SafeCache::put($key, $claims + 1, now()->addHour());
     }
 }

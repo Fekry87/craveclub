@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\ClubFeature;
+use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ClubBrandingController extends Controller
@@ -19,19 +19,10 @@ class ClubBrandingController extends Controller
      */
     public function show(string $slug): JsonResponse
     {
-        try {
-            $data = Cache::remember("branding_{$slug}", 3600, fn () => $this->computeBranding($slug));
-        } catch (\Exception $e) {
-            Log::warning('Cache unavailable, using direct query', ['slug' => $slug, 'method' => 'branding.show']);
-            $data = $this->computeBranding($slug);
-        }
+        $data = SafeCache::remember("branding_{$slug}", 3600, fn () => $this->computeBranding($slug));
 
         if ($data === null) {
-            try {
-                Cache::forget("branding_{$slug}");
-            } catch (\Exception $e) {
-                // Cache unavailable — no entry to clear
-            }
+            SafeCache::forget("branding_{$slug}");
             abort(404, 'Club not found.');
         }
 
@@ -138,7 +129,10 @@ class ClubBrandingController extends Controller
     {
         $club = Club::findOrFail(app('current_club_id'));
 
-        $validated = $request->validate($this->brandingRules($club->id));
+        // Club-scoped ruleset: a manager may restyle their own club but must NOT be able
+        // to self-upgrade `branding_tier` or claim a `custom_domain` — those are billing
+        // and namespace decisions that belong to the corporate tier alone.
+        $validated = $request->validate($this->clubManagerBrandingRules());
 
         $club->update($validated);
 
@@ -195,14 +189,45 @@ class ClubBrandingController extends Controller
     }
 
     /**
+     * Branding rules a CLUB_MANAGER may apply to their own club.
+     *
+     * Deliberately a subset of brandingRules(): `custom_domain`, `is_domain_active` and
+     * `branding_tier` are omitted, so a manager cannot upgrade their own plan or squat a
+     * domain by POSTing the field. Anything not listed here is dropped by validate().
+     */
+    private function clubManagerBrandingRules(): array
+    {
+        return [
+            'display_name' => 'nullable|string|max:255',
+            'app_name' => 'nullable|string|max:255',
+            'primary_color' => ['nullable', 'string', 'regex:/^[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['nullable', 'string', 'regex:/^[0-9A-Fa-f]{6}$/'],
+            'accent_color' => ['nullable', 'string', 'regex:/^[0-9A-Fa-f]{6}$/'],
+            'theme_color' => ['nullable', 'string', 'max:7'],
+            'logo_url' => 'nullable|url|max:500',
+            'cover_url' => 'nullable|url|max:500',
+            'favicon_url' => 'nullable|url|max:500',
+            'support_email' => 'nullable|email|max:255',
+            'support_phone' => 'nullable|string|max:20',
+            'social_links' => 'nullable|array',
+            'social_links.instagram' => 'nullable|string|max:255',
+            'social_links.twitter' => 'nullable|string|max:255',
+            'social_links.facebook' => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
      * Shared file upload handler.
      * Uses content-hash filenames for CDN cache-busting without purge.
      * Disk: 's3' in production (when AWS_BUCKET is set), 'public' in dev.
      */
     private function handleUpload(Request $request, Club $club): JsonResponse
     {
+        // SVG is deliberately NOT accepted. An SVG is an executable document: served from
+        // the same origin as the portal it becomes stored XSS, and the portal keeps its
+        // Sanctum token in localStorage where injected script can read it.
         $request->validate([
-            'file' => 'required|file|mimes:png,jpg,jpeg,svg|max:2048',
+            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:2048',
             'type' => 'required|string|in:logo,cover,favicon',
         ]);
 
@@ -210,17 +235,27 @@ class ClubBrandingController extends Controller
         $type = $request->input('type');
 
         // Validate MIME type from file content (not just extension)
-        $allowedMimes = ['image/png', 'image/jpeg', 'image/svg+xml'];
-        abort_if(! in_array($file->getMimeType(), $allowedMimes), 422, 'Invalid file type');
+        $allowedMimes = [
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+        ];
+        $mime = $file->getMimeType();
+        abort_if(! isset($allowedMimes[$mime]), 422, 'Invalid file type');
 
-        // Per-club upload rate limiting: max 20 uploads per hour
+        // Per-club upload rate limiting: max 20 uploads per hour.
+        // SafeCache so a Redis outage degrades the quota instead of 500-ing the upload.
         $uploadKey = "branding_uploads_{$club->id}";
-        $uploads = Cache::get($uploadKey, 0);
+        $uploads = SafeCache::get($uploadKey, 0);
         if ($uploads >= 20) {
             abort(429, 'Upload limit exceeded. Try again later.');
         }
-        Cache::put($uploadKey, $uploads + 1, now()->addHour());
-        $ext = $file->getClientOriginalExtension();
+        SafeCache::put($uploadKey, $uploads + 1, now()->addHour());
+
+        // Extension derived from the VALIDATED content type, never from
+        // getClientOriginalExtension() — that string is attacker-controlled and would let
+        // a caller pick the extension the web server later dispatches on.
+        $ext = $allowedMimes[$mime];
 
         // Content hash for CDN cache-busting: new file = new filename = fresh CDN response
         $hash = substr(md5_file($file->getRealPath()), 0, 8);
@@ -232,7 +267,7 @@ class ClubBrandingController extends Controller
         $disk = Storage::disk($diskName);
 
         $options = $diskName === 's3'
-            ? ['visibility' => 'public', 'ContentType' => $file->getMimeType(), 'CacheControl' => 'public, max-age=31536000, immutable']
+            ? ['visibility' => 'public', 'ContentType' => $mime, 'CacheControl' => 'public, max-age=31536000, immutable']
             : ['visibility' => 'public'];
 
         $disk->put($storagePath, file_get_contents($file->getRealPath()), $options);

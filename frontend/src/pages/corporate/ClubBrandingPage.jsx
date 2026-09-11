@@ -113,11 +113,11 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
             <div>Drop file or click to upload</div>
-            <div style={{ ...labelStyle, marginTop: 6 }}>PNG, JPG, SVG — max 2MB</div>
+            <div style={{ ...labelStyle, marginTop: 6 }}>PNG, JPG, WebP — max 2MB</div>
           </div>
         )}
         {uploading && <div style={{ ...labelStyle, color: '#0071E3', marginTop: 8 }}>Uploading...</div>}
-        <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/svg+xml'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+        <input ref={ref} type="file" accept={accept || 'image/png,image/jpeg,image/webp'} style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
       </div>
     </FormField>
   );

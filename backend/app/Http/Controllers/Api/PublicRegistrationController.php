@@ -12,9 +12,9 @@ use App\Models\CoachSchedule;
 use App\Models\Registration;
 use App\Models\Sport;
 use App\Models\SubscriptionPlan;
+use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -168,11 +168,13 @@ class PublicRegistrationController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Email-based rate limiting: max 5 registration attempts per phone per hour
-        $phoneKey = 'registration_attempt_'.hash('sha256', $request->input('phone', ''));
-        $attempts = Cache::get($phoneKey, 0);
+        // Per-phone rate limiting: max 5 registration attempts per hour.
+        // The key hashes the DIGITS of the number, not the raw string — otherwise
+        // "0551234567", "+966 55 123 4567" and a trailing space are three separate
+        // buckets and the limit is bypassed by reformatting.
+        $phoneKey = 'registration_attempt_'.hash('sha256', self::normalizePhone($request->input('phone', '')));
+        $attempts = SafeCache::get($phoneKey, 0);
         abort_if($attempts >= 5, 429, 'Too many registration attempts. Please try again later.');
-        Cache::put($phoneKey, $attempts + 1, now()->addHour());
 
         $validated = $request->validate([
             'full_name' => 'required|string|min:2|max:255',
@@ -205,6 +207,10 @@ class PublicRegistrationController extends Controller
             'consent_given' => 'sometimes|boolean',
         ]);
 
+        // Count the attempt only once the payload is well-formed. Counting before
+        // validation burns an honest applicant's whole hourly quota on five typos.
+        SafeCache::put($phoneKey, $attempts + 1, now()->addHour());
+
         $consentGivenAt = ! empty($validated['consent_given']) ? now() : null;
         unset($validated['consent_given']);
 
@@ -229,11 +235,11 @@ class PublicRegistrationController extends Controller
             abort(422, 'Coach does not belong to this club.');
         }
 
-        // Resolve sport_module_id from club's active sport modules
-        $sportModuleId = DB::table('club_sport_modules')
-            ->where('club_id', $clubId)
-            ->where('is_active', true)
-            ->value('sport_module_id');
+        // Resolve sport_module_id: honour the applicant's chosen sport when it maps to one
+        // of the club's active modules, otherwise fall back to the club's first module by
+        // its own sort order. The previous ->value() without an ORDER BY filed multi-sport
+        // applicants under whatever row the database happened to return first.
+        $sportModuleId = $this->resolveSportModuleId($clubId, $validated['sport_ids']);
 
         try {
             $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId, $consentGivenAt) {
@@ -271,6 +277,71 @@ class PublicRegistrationController extends Controller
             'reference_code' => $registration->reference_code,
             'status' => 'pending',
         ], 201);
+    }
+
+    /**
+     * Canonicalise a phone number so every spelling of it shares one rate-limit key.
+     *
+     * Strips formatting (spaces, dashes, brackets, the leading +), then folds the Saudi
+     * country code into the national form so "+966 55 123 4567", "00966551234567" and
+     * "055-123-4567" all reduce to "0551234567". Market is KSA (see CLAUDE.md); the
+     * worst case of an over-eager fold is two unrelated numbers sharing a counter, which
+     * makes the limit marginally stricter rather than bypassable.
+     */
+    private static function normalizePhone(mixed $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone) ?? '';
+
+        // International dialling prefix
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        // +966 5X XXX XXXX → 05X XXX XXXX
+        if (str_starts_with($digits, '966')) {
+            $digits = '0'.substr($digits, 3);
+        }
+
+        return $digits;
+    }
+
+    /**
+     * Pick the sport module a registration belongs to.
+     *
+     * `sport_ids` is a free-form array of client-chosen sport identifiers — the portal
+     * wizard sends swimming disciplines ("freestyle"), mobile sends module slugs or ids.
+     * Match either against the club's active modules; when nothing matches, fall back to
+     * the club's first active module in a STABLE order (sort_order, then id) so the same
+     * applicant always lands in the same place.
+     *
+     * @param  array<int, string>  $sportIds
+     */
+    private function resolveSportModuleId(int $clubId, array $sportIds): ?int
+    {
+        $modules = DB::table('club_sport_modules')
+            ->join('sport_modules', 'sport_modules.id', '=', 'club_sport_modules.sport_module_id')
+            ->where('club_sport_modules.club_id', $clubId)
+            ->where('club_sport_modules.is_active', true)
+            ->where('sport_modules.is_active', true)
+            ->whereNull('sport_modules.deleted_at')
+            ->orderBy('sport_modules.sort_order')
+            ->orderBy('sport_modules.id')
+            ->get(['sport_modules.id', 'sport_modules.slug']);
+
+        if ($modules->isEmpty()) {
+            return null;
+        }
+
+        $chosen = array_map(fn ($id) => strtolower(trim((string) $id)), $sportIds);
+
+        foreach ($modules as $module) {
+            if (in_array(strtolower((string) $module->slug), $chosen, true)
+                || in_array((string) $module->id, $chosen, true)) {
+                return (int) $module->id;
+            }
+        }
+
+        return (int) $modules->first()->id;
     }
 
     /**

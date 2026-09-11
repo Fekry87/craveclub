@@ -146,6 +146,59 @@ class RateLimitTest extends TestCase
         $this->assertStringContainsString('Too many registration attempts', $response->json('message'));
     }
 
+    // ── Test 2b: Reformatting the phone does not mint a fresh rate-limit bucket ──
+
+    public function test_registration_throttle_ignores_phone_formatting(): void
+    {
+        Cache::flush();
+
+        $headers = ['X-Club-Slug' => $this->club->slug];
+
+        // Exhaust the quota with one spelling of the number...
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/registrations', array_merge(
+                $this->validRegistration(),
+                ['phone' => '0551234567'],
+            ), $headers);
+        }
+
+        // ...then try the same number spaced, dashed and with a country prefix.
+        foreach (['+966 55 123 4567 ', '055-123-4567', ' 0551234567'] as $variant) {
+            $response = $this->postJson('/api/v1/registrations', array_merge(
+                $this->validRegistration(),
+                ['phone' => $variant],
+            ), $headers);
+
+            $response->assertStatus(429);
+        }
+    }
+
+    // ── Test 2c: Validation failures do not burn the applicant's quota ──
+
+    public function test_invalid_registration_payload_does_not_consume_quota(): void
+    {
+        Cache::flush();
+
+        $headers = ['X-Club-Slug' => $this->club->slug];
+        $phone = '0559998888';
+
+        // Five malformed submissions — typos, not attacks.
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/registrations', array_merge(
+                $this->validRegistration(),
+                ['phone' => $phone, 'gender' => 'not-a-gender'],
+            ), $headers)->assertStatus(422);
+        }
+
+        // The corrected submission must still go through.
+        $response = $this->postJson('/api/v1/registrations', array_merge(
+            $this->validRegistration(),
+            ['phone' => $phone],
+        ), $headers);
+
+        $response->assertStatus(201);
+    }
+
     // ── Test 3: Branding upload throttle after 20 uploads ──
 
     public function test_branding_upload_throttle_after_20_uploads(): void
@@ -265,8 +318,9 @@ class RateLimitTest extends TestCase
         $phone = '+9999999999';
         $reg = array_merge($this->validRegistration(), ['phone' => $phone]);
 
-        // Fill up rate limit
-        $key = 'registration_attempt_'.hash('sha256', $phone);
+        // Fill up rate limit. The key hashes the DIGITS of the number, not the raw
+        // string, so that reformatting it cannot mint a fresh bucket.
+        $key = 'registration_attempt_'.hash('sha256', '9999999999');
         Cache::put($key, 5, now()->addHour());
 
         // Should be blocked
