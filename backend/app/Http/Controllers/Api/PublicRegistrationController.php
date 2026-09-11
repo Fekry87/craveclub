@@ -261,13 +261,22 @@ class PublicRegistrationController extends Controller
         // Load relations for broadcast payload
         $registration->load(['branch', 'coach.user', 'plan']);
 
-        // Fire broadcast event OUTSIDE transaction — graceful if Reverb unavailable
+        // Fire broadcast event OUTSIDE transaction — graceful if Reverb unavailable.
+        // Degrading silently here is deliberate (a registration must never fail because
+        // the socket server is down), but the log has to say enough to diagnose it:
+        // a publish failure looks identical to a healthy portal from the browser's side,
+        // because the client stays connected and simply never receives anything.
         try {
             broadcast(new NewRegistrationSubmitted($registration))->toOthers();
-        } catch (\Exception $e) {
-            Log::warning('Broadcast failed for registration', [
+        } catch (\Throwable $e) {
+            Log::error('REALTIME_PUBLISH_FAILED', [
                 'registration_id' => $registration->id,
                 'error' => $e->getMessage(),
+                'hint' => $this->broadcastFailureHint($e),
+                'reverb_host' => config('broadcasting.connections.reverb.options.host'),
+                'reverb_port' => config('broadcasting.connections.reverb.options.port'),
+                'reverb_scheme' => config('broadcasting.connections.reverb.options.scheme'),
+                'reverb_app_id' => config('broadcasting.connections.reverb.app_id'),
             ]);
         }
 
@@ -277,6 +286,35 @@ class PublicRegistrationController extends Controller
             'reference_code' => $registration->reference_code,
             'status' => 'pending',
         ], 201);
+    }
+
+    /**
+     * Turn a broadcast exception into the one line that actually identifies the cause.
+     *
+     * Both failure modes render as a perfectly healthy portal in the browser — connected,
+     * subscribed, and silent — so the log is the only place the difference is visible.
+     */
+    private function broadcastFailureHint(\Throwable $e): string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, 'signature invalid')) {
+            return 'REVERB_APP_KEY/REVERB_APP_SECRET on this API do not match the Reverb server. They must be identical on both services.';
+        }
+
+        if (str_contains($message, 'cURL error 7') || str_contains($message, 'Could not connect')) {
+            return 'Cannot reach the Reverb server at the configured host. Check REVERB_HOST/REVERB_PORT/REVERB_SCHEME and that the reverb process is running.';
+        }
+
+        if (str_contains($message, 'cURL error 6') || str_contains($message, 'Could not resolve host')) {
+            return 'REVERB_HOST does not resolve. It must be the reverb service hostname without a scheme.';
+        }
+
+        if (str_contains($message, '404')) {
+            return 'Reverb rejected the app id. Check REVERB_APP_ID matches on both services.';
+        }
+
+        return 'Unrecognised broadcast failure — see `error`.';
     }
 
     /**

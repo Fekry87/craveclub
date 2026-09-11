@@ -166,6 +166,22 @@ class HardeningAuditTest extends TestCase
         $this->getJson('/__throttle_probe');
     }
 
+    public function test_named_rate_limiters_still_resolve_through_the_resilient_throttle(): void
+    {
+        // The parent decides a limiter is NAMED via func_num_args() === 3. A wrapper that
+        // forwards a fixed argument list demotes `throttle:by_user` to a numeric limit,
+        // `by_user` resolves to nothing, and every authenticated request sails through
+        // unthrottled while only a log line mentions it.
+        $response = $this->actingAs($this->manager, 'sanctum')
+            ->getJson('/api/v1/notifications');
+
+        $response->assertOk();
+
+        // by_user resolves to the authenticated limit from AppServiceProvider.
+        $this->assertSame('60', $response->headers->get('X-RateLimit-Limit'));
+        $this->assertNotNull($response->headers->get('X-RateLimit-Remaining'));
+    }
+
     /**
      * Point the framework's RateLimiter at a store where every call fails.
      *

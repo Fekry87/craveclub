@@ -116,8 +116,28 @@ export default function Registrations() {
       else setLiveState('offline'); // unavailable, failed, disconnected
     });
 
-    echo
-      .private(`club.${user.club_id}`)
+    const channel = echo.private(`club.${user.club_id}`);
+
+    // Connecting and SUBSCRIBING are different things. The socket can be happily
+    // connected while the private-channel subscription is rejected — a mismatch between
+    // the backend's REVERB_APP_KEY/SECRET and the Reverb server's makes /broadcasting/auth
+    // return a signature Reverb refuses. Without this the badge stays green and events
+    // simply never arrive, with nothing anywhere saying why.
+    channel.subscribed(() => {
+      setLiveState('live');
+    });
+
+    channel.error((err) => {
+      console.error(
+        '[realtime] Could not subscribe to the club channel. The socket is connected, so this is '
+        + 'an authorization failure: check that REVERB_APP_KEY and REVERB_APP_SECRET on the API '
+        + 'match the Reverb server, and that /broadcasting/auth is reachable.',
+        err,
+      );
+      setLiveState('offline');
+    });
+
+    channel
       .listen('.NewRegistrationSubmitted', (payload) => {
         setRegistrations(prev => prev ? [payload, ...prev] : [payload]);
 

@@ -22,7 +22,14 @@ use Throwable;
  */
 class ResilientThrottleRequests extends ThrottleRequests
 {
-    public function handle($request, Closure $next, $maxAttempts = 60, $decayMinutes = 1, $prefix = '')
+    /**
+     * Variadic on purpose. The parent decides whether `throttle:by_user` means a NAMED
+     * limiter by checking `func_num_args() === 3`, so forwarding a fixed five arguments
+     * silently demotes every named limiter to a numeric one — `by_user` then resolves to
+     * nothing and this wrapper fails open on every authenticated request. Pass through
+     * exactly the arguments that were received.
+     */
+    public function handle($request, Closure $next, ...$args)
     {
         $response = null;
         $downstreamRan = false;
@@ -37,7 +44,7 @@ class ResilientThrottleRequests extends ThrottleRequests
         };
 
         try {
-            return parent::handle($request, $tracked, $maxAttempts, $decayMinutes, $prefix);
+            return parent::handle($request, $tracked, ...$args);
         } catch (ThrottleRequestsException $e) {
             // A real rate limit. Must still reach the client as 429.
             throw $e;
