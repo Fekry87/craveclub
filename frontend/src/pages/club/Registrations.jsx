@@ -517,7 +517,7 @@ export default function Registrations() {
               </p>
 
               <div style={{ borderRadius: 16,
-                background: '#F2F2F7', padding: '16px 18px',
+                background: '#F2F2F7', borderRadius: 10, padding: '16px 18px',
                 border: '1px solid #E5E5EA', marginBottom: 8,
               }}>
                 <div style={{ ...labelStyle, marginBottom: 12 }}>
@@ -546,9 +546,9 @@ export default function Registrations() {
 
               {actionError && (
                 <div style={{
-                  background: '#FFFFFF', border: '1px solid #FF3B30',
+                  background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
                   padding: '10px 14px', marginTop: 12,
-                  color: '#FF3B30', fontSize: 13,
+                  color: '#B12A20', fontSize: 13,
                 }}>
                   {actionError}
                 </div>
@@ -607,9 +607,9 @@ export default function Registrations() {
           </p>
 
           <div style={{
-            background: '#FFFFFF', border: '1px solid #FF3B30',
+            background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
             padding: '12px 16px', marginBottom: 8,
-            color: '#FF3B30', fontSize: 13, lineHeight: 1.5,
+            color: '#B12A20', fontSize: 13, lineHeight: 1.5,
             display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -622,9 +622,9 @@ export default function Registrations() {
 
           {actionError && (
             <div style={{
-              background: '#FFFFFF', border: '1px solid #FF3B30',
+              background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
               padding: '10px 14px', marginTop: 12,
-              color: '#FF3B30', fontSize: 13,
+              color: '#B12A20', fontSize: 13,
             }}>
               {actionError}
             </div>

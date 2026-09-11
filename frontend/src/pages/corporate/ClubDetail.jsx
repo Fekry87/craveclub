@@ -28,25 +28,34 @@ function FeatureToggleCard({ featureKey, enabled, onToggle }) {
       onMouseLeave={e => { if (!enabled) e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
         display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-        background: '#FFFFFF', border: `1px solid ${enabled ? '#1D1D1F' : '#E5E5EA'}`,
+        background: '#FFFFFF', borderRadius: 14,
+        border: `1px solid ${enabled ? '#0071E3' : '#E5E5EA'}`,
         cursor: 'pointer', transition: 'border-color 0.15s ease',
       }}
     >
       <div style={{
-        width: 36, height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: enabled ? '#F2F2F7' : '#FFFFFF', border: `1px solid ${enabled ? '#E5E5EA' : '#E5E5EA'}`,
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: enabled ? 'rgba(0,113,227,0.1)' : '#F2F2F7',
       }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={enabled ? '#1D1D1F' : '#AEAEB2'} strokeWidth="2" strokeLinecap="round"><path d={f.icon} /></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={enabled ? '#0071E3' : '#AEAEB2'} strokeWidth="2" strokeLinecap="round"><path d={f.icon} /></svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          color: enabled ? '#1D1D1F' : '#6E6E73', fontSize: 14, fontWeight: 500,
-          fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
+          color: '#1D1D1F', fontSize: 14, fontWeight: 600,
+          fontFamily: 'var(--font-display)', letterSpacing: '-0.01em',
         }}>{f.label}</div>
         <div style={{ color: '#6E6E73', fontSize: 12, marginTop: 3, fontFamily: 'var(--font-body)' }}>{f.desc}</div>
       </div>
-      <div style={{ width: 42, height: 22, background: enabled ? '#1D1D1F' : '#AEAEB2', padding: 2, transition: 'background 0.2s ease', flexShrink: 0 }}>
-        <div style={{ width: 18, height: 18, background: '#F5F5F7', transition: 'transform 0.2s ease', transform: enabled ? 'translateX(20px)' : 'translateX(0)' }} />
+      <div style={{
+        position: 'relative', width: 44, height: 26, borderRadius: 13, flexShrink: 0,
+        background: enabled ? '#34C759' : '#E5E5EA', transition: 'background 0.2s ease',
+      }}>
+        <div style={{
+          position: 'absolute', top: 2, insetInlineStart: enabled ? 20 : 2,
+          width: 22, height: 22, borderRadius: 11, background: '#FFFFFF',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)', transition: 'inset-inline-start 0.2s ease',
+        }} />
       </div>
     </div>
   );
@@ -120,7 +129,7 @@ export default function CorporateClubDetail() {
               letterSpacing: '-0.02em', lineHeight: 1,
             }}>{club.name}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-              <span style={{ ...labelStyle, color: '#515154', padding: '2px 8px', border: '1px solid #AEAEB2' }}>{club.slug}</span>
+              <span style={{ ...labelStyle, color: '#515154', padding: '3px 9px', borderRadius: 980, background: '#F2F2F7' }}>{club.slug}</span>
               {club.contact_email && <span style={{ color: '#6E6E73', fontSize: 13 }}>{club.contact_email}</span>}
             </div>
           </div>

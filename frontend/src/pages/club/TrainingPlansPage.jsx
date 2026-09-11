@@ -13,6 +13,7 @@ import { PageHeader, Button, FormField, Input, Select, TextArea } from '../../co
 import { Modal, ModalActions } from '../../components/ui/Modal';
 import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 import { Badge } from '../../components/ui/Badge';
+import { Segmented, Tabs, Chips } from '../../components/ui/Controls';
 import { cardStyle, labelStyle } from '../../components/ui/styles';
 import SkillPicker from '../../components/ui/SkillPicker';
 
@@ -373,7 +374,7 @@ export default function TrainingPlansPage() {
         </FormField>
 
         <FormField label="Goals">
-          <TextArea value={form.goals} onChange={e => updateField('goals', e.target.value)} placeholder="Plan goals and objectives..." style={{ minHeight: 60 }} />
+          <TextArea value={form.goals} onChange={e => updateField('goals', e.target.value)} placeholder="Plan goals and objectives..." />
         </FormField>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -543,7 +544,7 @@ export default function TrainingPlansPage() {
     return (
       <>
         <PageHeader title="Training Plans" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               height: 240, background: '#FFFFFF',
@@ -582,43 +583,31 @@ export default function TrainingPlansPage() {
 
       {/* ── Tab bar (plans | assignments) ── */}
       {(isCoach || isManager) && (
-        <div style={{ display: 'flex', gap: 24, marginBottom: 20, borderBottom: '1px solid #E5E5EA' }}>
-          {['plans', 'assignments'].map(t => (
-            <button key={t} type="button" onClick={() => setTab(t)} style={{
-              padding: '10px 0', background: 'transparent', cursor: 'pointer',
-              border: 'none', borderBottom: `2px solid ${tab === t ? '#1D1D1F' : 'transparent'}`,
-              marginBottom: -1,
-              color: tab === t ? '#1D1D1F' : '#6E6E73',
-              fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em',
-              transition: 'color 0.15s ease, border-color 0.15s ease',
-            }}>
-              {t === 'plans' ? 'My Plans' : 'Assignments'}
-            </button>
-          ))}
+        <div style={{ marginBottom: 20 }}>
+          <Tabs
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'plans', label: 'My Plans' },
+              { value: 'assignments', label: 'Assignments' },
+            ]}
+          />
         </div>
       )}
 
       {/* ── Manager filter tabs ── */}
       {isManager && tab === 'plans' && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {[
-            { key: 'all', label: 'All' },
-            { key: 'unassigned', label: 'Unassigned' },
-            { key: 'assigned', label: 'Assigned' },
-            { key: 'templates', label: 'Templates' },
-          ].map(f => (
-            <button key={f.key} type="button" onClick={() => setFilter(f.key)} style={{
-              padding: '8px 16px', border: '1px solid',
-              borderColor: filter === f.key ? '#1D1D1F' : '#E5E5EA',
-              background: filter === f.key ? '#1D1D1F' : '#FFFFFF',
-              color: filter === f.key ? '#F5F5F7' : '#6E6E73',
-              cursor: 'pointer',
-              transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-              fontFamily: 'var(--font-body)', fontSize: 12,
-            }}>
-              {f.label}
-            </button>
-          ))}
+        <div style={{ marginBottom: 20 }}>
+          <Chips
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'unassigned', label: 'Unassigned' },
+              { value: 'assigned', label: 'Assigned' },
+              { value: 'templates', label: 'Templates' },
+            ]}
+          />
         </div>
       )}
 
@@ -636,7 +625,7 @@ export default function TrainingPlansPage() {
             {isManager && <Button type="button" onClick={openCreate}>Create your first plan</Button>}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch', gap: 16 }}>
             {filteredPlans.map((plan, i) => (
               <PlanCard
                 key={plan.id}
@@ -701,7 +690,7 @@ export default function TrainingPlansPage() {
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" /></svg>}
         >
           {assignCoachPlan.coach_user_id && (
-            <div style={{ padding: '12px 14px', background: '#FFFFFF', border: '1px solid #FF9500', marginBottom: 16, fontSize: 13, color: '#FF9500', lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(255,149,0,0.1)', border: 'none', borderRadius: 12, marginBottom: 16, fontSize: 13, color: '#A35A00', lineHeight: 1.6 }}>
               Currently assigned to: <strong>{assignCoachPlan.coach?.name || `Coach #${assignCoachPlan.coach_user_id}`}</strong>.
               Changing coach will not affect existing assignments.
             </div>
@@ -732,18 +721,16 @@ export default function TrainingPlansPage() {
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>}
         >
           {/* Step 1: Toggle group vs individual */}
-          <div style={{ display: 'flex', marginBottom: 16, border: '1px solid #E5E5EA' }}>
-            {['group', 'swimmer'].map(t => (
-              <button key={t} type="button" onClick={() => { setAssignType(t); setAssigneeId(''); }} style={{
-                flex: 1, padding: '11px 16px', border: 'none', cursor: 'pointer',
-                background: assignType === t ? '#1D1D1F' : 'transparent',
-                color: assignType === t ? '#F5F5F7' : '#6E6E73',
-                fontFamily: 'var(--font-body)', fontSize: 12,
-                transition: 'background 0.15s ease, color 0.15s ease',
-              }}>
-                {t === 'group' ? 'Group' : 'Individual Swimmer'}
-              </button>
-            ))}
+          <div style={{ marginBottom: 18 }}>
+            <Segmented
+              fullWidth
+              value={assignType}
+              onChange={t => { setAssignType(t); setAssigneeId(''); }}
+              options={[
+                { value: 'group', label: 'Group' },
+                { value: 'swimmer', label: 'Individual Swimmer' },
+              ]}
+            />
           </div>
 
           {/* Step 2: Select assignee */}
@@ -781,7 +768,7 @@ export default function TrainingPlansPage() {
 
           {/* Step 4: Notes */}
           <FormField label="Coach Notes">
-            <TextArea value={assignNotes} onChange={e => setAssignNotes(e.target.value)} placeholder="Optional notes for this assignment..." style={{ minHeight: 50 }} />
+            <TextArea value={assignNotes} onChange={e => setAssignNotes(e.target.value)} placeholder="Optional notes for this assignment..." />
           </FormField>
 
           {error && <ErrorBanner message={error} />}
@@ -1022,7 +1009,8 @@ function ToggleSwitch({ checked, onChange, color }) {
     }}>
       <span style={{
         position: 'absolute', top: 2, insetInlineStart: checked ? 20 : 2,
-        width: 18, height: 18, background: '#F5F5F7',
+        width: 22, height: 22, borderRadius: 11, background: '#FFFFFF',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         transition: 'inset-inline-start 0.2s ease',
       }} />
     </button>
@@ -1033,9 +1021,9 @@ function ToggleSwitch({ checked, onChange, color }) {
 function ErrorBanner({ message }) {
   return (
     <div style={{
-      background: '#FFFFFF', border: '1px solid #FF3B30',
+      background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
       padding: '12px 14px', marginTop: 16,
-      fontSize: 13, color: '#FF3B30', display: 'flex', alignItems: 'center', gap: 8,
+      fontSize: 13, color: '#B12A20', display: 'flex', alignItems: 'center', gap: 8,
       animation: 'fadeIn 0.2s ease-out',
     }}>
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>

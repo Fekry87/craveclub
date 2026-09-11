@@ -181,7 +181,7 @@ export default function BranchDetail() {
                   {/* Checkbox */}
                   <div style={{ borderRadius: 6,
                     width: 20, height: 20, flexShrink: 0,
-                    background: isSelected ? '#1D1D1F' : 'transparent',
+                    background: isSelected ? '#0071E3' : 'transparent',
                     border: isSelected ? '1px solid #1D1D1F' : '1px solid #AEAEB2',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'background 0.15s ease, border-color 0.15s ease',
@@ -228,9 +228,9 @@ export default function BranchDetail() {
 
         {error && (
           <div style={{
-            background: '#FFFFFF', border: '1px solid #FF3B30',
+            background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
             padding: '10px 14px', marginTop: 12,
-            fontSize: 13, color: '#FF3B30',
+            fontSize: 13, color: '#B12A20',
           }}>
             {error}
           </div>
@@ -444,7 +444,7 @@ export default function BranchDetail() {
             style={{
               padding: '12px 22px', background: 'none', border: 'none',
               borderBottom: activeTab === tab ? '2px solid #1D1D1F' : '2px solid transparent',
-              color: activeTab === tab ? '#1D1D1F' : '#6E6E73',
+              color: activeTab === tab ? '#0071E3' : '#6E6E73',
               fontSize: 11, cursor: 'pointer',
               fontFamily: 'var(--font-body)',
               transition: 'color 0.15s ease, border-color 0.15s ease',
@@ -606,7 +606,7 @@ function TabSection({ items, onAssign, renderItem, emptyText, assignLabel }) {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'stretch',
           gap: 12,
         }}>
           {items.map((item, i) => renderItem(item, i))}

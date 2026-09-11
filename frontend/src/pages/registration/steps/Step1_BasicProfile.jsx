@@ -197,7 +197,7 @@ export default function Step1_BasicProfile() {
                   borderRadius: 9,
                   background: active ? '#FFFFFF' : 'transparent',
                   boxShadow: active ? '0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
-                  color: active ? '#1D1D1F' : '#6E6E73',
+                  color: active ? '#0071E3' : '#6E6E73',
                   cursor: 'pointer',
                   fontSize: 14, fontWeight: active ? 600 : 500,
                   textTransform: 'capitalize',

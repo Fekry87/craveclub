@@ -83,8 +83,9 @@ const labelStyle = {
 };
 
 const monoTag = {
-  display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
-  fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: '14px', background: 'transparent',
+  display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: 980,
+  fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, lineHeight: '16px',
+  background: '#F2F2F7', border: 'none',
   whiteSpace: 'nowrap',
 };
 
@@ -115,7 +116,7 @@ function ColorPicker({ label, value, onChange }) {
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
         {colorPresets.map(color => (
           <button key={color} type="button" onClick={() => onChange(color)}
-            style={{ borderRadius: 6, width: 22, height: 22, background: color, padding: 0, cursor: 'pointer', border: value === color ? '2px solid #1D1D1F' : '1px solid #E5E5EA', transition: 'border-color 0.15s ease' }}
+            style={{ borderRadius: '50%', width: 24, height: 24, background: color, padding: 0, cursor: 'pointer', border: '1px solid rgba(0,0,0,0.08)', boxShadow: value === color ? '0 0 0 3px rgba(0,113,227,0.4)' : 'none', transition: 'box-shadow 0.15s ease' }}
           />
         ))}
       </div>
@@ -128,7 +129,7 @@ function FeatureToggleRow({ feature, enabled, onChange, index }) {
   return (
     <div style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
-      padding: '12px 0', borderBottom: '1px solid #E5E5EA',
+      padding: '12px 0', borderBottom: '1px solid #F2F2F7',
     }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
         <div style={{ minWidth: 0 }}>
@@ -141,7 +142,7 @@ function FeatureToggleRow({ feature, enabled, onChange, index }) {
       </div>
       <label style={{
         position: 'relative', display: 'inline-block',
-        width: 44, height: 24, cursor: 'pointer', flexShrink: 0,
+        width: 44, height: 26, cursor: 'pointer', flexShrink: 0,
       }}>
         <input
           type="checkbox"
@@ -150,15 +151,15 @@ function FeatureToggleRow({ feature, enabled, onChange, index }) {
           style={{ opacity: 0, width: 0, height: 0 }}
         />
         <span style={{
-          position: 'absolute', inset: 0,
-          background: on ? '#1D1D1F' : '#AEAEB2',
+          position: 'absolute', inset: 0, borderRadius: 13,
+          background: on ? '#34C759' : '#E5E5EA',
           transition: 'background 200ms ease',
         }} />
         <span style={{
           position: 'absolute',
-          top: 3, insetInlineStart: on ? 23 : 3,
-          width: 18, height: 18,
-          background: '#F5F5F7',
+          top: 2, insetInlineStart: on ? 20 : 2,
+          width: 22, height: 22, borderRadius: 11,
+          background: '#FFFFFF', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
           transition: 'inset-inline-start 200ms ease',
         }} />
       </label>
@@ -213,29 +214,29 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              color: '#1D1D1F', fontSize: 17, fontWeight: 500,
+              color: '#1D1D1F', fontSize: 17, fontWeight: 600,
               fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1.1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{club.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-              <span style={{ ...monoTag, color: '#515154', border: '1px solid #AEAEB2' }}>{club.slug}</span>
+              <span style={{ ...monoTag, color: '#515154' }}>{club.slug}</span>
               {brandColor && (
-                <div style={{ width: 14, height: 14, background: brandColor, border: '1px solid #E5E5EA', flexShrink: 0 }} />
+                <div style={{ width: 14, height: 14, borderRadius: '50%', background: brandColor, border: '1px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />
               )}
             </div>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, marginBottom: 16, background: '#E5E5EA', border: '1px solid #E5E5EA' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', marginBottom: 16, borderTop: '1px solid #F2F2F7', borderBottom: '1px solid #F2F2F7' }}>
           {[
             { label: 'Users', value: club.users_count || 0, color: '#1D1D1F' },
             { label: 'Swimmers', value: club.swimmer_profiles_count || 0, color: '#1D1D1F' },
             { label: 'Branches', value: `${usedBranches}/${maxBranches}`, color: atLimit ? '#FF3B30' : '#1D1D1F' },
           ].map(stat => (
-            <div key={stat.label} style={{ padding: '12px 10px', background: '#FFFFFF', textAlign: 'center' }}>
+            <div key={stat.label} style={{ padding: '13px 10px', background: '#FFFFFF', textAlign: 'center', borderInlineStart: stat.label === 'Users' ? 'none' : '1px solid #F2F2F7' }}>
               <div style={{
-                color: stat.color, fontSize: 20, fontWeight: 500,
+                color: stat.color, fontSize: 22, fontWeight: 700,
                 fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
               }}>{stat.value}</div>
               <div style={{ ...labelStyle, fontSize: 10, marginTop: 6 }}>{stat.label}</div>
@@ -246,12 +247,12 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
         {/* Features */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 16 }}>
           {enabledFeatures.slice(0, 5).map(f => (
-            <span key={f.key} style={{ ...monoTag, color: '#515154', border: '1px solid #E5E5EA' }}>
+            <span key={f.key} style={{ ...monoTag, color: '#0058B3', background: 'rgba(0,113,227,0.1)' }}>
               {f.label}
             </span>
           ))}
           {enabledFeatures.length > 5 && (
-            <span style={{ ...monoTag, color: '#6E6E73', border: '1px solid #E5E5EA' }}>
+            <span style={{ ...monoTag, color: '#6E6E73' }}>
               +{enabledFeatures.length - 5} more
             </span>
           )}
@@ -260,7 +261,7 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
         {/* Footer Actions */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          paddingTop: 14, borderTop: '1px solid #E5E5EA',
+          paddingTop: 14, borderTop: '1px solid #F2F2F7',
         }}>
           <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" style={{ flex: 1, justifyContent: 'center' }}
             onClick={e => { e.stopPropagation(); onClick(); }}>
@@ -381,7 +382,7 @@ export default function CorporateClubs() {
         </div>
 
         {/* Branding */}
-        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7' }}>
           <SectionTitle accent>Club Branding</SectionTitle>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <ColorPicker label="Primary Color" value={form.primary_color || form.theme_color} onChange={v => setForm({ ...form, primary_color: v, theme_color: v })} />
@@ -394,7 +395,7 @@ export default function CorporateClubs() {
         </div>
 
         {/* Branch Limit */}
-        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 14px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 14px', background: '#F2F2F7' }}>
           <SectionTitle hint="Maximum number of branches this club can create">Branch Limit</SectionTitle>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button type="button" className="pl-icon-btn" onClick={() => setForm({ ...form, max_branches: Math.max(1, form.max_branches - 1) })}>−</button>
@@ -409,9 +410,9 @@ export default function CorporateClubs() {
               <button key={n} type="button" onClick={() => setForm({ ...form, max_branches: n })}
                 style={{
                   ...monoTag, padding: '5px 10px', cursor: 'pointer',
-                  background: form.max_branches === n ? '#1D1D1F' : 'transparent',
-                  color: form.max_branches === n ? '#F5F5F7' : '#6E6E73',
-                  border: `1px solid ${form.max_branches === n ? '#1D1D1F' : '#AEAEB2'}`,
+                  background: form.max_branches === n ? '#0071E3' : 'transparent',
+                  color: form.max_branches === n ? '#FFFFFF' : '#6E6E73',
+                  border: `1px solid ${form.max_branches === n ? '#0071E3' : '#E5E5EA'}`,
                 }}>
                 {n} {n === 1 ? 'branch' : 'branches'}
               </button>
@@ -449,7 +450,7 @@ export default function CorporateClubs() {
         </div>
 
         {/* Manager Account */}
-        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7', border: '1px solid #E5E5EA' }}>
+        <div style={{ borderRadius: 16, marginTop: 12, padding: '18px 18px 6px', background: '#F2F2F7' }}>
           <SectionTitle>Club Manager Account</SectionTitle>
           <FormField label="Manager Name"><Input value={form.manager_name} onChange={e => setForm({ ...form, manager_name: e.target.value })} /></FormField>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -459,7 +460,7 @@ export default function CorporateClubs() {
         </div>
 
         {error && (
-          <div style={{ marginTop: 12, padding: '10px 14px', background: '#FFFFFF', border: '1px solid #FF3B30', color: '#FF3B30', fontSize: 13 }}>{error}</div>
+          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12, color: '#B12A20', fontSize: 13 }}>{error}</div>
         )}
 
         <FormPageActions>
@@ -482,7 +483,7 @@ export default function CorporateClubs() {
       {/* Summary strip */}
       {clubs.length > 0 && (
         <div style={{
-          display: 'flex', gap: 14, marginBottom: 24, flexWrap: 'wrap',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24,
           animation: 'fadeInUp 0.4s ease-out',
         }}>
           {[
@@ -491,7 +492,7 @@ export default function CorporateClubs() {
             { label: 'Total Swimmers', value: clubs.reduce((s, c) => s + (c.swimmer_profiles_count || 0), 0) },
           ].map((s, si) => (
             <div key={s.label} style={{ borderRadius: 16,
-              flex: '1 1 180px', padding: '18px 20px', background: '#FFFFFF',
+              minWidth: 0, padding: '18px 20px', background: '#FFFFFF',
               border: '1px solid #E5E5EA',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -515,7 +516,7 @@ export default function CorporateClubs() {
         }}>
           <div style={{ borderRadius: 14,
             width: 56, height: 56, margin: '0 auto 16px',
-            background: '#F2F2F7', border: '1px solid #E5E5EA',
+            background: '#F2F2F7',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.5" strokeLinecap="round"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
@@ -539,7 +540,7 @@ export default function CorporateClubs() {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch',
           gap: 18,
         }}>
           {clubs.map((club, i) => (
@@ -558,8 +559,8 @@ export default function CorporateClubs() {
       {error && !showModal && (
         <div style={{
           position: 'fixed', bottom: 24, insetInlineEnd: 24,
-          padding: '12px 18px', background: '#FFFFFF', border: '1px solid #FF3B30',
-          color: '#FF3B30', fontSize: 13, fontWeight: 500,
+          padding: '12px 18px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
+          color: '#B12A20', fontSize: 13, fontWeight: 500,
           animation: 'fadeInUp 0.3s ease-out',
           zIndex: 100,
         }}>

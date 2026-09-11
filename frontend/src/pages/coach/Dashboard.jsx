@@ -184,8 +184,7 @@ function LiveSessionBanner({ sessions, navigate }) {
 
   return (
     <div style={{ borderRadius: 16,
-      background: '#F2F2F7',
-      padding: '20px 24px', marginBottom: 20,
+      background: '#F2F2F7', borderRadius: 10, padding: '20px 24px', marginBottom: 20,
       border: '1px solid #FF9500',
       animation: 'fadeInUp 0.3s ease-out 0.05s both',
     }}>

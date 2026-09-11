@@ -298,9 +298,8 @@ export default function ClubDashboard() {
           {/* Quick counts strip */}
           <div className="quick-stats-bar" style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-            marginTop: 14,
-            borderRadius: 12,
-            background: '#F2F2F7',
+            marginTop: 18, paddingTop: 4,
+            borderTop: '1px solid #F2F2F7',
           }}>
             {[
               { val: data.groups_count,   lbl: t('dashboard.groups') },
@@ -309,9 +308,9 @@ export default function ClubDashboard() {
             ].map((item, i) => (
               <div key={i} style={{
                 textAlign: 'center', padding: '14px 8px', minWidth: 0,
-                borderInlineStart: i > 0 ? '1px solid #E5E5EA' : 'none',
+                borderInlineStart: i > 0 ? '1px solid #F2F2F7' : 'none',
               }}>
-                <div style={{ ...DISPLAY, color: '#1D1D1F', fontSize: 22 }}>{item.val}</div>
+                <div style={{ ...DISPLAY, color: '#1D1D1F', fontSize: 24, fontWeight: 700 }}>{item.val}</div>
                 <div style={{ ...labelStyle, marginTop: 6 }}>{item.lbl}</div>
               </div>
             ))}

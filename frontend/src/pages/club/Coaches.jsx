@@ -20,21 +20,23 @@ function CoachCard({ coach, onEdit, onDelete, index, t }) {
 
   return (
     <div
-      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; e.currentTarget.style.boxShadow = 'none'; }}
       style={{
         background: '#FFFFFF',
         padding: '20px 22px',
         border: '1px solid #E5E5EA',
-        transition: 'border-color 0.15s ease',
+        borderRadius: 16,
+        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
         position: 'relative',
+        display: 'flex', flexDirection: 'column', height: '100%',
         animation: `fadeInUp 0.3s ease-out ${0.04 + index * 0.04}s both`,
       }}
     >
       {/* Avatar tile + name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ borderRadius: 14,
-          width: 56, height: 56, background: color.bg, color: color.text,
+        <div style={{ borderRadius: '50%',
+          width: 52, height: 52, background: color.bg, color: color.text,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 20, fontWeight: 600,
           fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
@@ -44,7 +46,7 @@ function CoachCard({ coach, onEdit, onDelete, index, t }) {
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <h3 style={{
-            margin: 0, color: '#1D1D1F', fontSize: 17, fontWeight: 500,
+            margin: 0, color: '#1D1D1F', fontSize: 17, fontWeight: 600,
             fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{name}</h3>
@@ -141,7 +143,7 @@ export default function Coaches() {
           display: 'flex', alignItems: 'center', gap: 8,
           animation: 'fadeIn 0.25s ease-out',
         }}>
-          <span>coach{coaches.length !== 1 ? 'es' : ''}</span>
+          <span>{coaches.length} coach{coaches.length !== 1 ? 'es' : ''}</span>
         </div>
       )}
 
@@ -149,7 +151,7 @@ export default function Coaches() {
       {coaches.length > 0 ? (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', alignItems: 'stretch',
           gap: 16,
         }}>
           {coaches.map((coach, i) => (

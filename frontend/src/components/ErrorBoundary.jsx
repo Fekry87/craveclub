@@ -59,7 +59,7 @@ export default class ErrorBoundary extends Component {
 
             {/* Error details (for debugging) */}
             <div style={{
-              background: '#F2F2F7', padding: '14px 16px', marginBottom: 22,
+              background: '#F2F2F7', borderRadius: 10, padding: '14px 16px', marginBottom: 22,
               borderRadius: 10,
               textAlign: 'start', maxHeight: 200, overflowY: 'auto',
             }}>
@@ -150,7 +150,7 @@ export class RouteErrorBoundary extends Component {
 
             {/* Show the error for debugging */}
             <div style={{
-              background: '#F2F2F7', padding: '10px 14px', width: '100%',
+              background: '#F2F2F7', borderRadius: 10, padding: '10px 14px', width: '100%',
               borderRadius: 10, textAlign: 'start',
             }}>
               <code style={{

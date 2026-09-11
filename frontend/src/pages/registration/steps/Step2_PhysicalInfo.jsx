@@ -181,7 +181,7 @@ export default function Step2_PhysicalInfo() {
                   borderRadius: 9,
                   background: active ? '#FFFFFF' : 'transparent',
                   boxShadow: active ? '0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
-                  color: active ? '#1D1D1F' : '#6E6E73',
+                  color: active ? '#0071E3' : '#6E6E73',
                   cursor: 'pointer',
                   fontSize: 14, fontWeight: active ? 600 : 500,
                   transition: 'background 0.18s var(--ease-spring), color 0.15s ease, box-shadow 0.18s ease',

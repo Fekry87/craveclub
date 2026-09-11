@@ -246,8 +246,7 @@ export default function Step8_ReviewPayment() {
       {/* ── Payment Method Badge ─────────────────────────────────── */}
       <div style={{
         borderRadius: 14,
-        background: '#F2F2F7',
-        padding: '12px 16px',
+        background: '#F2F2F7', borderRadius: 10, padding: '12px 16px',
         marginTop: 6,
         marginBottom: 10,
         display: 'flex',

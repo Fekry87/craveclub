@@ -555,7 +555,7 @@ export default function SwimmerLeaderboard() {
                     justifyContent: 'center', textAlign: 'center',
                     padding: isMobile ? '14px 6px' : '16px 8px',
                     background: isCurrent ? '#F2F2F7' : '#FFFFFF',
-                    border: `1px solid ${isCurrent ? '#1D1D1F' : '#E5E5EA'}`,
+                    border: `1px solid ${isCurrent ? '#0071E3' : '#E5E5EA'}`,
                     opacity: isAchieved ? 1 : 0.45,
                     animation: `fadeInUp 0.3s ease-out ${0.15 + i * 0.04}s both`,
                     transition: 'border-color 0.15s ease',

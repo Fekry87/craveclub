@@ -79,9 +79,9 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
               padding: '0 10px', height: 30,
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
               letterSpacing: '-0.02em',
-              background: active ? '#1D1D1F' : '#FFFFFF',
-              border: `1px solid ${active ? '#1D1D1F' : '#E5E5EA'}`,
-              color: active ? '#F5F5F7' : '#515154',
+              background: active ? '#0071E3' : '#FFFFFF',
+              border: `1px solid ${active ? '#0071E3' : '#E5E5EA'}`,
+              color: active ? '#FFFFFF' : '#515154',
               cursor: 'pointer',
               transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
               display: 'flex', alignItems: 'center', gap: 6,
@@ -125,7 +125,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
               padding: '0 28px 0 10px', height: 30,
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
               letterSpacing: '-0.02em',
-              background: '#FFFFFF', border: `1px solid ${groupFilter ? '#1D1D1F' : '#E5E5EA'}`,
+              background: '#FFFFFF', border: `1px solid ${groupFilter ? '#0071E3' : '#E5E5EA'}`,
               color: groupFilter ? '#1D1D1F' : '#515154', cursor: 'pointer', outline: 'none',
               appearance: 'none',
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23171717' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E")`,
@@ -171,8 +171,8 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 30, height: 26, border: 'none', cursor: 'pointer',
-                  background: viewMode === v.key ? '#1D1D1F' : 'transparent',
-                  color: viewMode === v.key ? '#F5F5F7' : '#86868B',
+                  background: viewMode === v.key ? '#0071E3' : 'transparent',
+                  color: viewMode === v.key ? '#FFFFFF' : '#86868B',
                   transition: 'background 0.15s ease, color 0.15s ease',
                 }}
               >
@@ -269,8 +269,8 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: 30, height: 26, border: 'none', cursor: 'pointer',
-                background: viewMode === v.key ? '#1D1D1F' : 'transparent',
-                color: viewMode === v.key ? '#F5F5F7' : '#86868B',
+                background: viewMode === v.key ? '#0071E3' : 'transparent',
+                color: viewMode === v.key ? '#FFFFFF' : '#86868B',
                 transition: 'background 0.15s ease, color 0.15s ease',
               }}
             >
@@ -300,7 +300,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
                 padding: '0 28px 0 10px', height: 32,
                 fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
                 letterSpacing: '-0.02em',
-                background: '#FFFFFF', border: `1px solid ${groupFilter ? '#1D1D1F' : '#E5E5EA'}`,
+                background: '#FFFFFF', border: `1px solid ${groupFilter ? '#0071E3' : '#E5E5EA'}`,
                 color: groupFilter ? '#1D1D1F' : '#515154', cursor: 'pointer', outline: 'none',
                 appearance: 'none',
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23171717' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E")`,
@@ -617,7 +617,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
                   border: 'none', cursor: 'pointer',
                   borderBottom: '1px solid #E5E5EA',
                   borderInlineEnd: (i + 1) % 7 !== 0 ? '1px solid #E5E5EA' : 'none',
-                  background: isSelected ? '#1D1D1F' : 'transparent',
+                  background: isSelected ? '#0071E3' : 'transparent',
                   transition: 'background 0.12s ease', position: 'relative',
                 }}
               >
@@ -866,8 +866,8 @@ export default function CoachSessions() {
 
         {saveError && (
           <div style={{
-            marginTop: 14, padding: '10px 14px', background: '#FFFFFF', border: '1px solid #FF3B30',
-            color: '#FF3B30', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
+            marginTop: 14, padding: '10px 14px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
+            color: '#B12A20', fontSize: 12, fontWeight: 500, lineHeight: 1.5,
             whiteSpace: 'pre-line',
           }}>
             {saveError}
