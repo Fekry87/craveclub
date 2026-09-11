@@ -95,16 +95,26 @@ class PublicController extends Controller
 
         $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
         $disk = Storage::disk($diskName);
-        abort_if(! $disk->exists($path), 404);
 
-        $mime = 'image/png';
+        // Read directly rather than exists()/mimeType() first — those do HEAD
+        // calls that some S3-compatible backends (e.g. Backblaze B2) deny,
+        // which would 404 an image that GET can actually fetch.
         try {
-            $mime = $disk->mimeType($path) ?: 'image/png';
+            $contents = $disk->get($path);
         } catch (\Throwable $e) {
-            // Some drivers can't infer mime — default to png
+            $contents = null;
         }
+        abort_if($contents === null, 404);
 
-        return response($disk->get($path), 200, [
+        // Infer mime from the file extension (no extra network call).
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+
+        return response($contents, 200, [
             'Content-Type' => $mime,
             'Cache-Control' => 'public, max-age=86400',
         ]);
