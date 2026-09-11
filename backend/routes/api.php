@@ -220,6 +220,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'throttle:by_user', 'request.log'])->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
         // Broadcasting channel auth (private channels)
         Route::post('/broadcasting/auth', function (Request $request) {
@@ -311,6 +312,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerShow']);
             Route::put('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerUpdate']);
             Route::delete('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerDestroy']);
+            Route::post('/swimmers/{swimmer}/reset-password', [SwimmerManagementController::class, 'resetPassword']);
             Route::get('/swimmers/{swimmer}/weekly-report', [SwimmerReportController::class, 'managerSwimmer']);
 
             Route::get('/groups', [GroupManagementController::class, 'groupIndex']);
