@@ -307,10 +307,15 @@ input[type="checkbox"] {
 .pl-btn-accent:hover:not(:disabled) { background: var(--blue-dark); border-color: var(--blue-dark); }
 .pl-btn-secondary { background: var(--bg-2); color: var(--label); border-color: var(--separator-strong); }
 .pl-btn-secondary:hover:not(:disabled) { background: var(--fill); }
-.pl-btn-ghost { background: transparent; color: var(--blue); border-color: transparent; }
+.pl-btn-ghost { background: var(--fill); color: var(--blue); border-color: transparent; }
 .pl-btn-ghost:hover:not(:disabled) { background: var(--blue-tint); }
-.pl-btn-danger { background: transparent; color: var(--red); border-color: transparent; }
-.pl-btn-danger:hover:not(:disabled) { background: rgba(255,59,48,0.1); }
+.pl-btn-danger { background: rgba(255,59,48,0.1); color: #B12A20; border-color: transparent; }
+.pl-btn-danger:hover:not(:disabled) { background: rgba(255,59,48,0.16); }
+/* Inside a table row, actions stay quiet until the row is hovered. */
+.data-table-row .pl-btn-ghost,
+.data-table-row .pl-btn-danger { background: transparent; }
+.data-table-row:hover .pl-btn-ghost { background: var(--blue-tint); }
+.data-table-row:hover .pl-btn-danger { background: rgba(255,59,48,0.1); }
 .pl-btn-dark { background: var(--dark); color: #fff; border-color: var(--dark); }
 .pl-btn-dark:hover:not(:disabled) { background: var(--dark-2); }
 .pl-btn-sm { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 9px; }

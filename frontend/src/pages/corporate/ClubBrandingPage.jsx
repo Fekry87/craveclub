@@ -210,7 +210,13 @@ function ToggleSwitch({ checked, onChange }) {
     <label style={{ position: 'relative', display: 'inline-block', width: 44, height: 24, cursor: 'pointer', flexShrink: 0 }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
       <span style={{ position: 'absolute', inset: 0, background: checked ? '#34C759' : '#E5E5EA', transition: 'background 200ms ease' }} />
-      <span style={{ position: 'absolute', top: 3, insetInlineStart: checked ? 23 : 3, width: 18, height: 18, background: '#F5F5F7', transition: 'inset-inline-start 200ms ease', }} />
+      <span style={{
+          position: 'absolute',
+          top: 2, insetInlineStart: checked ? 20 : 2,
+          width: 22, height: 22, borderRadius: 11,
+          background: '#FFFFFF', boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          transition: 'inset-inline-start 200ms ease',
+        }} />
     </label>
   );
 }
@@ -362,7 +368,7 @@ export default function ClubBrandingPage() {
             <FormField label="Slug (read-only)">
               <div style={{ borderRadius: 16,
                 padding: '0 12px', height: 42, display: 'flex', alignItems: 'center',
-                background: '#F2F2F7', border: '1px solid #E5E5EA',
+                background: '#F2F2F7',
                 color: '#515154', fontSize: 13, fontFamily: 'var(--font-body)',
               }}>{form.slug}</div>
             </FormField>
@@ -452,7 +458,7 @@ export default function ClubBrandingPage() {
             </div>
             {form.custom_domain && (
               <div style={{ borderRadius: 16,
-                padding: '12px 14px', background: '#F2F2F7', border: '1px solid #E5E5EA', marginBottom: 18,
+                padding: '12px 14px', background: '#F2F2F7', marginBottom: 18,
               }}>
                 <div style={{ ...labelStyle, marginBottom: 8 }}>DNS Configuration</div>
                 <div style={{ color: '#1D1D1F', fontSize: 12, fontFamily: 'var(--font-body)', wordBreak: 'break-all' }}>

@@ -1009,7 +1009,8 @@ function ToggleSwitch({ checked, onChange, color }) {
     }}>
       <span style={{
         position: 'absolute', top: 2, insetInlineStart: checked ? 20 : 2,
-        width: 18, height: 18, background: '#F5F5F7',
+        width: 22, height: 22, borderRadius: 11, background: '#FFFFFF',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         transition: 'inset-inline-start 0.2s ease',
       }} />
     </button>
