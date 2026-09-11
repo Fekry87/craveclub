@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
 import { CardActions, CardInfoRow } from '../../components/ui/Cards';
+import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle, cardStyle } from '../../components/ui/styles';
 import { apiErrorMessage } from '../../lib/apiError';
@@ -29,7 +30,7 @@ function getInitials(firstName, lastName) {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
 }
 
-function SwimmerCard({ swimmer, onEdit, onDelete, index, t }) {
+function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, index, t }) {
   const name = `${swimmer.first_name} ${swimmer.last_name}`;
   const color = getAvatarColor(name);
   const initials = getInitials(swimmer.first_name, swimmer.last_name);
@@ -85,7 +86,23 @@ function SwimmerCard({ swimmer, onEdit, onDelete, index, t }) {
         )}
       </div>
 
-      <CardActions row={swimmer} onEdit={onEdit} onDelete={onDelete} />
+      <CardActions
+        row={swimmer}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        actions={swimmer.user ? (row) => (
+          <button
+            type="button"
+            className="pl-btn pl-btn-secondary pl-btn-sm"
+            style={{ flex: 1 }}
+            title="Reset this swimmer's password"
+            onClick={() => onResetPassword(row)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="4.5" /><path d="M10.7 12.3 19 4m-3 0h3v3" /></svg>
+            Reset
+          </button>
+        ) : undefined}
+      />
     </div>
   );
 }
@@ -111,6 +128,8 @@ export default function Swimmers() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [resetResult, setResetResult] = useState(null);
+  const [resetting, setResetting] = useState(null);
   const [levelFilter, setLevelFilter] = useState('All');
   const [loginFilter, setLoginFilter] = useState('All');
   const [pendingDeletion, setPendingDeletion] = useState([]);
@@ -151,6 +170,24 @@ export default function Swimmers() {
     setShowModal(true);
   };
   const handleDelete = async (s) => { if (confirm('Delete?')) { await api.delete(`/club/swimmers/${s.id}`); load(); } };
+
+  const handleResetPassword = async (s) => {
+    const name = `${s.first_name} ${s.last_name}`;
+    if (!confirm(`Reset password for ${name}? Their current password will stop working and they'll be signed out on all devices.`)) return;
+    setResetting(s.id);
+    try {
+      const { data } = await api.post(`/club/swimmers/${s.id}/reset-password`);
+      setResetResult({ name, ...(data.credentials || {}) });
+    } catch (e) {
+      alert(apiErrorMessage(e));
+    } finally {
+      setResetting(null);
+    }
+  };
+
+  const copyText = (text) => {
+    try { navigator.clipboard?.writeText(text); } catch { /* ignore */ }
+  };
 
   // Compute counts per level
   const levelCounts = swimmers.reduce((acc, s) => {
@@ -382,6 +419,7 @@ export default function Swimmers() {
               index={i}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onResetPassword={handleResetPassword}
               t={t}
             />
           ))}
@@ -439,6 +477,34 @@ export default function Swimmers() {
         </div>
       )}
 
+      {resetResult && (
+        <Modal title="New login credentials" onClose={() => setResetResult(null)}>
+          <p style={{ margin: '0 0 16px', color: '#6E6E73', fontSize: 14, lineHeight: 1.5 }}>
+            Share these with <strong>{resetResult.name}</strong>. They can log in with the
+            phone number or this email, then change the password from their profile.
+          </p>
+          {[
+            { label: 'Email', value: resetResult.email },
+            { label: 'Temporary password', value: resetResult.temp_password },
+          ].map((row) => (
+            <div key={row.label} style={{ marginBottom: 12 }}>
+              <div style={{ ...labelStyle, marginBottom: 6 }}>{row.label}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <code style={{
+                  flex: 1, background: '#F2F2F7', borderRadius: 10, padding: '12px 14px',
+                  fontSize: 15, color: '#1D1D1F', wordBreak: 'break-all',
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                }}>{row.value}</code>
+                <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm"
+                  onClick={() => copyText(row.value)}>Copy</button>
+              </div>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+            <button type="button" className="pl-btn pl-btn-primary" onClick={() => setResetResult(null)}>Done</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

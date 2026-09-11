@@ -168,6 +168,29 @@ class AuthPasswordTest extends TestCase
         ], ['X-Club-Slug' => $this->club->slug])->assertOk();
     }
 
+    public function test_reset_password_is_mobile_friendly(): void
+    {
+        $swimmerUser = $this->makeSwimmer();
+        $swimmer = SwimmerProfile::withoutGlobalScopes()->where('user_id', $swimmerUser->id)->first();
+
+        $manager = User::create([
+            'name' => 'Manager',
+            'email' => 'manager2@auth-test.com',
+            'password' => 'password',
+            'role' => UserRole::CLUB_MANAGER,
+            'club_id' => $this->club->id,
+        ]);
+
+        $temp = $this->actingAs($manager, 'sanctum')
+            ->withHeaders(['X-Club-Slug' => $this->club->slug])
+            ->postJson("/api/v1/club/swimmers/{$swimmer->id}/reset-password")
+            ->json('credentials.temp_password');
+
+        // Uppercase letters + digits only, no symbols, no ambiguous chars
+        $this->assertMatchesRegularExpression('/^[A-HJ-NP-Z2-9]+$/', $temp);
+        $this->assertGreaterThanOrEqual(8, strlen($temp));
+    }
+
     public function test_swimmer_cannot_reset_passwords(): void
     {
         $swimmerUser = $this->makeSwimmer();
