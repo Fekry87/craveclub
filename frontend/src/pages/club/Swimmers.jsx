@@ -351,7 +351,7 @@ export default function Swimmers() {
       {filtered.length > 0 ? (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', alignItems: 'stretch',
           gap: 16,
         }}>
           {filtered.map((swimmer, i) => (

@@ -47,7 +47,7 @@ function StarDisplay({ value, size = 16 }) {
         <svg key={r} width={size} height={size} viewBox="0 0 24 24">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
             fill={value >= r ? '#1D1D1F' : 'none'}
-            stroke={value >= r ? '#1D1D1F' : '#AEAEB2'}
+            stroke={value >= r ? '#0071E3' : '#AEAEB2'}
             strokeWidth="1.5" strokeLinejoin="round"
           />
         </svg>
@@ -200,8 +200,8 @@ export default function SwimmerDetail() {
       {toast && (
         <div style={{
           position: 'fixed', top: 24, insetInlineEnd: 24, zIndex: 1000,
-          padding: '12px 20px', background: '#FFFFFF', border: '1px solid #34C759',
-          color: '#34C759', fontFamily: 'var(--font-body)', fontSize: 12,
+          padding: '12px 20px', background: 'rgba(52,199,89,0.12)', border: 'none', borderRadius: 12,
+          color: '#1E7A3B', fontFamily: 'var(--font-body)', fontSize: 12,
           animation: 'fadeInUp 0.3s ease-out',
         }}>{toast}</div>
       )}

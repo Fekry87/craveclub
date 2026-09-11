@@ -26,7 +26,7 @@ function Section({ title, icon, children, delay = 0 }) {
         display: 'flex', alignItems: 'center', gap: 10,
         marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid #E5E5EA',
       }}>
-        {icon && <span style={{ display: 'inline-flex', color: '#1D1D1F' }}>{icon}</span>}
+        {icon && <span style={{ display: 'inline-flex', color: '#0071E3' }}>{icon}</span>}
         <h3 style={{
           margin: 0, color: '#1D1D1F', fontSize: 16,
           fontFamily: 'var(--font-display)', fontWeight: 600,
@@ -43,10 +43,10 @@ function FunnelChart({ data }) {
   const { t } = useTranslation();
   if (!data) return <EmptyState title={t('empty.noData')} description={t('analytics.noFunnelData')} />;
   const steps = [
-    { label: t('analytics.submitted'), value: data.submitted_30d ?? 0, color: '#1D1D1F', colorText: '#1D1D1F' },
-    { label: t('status.approved'),     value: data.approved_30d ?? 0,  color: '#34C759', colorText: '#34C759' },
-    { label: t('status.rejected'),     value: data.rejected_30d ?? 0,  color: '#FF3B30', colorText: '#FF3B30' },
-    { label: t('status.pending'),      value: data.pending_now ?? 0,   color: '#FF9500', colorText: '#FF9500' },
+    { label: t('analytics.submitted'), value: data.submitted_30d ?? 0, color: '#0071E3', colorText: '#0058B3' },
+    { label: t('status.approved'),     value: data.approved_30d ?? 0,  color: '#34C759', colorText: '#1E7A3B' },
+    { label: t('status.rejected'),     value: data.rejected_30d ?? 0,  color: '#FF3B30', colorText: '#B12A20' },
+    { label: t('status.pending'),      value: data.pending_now ?? 0,   color: '#FF9500', colorText: '#A35A00' },
   ];
   const max = Math.max(...steps.map(s => s.value), 1);
 
@@ -256,8 +256,8 @@ export default function AnalyticsDashboard() {
       <PageHeader title={t('analytics.title')}>
         {data.generated_at && (
           <div style={{
-            color: '#6E6E73', fontSize: 11, fontFamily: 'var(--font-body)',
-            padding: '4px 10px', border: '1px solid #E5E5EA',
+            color: '#6E6E73', fontSize: 12, fontFamily: 'var(--font-body)',
+            padding: '4px 10px', borderRadius: 980, background: '#F2F2F7',
           }}>
             {t('analytics.updated', { time: new Date(data.generated_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}
           </div>
@@ -329,7 +329,7 @@ export default function AnalyticsDashboard() {
         <Section title={t('analytics.membershipGrowth')} delay={0.1}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6" /></svg>}>
           {growthChartData.length > 0
-            ? <MiniChart data={growthChartData} type="bar" color="#1D1D1F" height={180} />
+            ? <MiniChart data={growthChartData} type="bar" color="#0071E3" height={180} />
             : <EmptyState title={t('empty.noData')} description={t('analytics.noGrowthData')} />
           }
         </Section>

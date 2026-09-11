@@ -233,9 +233,9 @@ export default function Leaderboard() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 14 }}>
         <div style={{ borderRadius: 14,
-          width: 48, height: 48, background: '#FFFFFF', border: '1px solid #FF3B30',
+          width: 48, height: 48, background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, color: '#FF3B30', fontFamily: 'var(--font-display)', fontWeight: 600,
+          fontSize: 22, color: '#B12A20', fontFamily: 'var(--font-display)', fontWeight: 600,
         }}>!</div>
         <div style={{
           color: '#1D1D1F', fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 600,
@@ -528,8 +528,8 @@ export default function Leaderboard() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
                   {/* Icon tile */}
                   <div style={{
-                    width: 44, height: 44, background: '#F2F2F7',
-                    border: `1px solid ${tier.color}`,
+                    width: 44, height: 44, borderRadius: 12,
+                    background: `${tier.color}1F`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 22, flexShrink: 0,
                   }}>
@@ -610,11 +610,14 @@ export default function Leaderboard() {
 
         {/* Level progression visual */}
         <div style={{ borderRadius: 16,
-          marginTop: 20, padding: '16px 18px',
-          background: '#F2F2F7',
+          marginTop: 20, padding: '18px 20px',
+          background: '#FFFFFF',
           border: '1px solid #E5E5EA',
         }}>
-          <div style={{ ...monoLabel, marginBottom: 16 }}>Level Progression</div>
+          <div style={{
+            fontSize: 15, fontWeight: 600, color: '#1D1D1F',
+            fontFamily: 'var(--font-display)', letterSpacing: '-0.01em', marginBottom: 16,
+          }}>Level Progression</div>
           <div style={{
             display: 'flex', alignItems: 'center',
             overflowX: 'auto', paddingBottom: 4,
@@ -623,8 +626,8 @@ export default function Leaderboard() {
               <div key={tier.id} style={{ display: 'flex', alignItems: 'center', flex: i < tiers.length - 1 ? 1 : 'none', minWidth: 0 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, minWidth: 48 }}>
                   <div style={{
-                    width: 36, height: 36, background: '#FFFFFF',
-                    border: `1px solid ${tier.color}`,
+                    width: 36, height: 36, borderRadius: 10,
+                    background: `${tier.color}1F`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 17,
                   }}>{tier.icon || '⭐'}</div>
@@ -662,9 +665,8 @@ export default function Leaderboard() {
           <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {tierError && (
               <div style={{
-                padding: '10px 14px', background: '#FFFFFF',
-                border: '1px solid #FF3B30',
-                color: '#FF3B30', fontSize: 13, fontFamily: 'var(--font-body)',
+                padding: '10px 14px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
+                color: '#B12A20', fontSize: 13, fontFamily: 'var(--font-body)',
               }}>{tierError}</div>
             )}
 

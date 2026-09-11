@@ -235,7 +235,7 @@ function HolidayDialog({ date, onConfirm, onCancel, hasSession, t }) {
           letterSpacing: '-0.02em', lineHeight: 1,
         }}>Add Holiday: {date}</h3>
         {hasSession && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #FF9500', padding: '8px 12px', marginBottom: 12, color: '#FF9500', fontSize: 13, fontFamily: 'var(--font-body)' }}>
+          <div style={{ background: 'rgba(255,149,0,0.1)', border: 'none', borderRadius: 12, padding: '8px 12px', marginBottom: 12, color: '#A35A00', fontSize: 13, fontFamily: 'var(--font-body)' }}>
             A session exists on this date and will be cancelled.
           </div>
         )}
@@ -546,9 +546,9 @@ export default function ScheduleBuilderPage() {
       {/* Error Banner */}
       {error && (
         <div style={{
-          background: '#FFFFFF', border: '1px solid #FF3B30',
+          background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
           padding: '12px 16px', marginBottom: 20,
-          color: '#FF3B30', fontSize: 13, fontFamily: 'var(--font-body)',
+          color: '#B12A20', fontSize: 13, fontFamily: 'var(--font-body)',
           display: 'flex', alignItems: 'center', gap: 8,
           animation: 'fadeInUp 0.3s ease-out',
         }}>

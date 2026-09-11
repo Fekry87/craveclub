@@ -99,7 +99,7 @@ function FileUploadZone({ label, accept, currentUrl, previewStyle, onUpload, upl
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
         style={{
-          border: `1px dashed ${dragOver ? '#1D1D1F' : '#AEAEB2'}`,
+          border: `1px dashed ${dragOver ? '#0071E3' : '#AEAEB2'}`,
           padding: 16, textAlign: 'center', cursor: 'pointer',
           background: dragOver ? '#F2F2F7' : '#FFFFFF',
           transition: 'border-color 0.15s ease, background 0.15s ease',
@@ -196,7 +196,7 @@ function PhonePreview({ form }) {
           {['Home', 'Sessions', 'Profile'].map(tab => (
             <div key={tab} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 18, height: 18, background: tab === 'Home' ? primary : '#515154' }} />
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: tab === 'Home' ? '#F5F5F7' : '#86868B' }}>{tab}</span>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: tab === 'Home' ? '#FFFFFF' : '#86868B' }}>{tab}</span>
             </div>
           ))}
         </div>
@@ -209,7 +209,7 @@ function ToggleSwitch({ checked, onChange }) {
   return (
     <label style={{ position: 'relative', display: 'inline-block', width: 44, height: 24, cursor: 'pointer', flexShrink: 0 }}>
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
-      <span style={{ position: 'absolute', inset: 0, background: checked ? '#1D1D1F' : '#AEAEB2', transition: 'background 200ms ease' }} />
+      <span style={{ position: 'absolute', inset: 0, background: checked ? '#34C759' : '#E5E5EA', transition: 'background 200ms ease' }} />
       <span style={{ position: 'absolute', top: 3, insetInlineStart: checked ? 23 : 3, width: 18, height: 18, background: '#F5F5F7', transition: 'inset-inline-start 200ms ease', }} />
     </label>
   );
@@ -375,9 +375,9 @@ export default function ClubBrandingPage() {
                     style={{
                       flex: 1, height: 42, cursor: 'pointer', textAlign: 'center',
                       transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-                      background: form.branding_tier === tier ? '#1D1D1F' : '#FFFFFF',
-                      border: `1px solid ${form.branding_tier === tier ? '#1D1D1F' : '#AEAEB2'}`,
-                      color: form.branding_tier === tier ? '#F5F5F7' : '#6E6E73',
+                      background: form.branding_tier === tier ? '#0071E3' : '#FFFFFF',
+                      border: `1px solid ${form.branding_tier === tier ? '#0071E3' : '#AEAEB2'}`,
+                      color: form.branding_tier === tier ? '#FFFFFF' : '#6E6E73',
                       fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em',
                     }}>
                     {tier === 'shared' ? 'Shared' : 'Branded'}
@@ -465,8 +465,8 @@ export default function ClubBrandingPage() {
           {/* Error */}
           {error && (
             <div style={{
-              padding: '12px 16px', background: '#FFFFFF', border: '1px solid #FF3B30',
-              color: '#FF3B30', fontSize: 13, marginBottom: 12, fontFamily: 'var(--font-body)',
+              padding: '12px 16px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
+              color: '#B12A20', fontSize: 13, marginBottom: 12, fontFamily: 'var(--font-body)',
               display: 'flex', alignItems: 'center', gap: 8,
               animation: 'fadeInUp 0.3s ease-out',
             }}>

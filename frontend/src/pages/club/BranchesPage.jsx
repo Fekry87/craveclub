@@ -319,7 +319,7 @@ export default function BranchesPage() {
     return (
       <>
         <PageHeader title={t('branches.title')} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               ...cardStyle,
@@ -388,7 +388,7 @@ export default function BranchesPage() {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch',
           gap: 16,
         }}>
           {branches.map((branch, i) => (

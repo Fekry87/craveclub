@@ -53,7 +53,7 @@ export default function ClubSportModulesPanel({ clubId }) {
         <span style={labelStyle}>{modules.length}</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', alignItems: 'stretch', gap: 12 }}>
         {modules.map((mod) => {
           const isLoading = loadingId === mod.id;
           const isActive = mod.is_active && mod.is_assigned;

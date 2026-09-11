@@ -151,7 +151,7 @@ function FeatureToggleRow({ feature, enabled, onChange, index }) {
         />
         <span style={{
           position: 'absolute', inset: 0,
-          background: on ? '#1D1D1F' : '#AEAEB2',
+          background: on ? '#34C759' : '#E5E5EA',
           transition: 'background 200ms ease',
         }} />
         <span style={{
@@ -409,9 +409,9 @@ export default function CorporateClubs() {
               <button key={n} type="button" onClick={() => setForm({ ...form, max_branches: n })}
                 style={{
                   ...monoTag, padding: '5px 10px', cursor: 'pointer',
-                  background: form.max_branches === n ? '#1D1D1F' : 'transparent',
-                  color: form.max_branches === n ? '#F5F5F7' : '#6E6E73',
-                  border: `1px solid ${form.max_branches === n ? '#1D1D1F' : '#AEAEB2'}`,
+                  background: form.max_branches === n ? '#0071E3' : 'transparent',
+                  color: form.max_branches === n ? '#FFFFFF' : '#6E6E73',
+                  border: `1px solid ${form.max_branches === n ? '#0071E3' : '#AEAEB2'}`,
                 }}>
                 {n} {n === 1 ? 'branch' : 'branches'}
               </button>
@@ -459,7 +459,7 @@ export default function CorporateClubs() {
         </div>
 
         {error && (
-          <div style={{ marginTop: 12, padding: '10px 14px', background: '#FFFFFF', border: '1px solid #FF3B30', color: '#FF3B30', fontSize: 13 }}>{error}</div>
+          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12, color: '#B12A20', fontSize: 13 }}>{error}</div>
         )}
 
         <FormPageActions>
@@ -539,7 +539,7 @@ export default function CorporateClubs() {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch',
           gap: 18,
         }}>
           {clubs.map((club, i) => (
@@ -558,8 +558,8 @@ export default function CorporateClubs() {
       {error && !showModal && (
         <div style={{
           position: 'fixed', bottom: 24, insetInlineEnd: 24,
-          padding: '12px 18px', background: '#FFFFFF', border: '1px solid #FF3B30',
-          color: '#FF3B30', fontSize: 13, fontWeight: 500,
+          padding: '12px 18px', background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
+          color: '#B12A20', fontSize: 13, fontWeight: 500,
           animation: 'fadeInUp 0.3s ease-out',
           zIndex: 100,
         }}>

@@ -52,7 +52,7 @@ export function CardActions({ row, onEdit, onDelete, actions }) {
   const { t } = useTranslation();
   if (!onEdit && !onDelete && !actions) return null;
   return (
-    <div style={{ display: 'flex', gap: 8, marginTop: 14, paddingTop: 14, borderTop: '1px solid #F2F2F7' }}>
+    <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid #F2F2F7' }}>
       {actions && actions(row)}
       {onEdit && (
         <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" style={{ flex: 1 }} onClick={() => onEdit(row)}>

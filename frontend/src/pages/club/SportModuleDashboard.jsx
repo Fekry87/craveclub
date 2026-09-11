@@ -88,7 +88,7 @@ export default function SportModuleDashboard() {
       </div>
 
       {/* Card Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'stretch', gap: 16 }}>
         {modules.map((mod, i) => (
           <SportCard key={mod.id} module={mod} index={i} onEnter={() => handleEnterSport(mod)} />
         ))}

@@ -272,7 +272,7 @@ function RatingDots({ value, size = 22 }) {
           width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           fontSize: size * 0.45, fontWeight: 500,
           background: value >= r ? '#1D1D1F' : '#E5E5EA',
-          color: value >= r ? '#F5F5F7' : '#86868B',
+          color: value >= r ? '#FFFFFF' : '#86868B',
           fontFamily: 'var(--font-body)', letterSpacing: '-0.02em',
         }}>{r}</span>
       ))}

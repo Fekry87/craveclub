@@ -323,7 +323,7 @@ export default function SubscriptionPlansPage() {
     return (
       <>
         <PageHeader title={t('subscriptions.title')} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'stretch', gap: 16 }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               ...cardStyle, height: 220,
@@ -389,7 +389,7 @@ export default function SubscriptionPlansPage() {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'stretch',
           gap: 16,
         }}>
           {plans.map((plan, i) => (
@@ -518,8 +518,8 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
 
       {/* Plan name */}
       <div style={{
-        fontSize: 18, fontWeight: 500, color: textPrimary,
-        fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8,
+        fontSize: 18, fontWeight: 600, color: textPrimary,
+        fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 6,
       }}>
         {plan.name}
       </div>
@@ -534,26 +534,29 @@ function PlanCard({ plan, index, total, onEdit, onDelete, onToggle, onMoveUp, on
       {/* Price */}
       <div style={{ marginBottom: 18 }}>
         {discountedPrice ? (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
             <span style={{
-              fontSize: 34, fontWeight: 500, color: priceColor,
+              fontSize: 32, fontWeight: 700, color: priceColor,
               fontFamily: 'var(--font-display)', lineHeight: 1, letterSpacing: '-0.02em',
             }}>
               {Number(discountedPrice).toLocaleString()} {t('common.currency')}
             </span>
-            <span style={{ fontSize: 13, color: '#86868B', textDecoration: 'line-through' }}>
-              {Number(plan.price).toLocaleString()} {t('common.currency')}
-            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: '#86868B', textDecoration: 'line-through' }}>
+                {Number(plan.price).toLocaleString()} {t('common.currency')}
+              </span>
             <span style={{
-              padding: '2px 8px', border: '1px solid #0071E3', color: '#0071E3',
-              fontFamily: 'var(--font-body)', fontSize: 12,
+              padding: '3px 9px', borderRadius: 980,
+              background: 'rgba(52,199,89,0.14)', color: '#1E7A3B',
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600,
             }}>
               -{plan.discount_percent}%
+            </span>
             </span>
           </div>
         ) : (
           <span style={{
-            fontSize: 34, fontWeight: 500, color: priceColor,
+            fontSize: 32, fontWeight: 700, color: priceColor,
             fontFamily: 'var(--font-display)', lineHeight: 1, letterSpacing: '-0.02em',
           }}>
             {Number(plan.price).toLocaleString()} {t('common.currency')}
@@ -658,10 +661,9 @@ function ToggleSwitch({ checked, onChange, color }) {
 function ErrorBanner({ message }) {
   return (
     <div style={{
-      background: '#FFFFFF',
-      border: '1px solid #FF3B30',
+      background: 'rgba(255,59,48,0.1)', border: 'none', borderRadius: 12,
       padding: '10px 14px', marginTop: 16,
-      fontSize: 13, color: '#FF3B30',
+      fontSize: 13, color: '#B12A20',
       display: 'flex', alignItems: 'center', gap: 8,
       animation: 'fadeInUp 0.3s ease-out',
     }}>
