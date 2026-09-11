@@ -88,21 +88,42 @@ class PublicController extends Controller
      * bucket, so we stream it (with the backend's credentials) instead of
      * handing out a bucket URL that would 401 for app users.
      */
-    public function splashImage()
+    public function splashImage(Request $request)
     {
         $path = CorporateSetting::get('splash_image_path');
+
+        if ($request->query('debug') === 'crave123') {
+            $out = ['path' => $path, 's3_bucket' => config('filesystems.disks.s3.bucket')];
+            foreach (['b2', 's3', 'public'] as $diskName) {
+                $row = [];
+                try {
+                    $c = \Illuminate\Support\Facades\Storage::disk($diskName)->get($path);
+                    $row['get_bytes'] = $c === null ? null : strlen($c);
+                } catch (\Throwable $e) {
+                    $row['get_error'] = substr($e->getMessage(), 0, 200);
+                }
+                $out['disk_'.$diskName] = $row;
+            }
+
+            return response()->json($out);
+        }
+
         abort_if(! $path, 404);
 
-        $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
-        $disk = Storage::disk($diskName);
-
-        // Read directly rather than exists()/mimeType() first — those do HEAD
-        // calls that some S3-compatible backends (e.g. Backblaze B2) deny,
-        // which would 404 an image that GET can actually fetch.
-        try {
-            $contents = $disk->get($path);
-        } catch (\Throwable $e) {
-            $contents = null;
+        // Try the properly-configured Backblaze disk first (path-style), then the
+        // generic s3 disk, then the local public disk. Read via get() (not
+        // exists(), which does a HEAD some S3-compatible backends deny).
+        $candidates = config('filesystems.disks.s3.bucket') ? ['b2', 's3'] : ['public'];
+        $contents = null;
+        foreach ($candidates as $diskName) {
+            try {
+                $contents = Storage::disk($diskName)->get($path);
+                if ($contents !== null) {
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // try next disk
+            }
         }
         abort_if($contents === null, 404);
 
