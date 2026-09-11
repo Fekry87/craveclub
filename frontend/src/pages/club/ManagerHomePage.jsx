@@ -141,9 +141,7 @@ export default function ManagerHomePage() {
       {/* ═══ TOP BAR ═══ */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,
-        background: 'rgba(246,246,248,0.86)',
-        backdropFilter: 'saturate(180%) blur(20px)',
-        WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+        background: '#FFFFFF',
         borderBottom: '1px solid rgba(0,0,0,0.06)',
         padding: isMobile ? '0 16px' : '0 32px',
         height: 56,
