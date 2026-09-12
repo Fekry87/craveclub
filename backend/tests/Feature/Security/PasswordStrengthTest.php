@@ -17,7 +17,7 @@ class PasswordStrengthTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_approve_registration_generates_strong_password(): void
+    public function test_approve_registration_generates_a_readable_temp_password(): void
     {
         // ── Set up club with all required relations ──
         $club = Club::create([
@@ -92,17 +92,28 @@ class PasswordStrengthTest extends TestCase
 
         $tempPassword = $response->json('swimmer.temp_password');
 
-        // ── Assert password strength ──
-        // At least 9 characters
-        $this->assertGreaterThanOrEqual(9, strlen($tempPassword), 'Password must be at least 9 characters');
+        // ── Assert the TempPassword contract ──
+        // Deliberately readable: 4 uppercase letters then 4 digits, no symbols and no
+        // case-mixing, so a manager can read it down the phone and it types cleanly on a
+        // mobile keyboard. It is a single-use credential the member changes on first
+        // login, and login is throttled, which is what makes the shorter alphabet
+        // acceptable here. Do NOT relax this into "any 8 chars" — the readability
+        // guarantee is the point.
+        $this->assertSame(8, strlen($tempPassword), 'Temp password must be exactly 8 characters');
+        $this->assertMatchesRegularExpression('/^[A-Z]{4}[0-9]{4}$/', $tempPassword, 'Temp password must be 4 uppercase letters then 4 digits');
 
-        // Contains at least one uppercase letter
-        $this->assertMatchesRegularExpression('/[A-Z]/', $tempPassword, 'Password must contain an uppercase letter');
+        // Ambiguous glyphs are excluded so it cannot be misheard or mistyped.
+        $this->assertDoesNotMatchRegularExpression('/[IO01]/', $tempPassword, 'Temp password must exclude I, O, 0 and 1');
+    }
 
-        // Contains at least one digit
-        $this->assertMatchesRegularExpression('/[0-9]/', $tempPassword, 'Password must contain a digit');
+    public function test_reset_password_uses_the_same_readable_format(): void
+    {
+        // Both entry points must agree; they share App\Support\TempPassword.
+        for ($i = 0; $i < 25; $i++) {
+            $password = \App\Support\TempPassword::generate();
 
-        // Contains at least one special character
-        $this->assertMatchesRegularExpression('/[!@#$]/', $tempPassword, 'Password must contain a special character');
+            $this->assertMatchesRegularExpression('/^[A-Z]{4}[0-9]{4}$/', $password);
+            $this->assertDoesNotMatchRegularExpression('/[IO01]/', $password);
+        }
     }
 }

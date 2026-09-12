@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
+import { apiErrorMessage } from '../../lib/apiError';
 import { useIsMobile, getAvatarColor } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 
@@ -132,6 +133,7 @@ export default function SessionLive() {
   const [summaryNotes, setSummaryNotes] = useState('');
   const [expandedSwimmer, setExpandedSwimmer] = useState(null);
   const [toast, setToast] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadSession();
@@ -169,6 +171,10 @@ export default function SessionLive() {
   };
 
   const swimmers = session?.effective_roster || [];
+  // A Completed/Cancelled session must not keep offering "Complete session" — the
+  // coach can land back here with the browser back button, and pressing save on a
+  // finished session used to look like a failure.
+  const isFinished = session?.status === 'Completed' || session?.status === 'Cancelled';
   const presentCount = Object.values(attendance).filter(Boolean).length;
   const absentCount = swimmers.length - presentCount;
 
@@ -185,6 +191,7 @@ export default function SessionLive() {
 
   const handleEndSession = async () => {
     setSaving(true);
+    setError('');
     try {
       const attArr = swimmers.map(sw => ({ swimmer_id: sw.id, present: !!attendance[sw.id] }));
       const evalArr = Object.entries(evaluations)
@@ -201,7 +208,7 @@ export default function SessionLive() {
       setToast('Session completed successfully!');
       setTimeout(() => navigate('/coach/sessions'), 1500);
     } catch (e) {
-      alert('Error completing session');
+      setError(apiErrorMessage(e));
       setSaving(false);
     }
   };
@@ -460,7 +467,16 @@ export default function SessionLive() {
           <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#AEAEB2', display: 'inline-block' }} />
           <span>{presentCount}/{swimmers.length} present</span>
         </div>
-        {!showEndConfirm ? (
+        {isFinished ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ ...caption, color: '#34C759', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+              {session.status === 'Completed' ? 'Session completed' : 'Session cancelled'}
+            </span>
+            <button type="button" onClick={() => navigate('/coach/sessions')} className="pl-btn pl-btn-primary pl-btn-sm"
+            >Back to sessions</button>
+          </div>
+        ) : !showEndConfirm ? (
           <button type="button" onClick={() => setShowEndConfirm(true)} className="pl-btn pl-btn-primary">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
             Complete session
@@ -475,6 +491,20 @@ export default function SessionLive() {
           </div>
         )}
       </div>
+
+      {/* Failure banner — shows why completing failed instead of a bare alert */}
+      {error && (
+        <div role="alert" style={{
+          position: 'sticky', bottom: 72, insetInline: 0, marginTop: 8,
+          padding: '10px 14px', borderRadius: 12, zIndex: 11,
+          background: '#FFF2F2', border: '1px solid #FFB8B8', color: '#B3261E',
+          fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.45,
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10" /><path d="M12 8v5M12 16h.01" /></svg>
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Success toast */}
       {toast && (

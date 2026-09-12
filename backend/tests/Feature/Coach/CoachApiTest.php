@@ -12,7 +12,10 @@ use App\Models\GroupMembership;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
+use Illuminate\Cache\Repository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Tests\Support\ThrowingCacheStore;
 use Tests\TestCase;
 
 class CoachApiTest extends TestCase
@@ -313,6 +316,81 @@ class CoachApiTest extends TestCase
 
         $this->session->refresh();
         $this->assertEquals('Completed', $this->session->status);
+    }
+
+    /**
+     * A coach who presses save twice — or walks back into the live screen with the
+     * browser back button — must get a 200, not a 404. The old lookup filtered on
+     * status = Live, so every re-submit failed against a session that was in fact
+     * finished, which read as "completing the session is broken".
+     */
+    public function test_completing_an_already_completed_session_is_idempotent(): void
+    {
+        $this->session->update(['status' => 'Live', 'started_at' => now()]);
+
+        $payload = [
+            'attendance' => [['swimmer_id' => $this->swimmer1->id, 'present' => true]],
+            'summary_notes' => 'first pass',
+        ];
+
+        $this->actingAs($this->coach, 'sanctum')
+            ->postJson("/api/v1/coach/sessions/{$this->session->id}/complete", $payload)
+            ->assertOk()
+            ->assertJsonFragment(['already_completed' => false]);
+
+        $firstCompletedAt = $this->session->fresh()->completed_at;
+
+        $this->travel(2)->minutes();
+
+        $this->actingAs($this->coach, 'sanctum')
+            ->postJson("/api/v1/coach/sessions/{$this->session->id}/complete", $payload)
+            ->assertOk()
+            ->assertJsonFragment(['already_completed' => true]);
+
+        $this->session->refresh();
+        $this->assertEquals('Completed', $this->session->status);
+        // completed_at records when the session ended, not the last save.
+        $this->assertEquals(
+            $firstCompletedAt->toDateTimeString(),
+            $this->session->completed_at->toDateTimeString(),
+        );
+    }
+
+    /**
+     * Everything after the status write — cache busting, XP recalculation,
+     * notifications, the broadcast — is a side effect of a completion that is
+     * already committed. A failure there must never be reported to the coach as a
+     * failed completion, or they retry against a session that is no longer Live.
+     */
+    public function test_completion_survives_an_unreachable_cache(): void
+    {
+        $this->session->update(['status' => 'Live', 'started_at' => now()]);
+
+        Cache::swap(new Repository(new ThrowingCacheStore));
+
+        $this->actingAs($this->coach, 'sanctum')
+            ->postJson("/api/v1/coach/sessions/{$this->session->id}/complete", [
+                'attendance' => [['swimmer_id' => $this->swimmer1->id, 'present' => true]],
+                'evaluations' => [['swimmer_id' => $this->swimmer1->id, 'rating' => 4, 'notes' => 'good']],
+                'group_evaluation' => ['rating' => 4, 'notes' => 'solid'],
+                'summary_notes' => 'went well',
+            ])
+            ->assertOk();
+
+        $this->session->refresh();
+        $this->assertEquals('Completed', $this->session->status);
+    }
+
+    public function test_completing_a_session_that_was_never_started_explains_why(): void
+    {
+        $this->actingAs($this->coach, 'sanctum')
+            ->postJson("/api/v1/coach/sessions/{$this->session->id}/complete", [
+                'attendance' => [['swimmer_id' => $this->swimmer1->id, 'present' => true]],
+            ])
+            ->assertStatus(422)
+            ->assertJsonFragment(['message' => 'This session has not been started yet.']);
+
+        $this->assertEquals('Scheduled', $this->session->fresh()->status);
     }
 
     // ── Profile ────────────────────────────────────────────

@@ -57,6 +57,8 @@
 - AuditService: `AuditService::log($action, $model, $modelId, $metadata, $clubId)` — writes to `storage/logs/audit.log` (daily, 90-day retention)
 - Audit logging on: registration.approved, registration.rejected, swimmer.deleted, coach.deleted, club.deleted, leaderboard.settings_changed, features.updated
 - White-label branding: Club model has display_name, cover_url, favicon_url, app_name, support_email, support_phone, social_links (JSON), custom_domain, is_domain_active, branding_tier (shared|branded)
+- App splash screen is corporate-controlled: `POST /api/v1/corporate/settings/splash-image` uploads it, `GET /api/v1/public/branding` returns `splash_background_color` + `splash_image_url`. The image is stored base64 IN `corporate_settings.value` and served through `GET /api/v1/public/branding/splash-image`, a first-party proxy — the B2 bucket denies public reads, so a direct bucket URL 403s. Migration 000073 widens that column to LONGTEXT on MySQL (TEXT's 64KB is too small); Postgres/SQLite text is already unbounded.
+- Manager password reset for a swimmer: `POST /api/v1/club/swimmers/{swimmer}/reset-password` (CLUB_MANAGER, club-scoped) returns `{credentials: {email, temp_password}}`. Pairs with `POST /api/v1/auth/change-password` for the member.
 - Public branding API: `GET /api/v1/branding/{slug}` — cached 1hr, busted on update; returns club branding + feature flags
 - Club Manager branding: `GET /api/v1/club/branding` (read), `PUT /api/v1/club/branding` (update), `POST /api/v1/club/branding/upload` (upload assets) — full branding config available to CLUB_MANAGER, not just corporate
 - CDN for assets: `CDN_URL` env var in `config/filesystems.php` s3 disk — when set, `Storage::disk('s3')->url()` returns CDN URL; branding uploads use content-hash filenames with `Cache-Control: immutable`
@@ -124,7 +126,7 @@
 - Frontend ESLint is NOT in CI. It has pre-existing `react-hooks` / `react-refresh` errors (e.g. `Cards.jsx` non-component export, `Date.now` in wizard steps) — don't be alarmed, and don't try to fix them as part of unrelated work.
 
 ## Common Commands
-- `cd backend && php artisan test` — run all tests (268 tests)
+- `cd backend && php artisan test` — run all tests (285 tests)
 - `cd backend && vendor/bin/pint` — auto-fix code style (run before pushing; CI lint gate)
 - `cd backend && composer audit` — must be clean before a release (dependency CVEs)
 - `cd frontend && npm audit fix` — fix frontend dependency CVEs (npm's advisory endpoint is flaky from this machine; retry on timeout)
@@ -157,9 +159,10 @@
 - `CoachSchedule` upsert pattern: `updateOrCreate(['coach_id', 'day_of_week'], ['slots' => ...])` — slot format is `{time, is_available, max_capacity}` (NOT `start_time`/`end_time`)
 - `SubscriptionPlan` reorder endpoint expects `ordered_ids` field (array of plan IDs in desired order)
 - Registration approval chain: `registration.coach_id` → `coach_profiles.id` → `user_id` → `groups.coach_user_id` — used to auto-assign swimmers to groups
+- Temp passwords come from `App\Support\TempPassword::generate()` and are deliberately readable: exactly 4 uppercase letters then 4 digits, no symbols, no case-mixing, and no `I`/`O`/`0`/`1`. A manager reads these down the phone, so readability IS the contract — `PasswordStrengthTest` pins the exact shape. Both entry points (registration approval, manager reset) must use the helper, never roll their own. It is single-use, changed on first login, and login is throttled; that is what makes the shorter alphabet acceptable.
 - User model `'password' => 'hashed'` cast auto-hashes plain passwords on create — no need to call `Hash::make()`
 - User model has NO `is_active` column — `is_active` exists on clubs, branches, plans, but NOT users; do NOT pass `is_active` in `User::create()`
-- Migration numbering: sequential from `2024_01_01_000071_` (last: `000071_add_consent_given_at_to_registrations`) — check last number before adding new migrations
+- Migration numbering: sequential from `2024_01_01_000073_` (last: `000073_widen_corporate_settings_value`) — check last number before adding new migrations
 - Rate limits: env-configurable via `RATE_LIMIT_AUTH` (default 60) and `RATE_LIMIT_GUEST` (default 20) in AppServiceProvider — useful for load testing without code changes
 - Route middleware stacking: parent group has `throttle:by_user` (60/min auth, 20/min guests) — do NOT add extra throttle to child groups
 - All React page components must have `.catch()` on API calls and null guards before accessing API state
@@ -242,11 +245,13 @@
 - `frontend/src/api/subscriptionPlans.js` — subscription plans API module
 - `frontend/src/components/ui/FormPage.jsx` — FormPage and FormPageActions components (full-page replacement for Modal on create/edit)
 - `backend/app/Services/AuditService.php` — audit logging service (daily log channel, 90-day retention)
+- `backend/app/Support/TempPassword.php` — the ONLY temp-password generator (4 uppercase letters + 4 digits, no ambiguous glyphs)
+- `frontend/src/lib/apiError.js` — `apiErrorMessage(err)`: flattens Laravel's `{errors:{field:[...]}}` into one line, plus the no-response/403/404/429 cases
 - `backend/app/Support/SafeCache.php` — cache access that degrades instead of 500-ing when Redis is unreachable (get/put/forget/remember)
 - `backend/app/Http/Middleware/ResilientThrottleRequests.php` — `throttle` that fails open when the rate-limiter cache is unreachable (aliased over Laravel's in `bootstrap/app.php`)
 - `backend/tests/Support/ThrowingCacheStore.php` — cache store where every call throws, for simulating a Redis outage in tests
 - `backend/app/Exceptions/RegistrationNotPendingException.php` — sentinel thrown inside the approval transaction when the locked row is no longer pending (→ 422, not 500)
-- `backend/tests/Feature/Security/HardeningAuditTest.php` — 18 regression tests for the backend security audit (deletion-status oracle, cache outage, branding escalation, SVG upload, extension spoofing, metrics key, approval race, soft-deleted email, sport module resolution, push-token claim cap)
+- `backend/tests/Feature/Security/HardeningAuditTest.php` — 22 regression tests for the backend security audit (deletion-status oracle, cache outage, branding escalation, SVG upload, extension spoofing, metrics key, approval race, soft-deleted email, sport module resolution, push-token claim cap)
 - `backend/app/Http/Controllers/Api/ClubBrandingController.php` — public/corporate/club branding endpoints with caching
 - `backend/app/Http/Controllers/Api/CoachManagementController.php` — coach CRUD (split from ClubController)
 - `backend/app/Http/Controllers/Api/SwimmerManagementController.php` — swimmer CRUD (split from ClubController)
@@ -382,6 +387,10 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - Login endpoint has its own `throttle:10,1` — separate from authenticated routes
 - Club portal login is at `/:clubSlug` (also `/portal/:slug` for compat), corporate login at `/login` — different auth flows; ClubLogin.jsx fetches branding from `/branding/:slug` and sets document.title to club display_name
 - Coach schedule FK references `coach_profiles` table (not `users`) — `coach_id` points to `coach_profiles.id`
+- The `worker` service publishes broadcasts, not `web`. Events implementing `ShouldBroadcast` are QUEUED, so the queue worker is what talks to Reverb — it needs its own `REVERB_*` + `BROADCAST_CONNECTION` variables and the same `REDIS_URL`. A client can be connected and subscribed (green badge) while nothing arrives, because the failure is in the worker. Symptom to look for: health reports `failed_last_hour` climbing while `pending_jobs` is 0.
+- A publish failure is caught and logged as `REALTIME_PUBLISH_FAILED` with the host/port/scheme/app-id it tried plus a hint. `Authentication signature invalid` means the key/secret differ between services; `cURL error 7` means `REVERB_HOST` is wrong or the process is down.
+- `REVERB_SERVER_PORT` (default 8080) is what Reverb BINDS to; `REVERB_PORT` (default 443) is what clients reach it on through Railway's edge. Confusing them stops the container serving and Railway's edge answers `server: railway-hikari` 500, which reads like a client bug.
+- **Mobile hitting the wrong backend is the first thing to check** when portal and app disagree. Expo loads `.env.local` ahead of `.env`, and it is gitignored so it is invisible in review. A `.env.local` pointing at `127.0.0.1` sends every registration to the local database while the production portal shows nothing. Compare the club list: if the app shows a club the production `/clubs` does not return, it is not talking to production. The public endpoint returns only active, non-deleted clubs and the corporate list is a SUPERSET of it, so "on mobile but not in club management" is always a stale or wrong-backend list, never a backend disagreement.
 - Real-time (Reverb) needs FOUR things lined up or the Registrations page just says "offline": (1) the reverb process running, (2) `VITE_REVERB_APP_KEY` **exactly** equal to the backend's `REVERB_APP_KEY` — a wrong key makes Reverb close the socket mid-handshake with no error text, (3) `VITE_REVERB_HOST` pointing at the reverb service's public domain, (4) the auth endpoint reachable. `frontend/src/lib/echo.js` derives `authEndpoint` from the exported `API_BASE` in `api/axios.js` — it was once hardcoded to `http://localhost:8000`, which broke private-channel auth in production and on `127.0.0.1`. `reverbConfigError()` there is called before connecting so a missing/placeholder key is logged instead of showing a mute "offline".
 - Procfile `reverb:` must bind Railway's injected `$PORT` (`--port=${PORT:-${REVERB_SERVER_PORT:-8080}}`), the same way `web:` does. Note the two ports are different settings and mixing them breaks the boot: `REVERB_SERVER_PORT` (config/reverb.php `servers.reverb.port`, default 8080) is what Reverb BINDS to inside the container, while `REVERB_PORT` (default 443) is the port CLIENTS reach it on through Railway's edge. Falling back to `REVERB_PORT` makes Reverb try to bind 443. Binding a fixed 8080 means Railway's edge cannot reach the process and every WebSocket returns a `server: railway-hikari` 500 ("Application failed to respond") that looks like a client bug.
 - `frontend/.env.production` deliberately does NOT contain `VITE_REVERB_HOST` / `VITE_REVERB_APP_KEY` — set them on the Railway frontend service. Committing placeholders is what caused the original silent failure.
@@ -458,7 +467,7 @@ Success page wrapped in `ProtectedRoute` only (no RegistrationProvider — conte
 - ClubAnalyticsService methods are cached (1hr TTL) — N+1 fixes reduce cold-cache query count from 50+ to 5-8 per endpoint
 - `QUEUE_CONNECTION=database` in dev (SQLite), `redis` in production — queue:work command must specify driver: `queue:work redis`
 - Scheduled commands in `routes/console.php`: subscription-reminders (09:00), session-reminders (08:00), queue:health-check (every 5min), backup:database (02:00 UTC), accounts:purge (03:00 UTC) — registered via `Schedule::command()`
-- Migration numbering: sequential from `2024_01_01_000071_` (last: `000071_add_consent_given_at_to_registrations`) — check last number before adding new migrations
+- Migration numbering: sequential from `2024_01_01_000073_` (last: `000073_widen_corporate_settings_value`) — check last number before adding new migrations
 - `ApiVersionMiddleware` reads `X-App-Version` and `X-Platform` headers, stores in container as `client_app_version`/`client_platform` — also adds `X-API-Version` response header from `config('app_versions.api_version')`
 - Version check endpoint (`GET /api/v1/app/version-check`) is public (no auth) — mobile calls on app launch, separate minimum versions per iOS/Android
 - `force_update` is true when `X-App-Version` < platform minimum; `update_available` is true when above minimum but below latest — invalid semver yields both false

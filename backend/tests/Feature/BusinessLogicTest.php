@@ -141,8 +141,13 @@ class BusinessLogicTest extends TestCase
         $response = $this->actingAs($this->coachUser, 'sanctum')
             ->postJson("/api/v1/coach/sessions/{$session->id}/complete");
 
-        // Session not found because query filters by status=Live
-        $response->assertStatus(404);
+        // 422 with the reason, not 404: the session exists and belongs to this coach,
+        // it simply has not been started. 404 is reserved for "not yours / no such
+        // session" so the portal can tell the two apart.
+        $response->assertStatus(422)
+            ->assertJsonFragment(['message' => 'This session has not been started yet.']);
+
+        $this->assertEquals('Scheduled', $session->fresh()->status);
     }
 
     // ── Test 3: Cannot start a completed session ──

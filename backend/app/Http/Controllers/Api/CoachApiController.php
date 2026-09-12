@@ -19,9 +19,10 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class CoachApiController extends Controller
@@ -404,9 +405,21 @@ class CoachApiController extends Controller
         $user = $request->user();
         $groupIds = $this->coachGroupIds($request);
 
-        $session = TrainingSession::whereIn('group_id', $groupIds)
-            ->where('status', 'Live')
-            ->findOrFail($id);
+        // Accept a session that is Live OR already Completed. Completing is idempotent:
+        // a coach who re-submits (retry after a failed response, browser back into the
+        // live screen) must get a 200 and the saved data, not a 404 that reads as
+        // "your work was lost" for a session that is in fact finished.
+        $session = TrainingSession::whereIn('group_id', $groupIds)->findOrFail($id);
+
+        if (! in_array($session->status, ['Live', 'Completed'], true)) {
+            return response()->json([
+                'message' => $session->status === 'Cancelled'
+                    ? 'This session was cancelled and cannot be completed.'
+                    : 'This session has not been started yet.',
+            ], 422);
+        }
+
+        $alreadyCompleted = $session->status === 'Completed';
 
         $request->validate([
             'summary_notes' => 'nullable|string',
@@ -453,10 +466,45 @@ class CoachApiController extends Controller
 
         $session->update([
             'status' => 'Completed',
-            'completed_at' => now(),
+            // Keep the original completion time on a re-submit — it is the record of
+            // when the session actually ended, not of when the coach last pressed save.
+            'completed_at' => $session->completed_at ?? now(),
             'summary_notes' => $request->summary_notes,
         ]);
 
+        // Everything past this point is a side effect of an already-persisted
+        // completion: notifications, cache busting, XP recalculation, broadcast.
+        // None of it may turn a successful completion into an error for the coach,
+        // who would otherwise see "failed" for a session that is finished and would
+        // press save again against a session that is no longer Live.
+        try {
+            $this->afterSessionCompleted($request, $session);
+        } catch (\Throwable $e) {
+            Log::error('SESSION_COMPLETE_SIDE_EFFECT_FAILED', [
+                'session_id' => $session->id,
+                'club_id' => $session->club_id,
+                'error' => $e->getMessage(),
+                'at' => $e->getFile().':'.$e->getLine(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Session completed',
+            'already_completed' => $alreadyCompleted,
+            'session' => $session->load([
+                'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation',
+            ]),
+        ]);
+    }
+
+    /**
+     * Fan-out after a session is marked Completed: absence notifications, cache
+     * busting, XP recalculation and the real-time event. Best-effort by design —
+     * the caller runs this inside a try/catch because the completion itself is
+     * already committed.
+     */
+    private function afterSessionCompleted(Request $request, TrainingSession $session): void
+    {
         // ── Absence Alert Notifications ──
         if ($request->has('attendance')) {
             $clubId = app('current_club_id');
@@ -536,10 +584,10 @@ class CoachApiController extends Controller
 
         // Bust dashboard and analytics caches after session completion
         $clubId = app('current_club_id');
-        Cache::forget("dashboard_metrics_{$clubId}");
-        Cache::forget("analytics_coaches_{$clubId}");
-        Cache::forget("analytics_attendance_trend_{$clubId}");
-        Cache::forget("analytics_full_{$clubId}");
+        SafeCache::forget("dashboard_metrics_{$clubId}");
+        SafeCache::forget("analytics_coaches_{$clubId}");
+        SafeCache::forget("analytics_attendance_trend_{$clubId}");
+        SafeCache::forget("analytics_full_{$clubId}");
 
         // Keep stored xp_points in sync with attendance/evaluation changes
         $affectedSwimmerIds = collect($request->input('attendance', []))->pluck('swimmer_id')
@@ -557,15 +605,9 @@ class CoachApiController extends Controller
                 broadcast(new SessionCompleted($session, $swimmerUserIds));
             }
         } catch (\Throwable $e) {
-            \Log::warning('SessionCompleted broadcast failed: '.$e->getMessage());
+            Log::warning('SessionCompleted broadcast failed: '.$e->getMessage());
         }
 
-        return response()->json([
-            'message' => 'Session completed',
-            'session' => $session->load([
-                'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation',
-            ]),
-        ]);
     }
 
     public function sessionRoster(Request $request, int $id): JsonResponse
