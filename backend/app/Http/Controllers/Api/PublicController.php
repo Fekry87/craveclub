@@ -56,50 +56,6 @@ class PublicController extends Controller
         ]);
     }
 
-    /**
-     * Resolve a club a swimmer typed by name (or slug) to exactly one club.
-     *
-     * This backs the app's entry screen, which asks for a club name instead of
-     * listing every club — a swimmer at one club has no business being shown the
-     * others. That only holds if this endpoint refuses to help someone guess, so
-     * the match is EXACT: no partial, prefix or fuzzy matching, and a miss says
-     * only "not found", never how close the guess was.
-     */
-    public function clubLookup(Request $request): JsonResponse
-    {
-        $request->validate(['q' => 'required|string|max:120']);
-
-        // "  Smart   Club " and "smart-club" must both find Smart Club.
-        $needle = trim(preg_replace('/\s+/', ' ', mb_strtolower((string) $request->input('q'))));
-        $asSlug = Str::slug($needle);
-
-        if ($needle === '') {
-            return response()->json(['message' => 'Club not found'], 404);
-        }
-
-        $club = Club::where('is_active', true)
-            ->where(function ($q) use ($needle, $asSlug) {
-                $q->whereRaw('LOWER(slug) = ?', [$asSlug])
-                    ->orWhereRaw('LOWER(TRIM(name)) = ?', [$needle])
-                    ->orWhereRaw('LOWER(TRIM(display_name)) = ?', [$needle]);
-            })
-            ->orderBy('id')
-            ->first();
-
-        if (! $club) {
-            return response()->json(['message' => 'Club not found'], 404);
-        }
-
-        return response()->json([
-            'id' => $club->id,
-            'name' => $club->name,
-            'display_name' => $club->display_name,
-            'slug' => $club->slug,
-            'primary_color' => $club->primary_color,
-            'logo_url' => $club->logo_url,
-        ]);
-    }
-
     public function clubBySlug(string $slug): JsonResponse
     {
         $club = Club::where('slug', $slug)->firstOrFail();
