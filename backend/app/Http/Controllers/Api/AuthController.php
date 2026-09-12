@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\User;
 use App\Support\SafeCache;
+use App\Support\SwimmerLogin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,7 +117,7 @@ class AuthController extends Controller
             return $identifier;
         }
 
-        $digits = preg_replace('/[^0-9]/', '', $identifier);
+        $digits = SwimmerLogin::digits($identifier);
         if ($digits === '' || ! $request->filled('club_slug')) {
             return $identifier;
         }
@@ -126,15 +127,7 @@ class AuthController extends Controller
             return $identifier;
         }
 
-        $user = User::where('club_id', $club->id)
-            ->where(function ($q) use ($digits, $club) {
-                $q->where('email', 'swimmer_'.$digits.'@club'.$club->id.'.craveclubs.local')
-                    ->orWhere('email', 'like', 'swimmer_'.$digits.'\\_%@club'.$club->id.'.craveclubs.local');
-            })
-            ->orderBy('id')
-            ->first();
-
-        return $user?->email ?? $identifier;
+        return SwimmerLogin::resolve($club->id, $digits)?->email ?? $identifier;
     }
 
     /**
