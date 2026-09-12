@@ -13,6 +13,7 @@ use App\Models\SwimmerProfile;
 use App\Models\User;
 use App\Services\AuditService;
 use App\Services\NotificationService;
+use App\Support\SwimmerLogin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -92,14 +93,13 @@ class RegistrationController extends Controller
                 $lastName = $nameParts[1] ?? '';
 
                 // 2. Generate unique email for swimmer account
-                $baseEmail = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'@club'.$clubId.'.craveclubs.local';
-                $email = $baseEmail;
+                $email = SwimmerLogin::email($clubId, $registration->phone);
                 $counter = 1;
                 // withTrashed(): `users.email` is UNIQUE at the database level and soft
                 // deletes leave the row in place, so a skipped trashed match would collide
                 // on insert and surface as an opaque 500 for the whole 30-day window.
                 while (User::withTrashed()->where('email', $email)->exists()) {
-                    $email = 'swimmer_'.preg_replace('/[^0-9]/', '', $registration->phone).'_'.$counter.'@club'.$clubId.'.craveclubs.local';
+                    $email = SwimmerLogin::email($clubId, $registration->phone, $counter);
                     $counter++;
                 }
 
@@ -234,15 +234,7 @@ class RegistrationController extends Controller
             // Match on the deterministic phone-derived email, NOT the display name —
             // two same-named members would otherwise notify the wrong person.
             $clubId = app('current_club_id');
-            $phoneDigits = preg_replace('/[^0-9]/', '', (string) $registration->phone);
-            $swimmerUser = $phoneDigits
-                ? User::where('club_id', $clubId)
-                    ->where(function ($q) use ($phoneDigits, $clubId) {
-                        $q->where('email', 'swimmer_'.$phoneDigits.'@club'.$clubId.'.craveclubs.local')
-                            ->orWhere('email', 'like', 'swimmer_'.$phoneDigits.'\_%@club'.$clubId.'.craveclubs.local');
-                    })
-                    ->first()
-                : null;
+            $swimmerUser = SwimmerLogin::resolve($clubId, $registration->phone);
 
             if ($swimmerUser) {
                 app(NotificationService::class)->notify(

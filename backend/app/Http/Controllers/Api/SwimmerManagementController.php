@@ -162,11 +162,20 @@ class SwimmerManagementController extends Controller
             'swimmer_name' => $swimmer->full_name,
         ]);
 
+        // A swimmer types their phone number, not this address, and a phone reaches
+        // only the oldest account holding it. When the club has a second account for
+        // the same phone, this password is real but unusable that way — the manager
+        // has to relay the email instead, so say so rather than let it look broken.
+        $phone = \App\Support\SwimmerLogin::phoneFromEmail($user->email);
+        $reachableByPhone = \App\Support\SwimmerLogin::isReachableByPhone($user);
+
         return response()->json([
             'message' => 'Password reset. Share these credentials with the swimmer.',
             'credentials' => [
                 'email' => $user->email,
                 'temp_password' => $tempPassword,
+                'phone' => $reachableByPhone ? $phone : null,
+                'phone_login_works' => $reachableByPhone,
             ],
         ]);
     }

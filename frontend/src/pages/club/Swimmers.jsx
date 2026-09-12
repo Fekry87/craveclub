@@ -480,10 +480,25 @@ export default function Swimmers() {
       {resetResult && (
         <Modal title="New login credentials" onClose={() => setResetResult(null)}>
           <p style={{ margin: '0 0 16px', color: '#6E6E73', fontSize: 14, lineHeight: 1.5 }}>
-            Share these with <strong>{resetResult.name}</strong>. They can log in with the
-            phone number or this email, then change the password from their profile.
+            Share these with <strong>{resetResult.name}</strong>. They sign in on the
+            {resetResult.phone_login_works === false ? ' email below' : ' phone number or this email'},
+            then change the password from their profile.
           </p>
+          {resetResult.phone_login_works === false && (
+            <div style={{
+              margin: '0 0 16px', padding: '12px 14px', borderRadius: 10,
+              background: '#FFF4E5', border: '1px solid #FF9500',
+              color: '#7A4A00', fontSize: 13, lineHeight: 1.5,
+            }}>
+              This club has more than one account on that phone number. Signing in by
+              phone reaches the older account, so <strong>{resetResult.name}</strong> must
+              use the email address below — the phone number will reject this password.
+            </div>
+          )}
           {[
+            ...(resetResult.phone === undefined || resetResult.phone === null
+              ? []
+              : [{ label: 'Phone', value: resetResult.phone }]),
             { label: 'Email', value: resetResult.email },
             { label: 'Temporary password', value: resetResult.temp_password },
           ].map((row) => (
