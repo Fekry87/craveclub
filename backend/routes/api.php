@@ -180,14 +180,17 @@ Route::prefix('v1')->group(function () {
     Route::get('/docs', [ApiDocController::class, 'docs']);
 
     // Public
-    Route::get('/clubs', [PublicController::class, 'clubIndex']);
-    Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
-    Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
-    // Exact-match club lookup for the app's entry screen. Throttled because it is
-    // the one public route that answers "does this club exist?", and the whole
-    // point of it is that swimmers cannot browse the club roster.
+    //
+    // There is deliberately no public "list all clubs" route. It used to exist to
+    // populate a club picker in the app, and it handed the whole customer roster
+    // to anyone who opened the URL. Reaching a club now requires already knowing
+    // which one you want, so every route below is throttled the same way: they
+    // each answer "does this club exist?", and guessing must stay expensive
+    // whichever one you ask.
     Route::middleware('throttle:20,1')->group(function () {
         Route::get('/public/club-lookup', [PublicController::class, 'clubLookup']);
+        Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
+        Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
     });
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);

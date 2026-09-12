@@ -80,6 +80,13 @@ class ClubLookupTest extends TestCase
         $this->getJson('/api/v1/public/club-lookup')->assertStatus(422);
     }
 
+    public function test_there_is_no_public_route_that_lists_every_club(): void
+    {
+        // This is the point of the whole feature: the customer roster is not a
+        // public document. If someone re-adds the listing route, this fails.
+        $this->getJson('/api/v1/clubs')->assertStatus(404);
+    }
+
     public function test_response_exposes_only_branding_fields(): void
     {
         $body = $this->lookup('Smart Club')->assertOk()->json();

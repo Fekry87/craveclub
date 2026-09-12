@@ -12,16 +12,6 @@ use Illuminate\Support\Str;
 
 class PublicController extends Controller
 {
-    public function clubIndex(): JsonResponse
-    {
-        $clubs = Club::select('id', 'name', 'display_name', 'slug', 'logo_url', 'primary_color', 'about')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return response()->json(['data' => $clubs]);
-    }
-
     /**
      * Resolve a club a swimmer typed by name (or slug) to exactly one club.
      *
