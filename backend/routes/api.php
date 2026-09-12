@@ -183,6 +183,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/clubs', [PublicController::class, 'clubIndex']);
     Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
     Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
+    // Exact-match club lookup for the app's entry screen. Throttled because it is
+    // the one public route that answers "does this club exist?", and the whole
+    // point of it is that swimmers cannot browse the club roster.
+    Route::middleware('throttle:20,1')->group(function () {
+        Route::get('/public/club-lookup', [PublicController::class, 'clubLookup']);
+    });
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
