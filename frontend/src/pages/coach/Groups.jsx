@@ -18,7 +18,7 @@ function SwimmerChip({ swimmer, removable, onRemove, small }) {
     <div
       onMouseEnter={e => { if (removable) { e.currentTarget.style.borderColor = '#FF3B30'; } }}
       onMouseLeave={e => { if (removable) { e.currentTarget.style.borderColor = '#E5E5EA'; } }}
-      style={{ borderRadius: 16,
+      style={{ borderRadius: 980,
         display: 'flex', alignItems: 'center', gap: small ? 6 : 7,
         padding: small ? '4px 8px 4px 4px' : '5px 10px 5px 5px',
         background: '#FFFFFF', border: '1px solid #E5E5EA',
@@ -27,7 +27,7 @@ function SwimmerChip({ swimmer, removable, onRemove, small }) {
     >
       <div style={{
         width: small ? 22 : 26, height: small ? 22 : 26,
-        background: ac.bg,
+        borderRadius: '50%', background: ac.bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: small ? 9 : 10, fontWeight: 500, color: ac.text,
         fontFamily: 'var(--font-body)', letterSpacing: '-0.02em',
@@ -36,7 +36,7 @@ function SwimmerChip({ swimmer, removable, onRemove, small }) {
       {removable && (
         <button type="button" onClick={e => { e.stopPropagation(); onRemove(); }}
           style={{
-            width: 18, height: 18, border: '1px solid #FF3B30',
+            width: 18, height: 18, borderRadius: '50%', border: '1px solid #FF3B30',
             background: 'transparent', color: '#FF3B30',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', marginInlineStart: 2, padding: 0,
@@ -59,6 +59,7 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
         background: '#FFFFFF',
+        borderRadius: 16,
         border: '1px solid #E5E5EA',
         transition: 'border-color 0.15s ease',
         position: 'relative',
@@ -87,14 +88,14 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
                 onClick={() => navigate(`/coach/swimmers/${s.id}`)}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-                style={{ borderRadius: 16,
+                style={{ borderRadius: 980,
                   display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer',
                   padding: '5px 10px 5px 5px', background: '#FFFFFF', border: '1px solid #E5E5EA',
                   transition: 'border-color 0.15s ease',
                 }}
               >
                 <div style={{
-                  width: 26, height: 26, background: getAvatarColor(`${s.first_name} ${s.last_name}`).bg,
+                  width: 26, height: 26, borderRadius: '50%', background: getAvatarColor(`${s.first_name} ${s.last_name}`).bg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 10, fontWeight: 500, color: getAvatarColor(`${s.first_name} ${s.last_name}`).text,
                   fontFamily: 'var(--font-body)', letterSpacing: '-0.02em',
@@ -112,8 +113,8 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {group.plans.map(p => (
                 <span key={p.id} style={{
-                  padding: '3px 8px', background: 'transparent', border: '1px solid #AEAEB2',
-                  color: '#515154', fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: '14px',
+                  padding: '3px 9px', background: '#F2F2F7', borderRadius: 980,
+                  color: '#515154', fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, lineHeight: '16px',
                 }}>{p.title}</span>
               ))}
             </div>

@@ -257,7 +257,7 @@ export default function Registrations() {
   if (error) {
     return (
       <div style={{
-        background: '#FFFFFF', border: '1px solid #FF3B30',
+        background: '#FFFFFF', border: '1px solid #FF3B30', borderRadius: 16,
         padding: '24px 28px', textAlign: 'center',
       }}>
         <p style={{ color: '#FF3B30', fontSize: 13, margin: '0 0 16px' }}>{error}</p>
@@ -409,7 +409,7 @@ export default function Registrations() {
                     }}
                   >
                     <td style={{ ...tdStyle, ...labelStyle, color: '#6E6E73', padding: '14px 16px' }}>
-                      
+                      {ri + 1}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 500 }}>
                       {reg.swimmer_name ?? reg.full_name}
@@ -418,7 +418,7 @@ export default function Registrations() {
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.branch_name ?? reg.branch?.name ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.coach_name ?? reg.coach?.user?.name ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.plan_name ?? reg.plan?.name ?? '\u2014'}</td>
-                    <td style={{ ...tdStyle, fontWeight: 500, color: '#0071E3' }}>
+                    <td style={{ ...tdStyle, fontWeight: 500, color: '#1D1D1F' }}>
                       {reg.total_amount} {t('common.currency')}
                     </td>
                     <td style={tdStyle}>
@@ -483,7 +483,7 @@ export default function Registrations() {
             /* ── Success view ── */
             <div>
               <div style={{
-                background: '#FFFFFF', border: '1px solid #34C759',
+                background: '#FFFFFF', border: '1px solid #34C759', borderRadius: 12,
                 padding: '20px 22px', marginBottom: 20,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>

@@ -449,9 +449,13 @@ export default function Layout() {
 
         {/* Page content (scrollable) */}
         <div className="page-scroll-area" style={{ flex: 1, padding: '26px clamp(16px, 4vw, 32px) 40px', overflowY: 'auto' }}>
-          <RouteErrorBoundary key={location.pathname}>
-            <Outlet />
-          </RouteErrorBoundary>
+          {/* Shared content container: same 1280px measure as ManagerHomePage, so
+              list/detail pages stop stretching edge-to-edge on wide displays. */}
+          <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+            <RouteErrorBoundary key={location.pathname}>
+              <Outlet />
+            </RouteErrorBoundary>
+          </div>
         </div>
       </main>
     </div>
