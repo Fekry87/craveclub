@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\DailyEvaluation;
+use App\Models\GroupEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
 use App\Models\Registration;
@@ -16,6 +17,16 @@ use Illuminate\Http\Request;
 
 class SwimmerApiController extends Controller
 {
+    /**
+     * Coach-only fields on a training session.
+     *
+     * `summary_notes` is written by the coach after a session, with a prompt that
+     * invites per-swimmer feedback ("swimmer feedback, highlights..."), and nothing
+     * tells the coach the group can read it. Every swimmer-facing response strips
+     * it — including the ones that only carry a session as a nested relation.
+     */
+    private const COACH_ONLY_SESSION_FIELDS = ['summary_notes'];
+
     private function getSwimmerProfile(Request $request): ?SwimmerProfile
     {
         return SwimmerProfile::where('user_id', $request->user()->id)->first();
@@ -35,7 +46,8 @@ class SwimmerApiController extends Controller
             ->orderBy('date')->orderBy('start_time')
             ->take(5)
             ->with(['group', 'plan'])
-            ->get();
+            ->get()
+            ->makeHidden(self::COACH_ONLY_SESSION_FIELDS);
 
         $totalAttendance = Attendance::where('swimmer_id', $profile->id)->count();
         $presentCount = Attendance::where('swimmer_id', $profile->id)->where('present', true)->count();
@@ -45,7 +57,8 @@ class SwimmerApiController extends Controller
             ->with('session.group')
             ->latest()
             ->take(5)
-            ->get();
+            ->get()
+            ->each(fn ($eval) => $eval->session?->makeHidden(self::COACH_ONLY_SESSION_FIELDS));
 
         $avgRating = DailyEvaluation::where('swimmer_id', $profile->id)->avg('rating');
         $bestRating = DailyEvaluation::where('swimmer_id', $profile->id)->max('rating');
@@ -274,7 +287,97 @@ class SwimmerApiController extends Controller
             ->orderBy('date', 'desc')
             ->paginate($request->input('per_page', 15));
 
+        $sessions->getCollection()->makeHidden(self::COACH_ONLY_SESSION_FIELDS);
+
         return response()->json($sessions);
+    }
+
+    /**
+     * One session, with everything a swimmer needs on its detail page.
+     *
+     * Only sessions of the swimmer's own groups resolve. Anything else is a 404,
+     * not a 403, so the endpoint never confirms that another group's session id
+     * exists.
+     *
+     * Built field by field, so no COACH_ONLY_SESSION_FIELDS can slip in. The
+     * club-set `notes` are the ones meant for the group.
+     */
+    public function sessionShow(Request $request, int $session): JsonResponse
+    {
+        $profile = $this->getSwimmerProfile($request);
+        if (! $profile) {
+            return response()->json(['message' => 'Swimmer profile not found'], 404);
+        }
+
+        $groupIds = $profile->groups()->pluck('groups.id');
+
+        $model = TrainingSession::whereIn('group_id', $groupIds)
+            ->with(['group', 'plan', 'branch', 'coach.coachProfile', 'group.coach.coachProfile'])
+            ->find($session);
+
+        if (! $model) {
+            return response()->json(['message' => 'Session not found'], 404);
+        }
+
+        $attendance = Attendance::where('session_id', $model->id)
+            ->where('swimmer_id', $profile->id)
+            ->first();
+
+        $evaluation = DailyEvaluation::where('session_id', $model->id)
+            ->where('swimmer_id', $profile->id)
+            ->first();
+
+        $groupEvaluation = GroupEvaluation::where('session_id', $model->id)
+            ->where('group_id', $model->group_id)
+            ->first();
+
+        // The session's own coach, or the group's coach when none was set on it.
+        $coachUser = $model->coach ?? $model->group?->coach;
+
+        $perAttendance = (int) LeaderboardSetting::forClub($model->club_id)->attendance_xp;
+
+        $start = $model->start_time ? \Carbon\Carbon::parse($model->start_time) : null;
+        $end = $model->end_time ? \Carbon\Carbon::parse($model->end_time) : null;
+
+        return response()->json([
+            'id' => $model->id,
+            'title' => $model->title,
+            'type' => $model->type,
+            'status' => $model->status,
+            'date' => $model->date?->toDateString(),
+            'start_time' => $model->start_time,
+            'end_time' => $model->end_time,
+            'duration_minutes' => $start && $end ? (int) $start->diffInMinutes($end) : null,
+            'location' => $model->location,
+            'started_at' => $model->started_at,
+            'completed_at' => $model->completed_at,
+            'notes' => $model->notes,
+            'group' => $model->group ? ['id' => $model->group->id, 'name' => $model->group->name] : null,
+            'plan' => $model->plan ? ['id' => $model->plan->id, 'title' => $model->plan->title] : null,
+            'branch' => $model->branch ? [
+                'id' => $model->branch->id,
+                'name' => $model->branch->name,
+                'address' => $model->branch->address,
+                'city' => $model->branch->city,
+                'phone' => $model->branch->phone,
+            ] : null,
+            'coach' => $coachUser ? $this->formatCoach($coachUser) : null,
+            'my_attendance' => $attendance ? ['present' => (bool) $attendance->present] : null,
+            'my_evaluation' => $evaluation ? [
+                'rating' => (int) $evaluation->rating,
+                'notes' => $evaluation->notes,
+                'created_at' => $evaluation->created_at,
+            ] : null,
+            'group_evaluation' => $groupEvaluation ? [
+                'rating' => (int) $groupEvaluation->rating,
+                'notes' => $groupEvaluation->notes,
+            ] : null,
+            'xp' => [
+                'per_attendance' => $perAttendance,
+                // Only settled once the session is over and attendance is taken.
+                'earned' => $attendance ? ($attendance->present ? $perAttendance : 0) : null,
+            ],
+        ]);
     }
 
     public function evaluations(Request $request): JsonResponse
@@ -288,6 +391,9 @@ class SwimmerApiController extends Controller
             ->with('session.group')
             ->orderBy('created_at', 'desc')
             ->paginate($request->input('per_page', 15));
+
+        $evaluations->getCollection()
+            ->each(fn ($eval) => $eval->session?->makeHidden(self::COACH_ONLY_SESSION_FIELDS));
 
         return response()->json($evaluations);
     }

@@ -488,6 +488,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/dashboard', [SwimmerApiController::class, 'dashboard']);
             Route::get('/profile', [SwimmerApiController::class, 'profile']);
             Route::get('/sessions', [SwimmerApiController::class, 'sessions']);
+            Route::get('/sessions/{session}', [SwimmerApiController::class, 'sessionShow'])->whereNumber('session');
             Route::get('/stats', [SwimmerApiController::class, 'stats']);
 
             // Training Plan
