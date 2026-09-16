@@ -76,7 +76,7 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
             onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = '#D2D2D7'; }}
             onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = '#E5E5EA'; }}
             style={{
-              padding: '0 10px', height: 30,
+              padding: '0 12px', height: 30, borderRadius: 980,
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
               letterSpacing: '-0.02em',
               background: active ? '#0071E3' : '#FFFFFF',
@@ -122,7 +122,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
           {/* Group dropdown */}
           <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)}
             style={{
-              padding: '0 28px 0 10px', height: 30,
+              padding: '0 28px 0 10px', height: 30, borderRadius: 9,
               fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
               letterSpacing: '-0.02em',
               background: '#FFFFFF', border: `1px solid ${groupFilter ? '#0071E3' : '#E5E5EA'}`,
@@ -156,7 +156,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
           <div style={{ width: 1, height: 22, background: '#E5E5EA' }} />
 
           {/* View toggle */}
-          <div style={{ borderRadius: 16,
+          <div style={{ borderRadius: 10,
             display: 'flex',
             background: '#FFFFFF', border: '1px solid #E5E5EA',
             padding: 2,
@@ -170,7 +170,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
                 onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#86868B'; }}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 30, height: 26, border: 'none', cursor: 'pointer',
+                  width: 30, height: 26, border: 'none', cursor: 'pointer', borderRadius: 8,
                   background: viewMode === v.key ? '#0071E3' : 'transparent',
                   color: viewMode === v.key ? '#FFFFFF' : '#86868B',
                   transition: 'background 0.15s ease, color 0.15s ease',
@@ -254,7 +254,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
         <div style={{ width: 1, height: 20, background: '#E5E5EA' }} />
 
         {/* View toggle */}
-        <div style={{ borderRadius: 16,
+        <div style={{ borderRadius: 10,
           display: 'flex',
           background: '#FFFFFF', border: '1px solid #E5E5EA',
           padding: 2,
@@ -268,7 +268,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
               onMouseLeave={e => { if (viewMode !== v.key) e.currentTarget.style.color = '#86868B'; }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 30, height: 26, border: 'none', cursor: 'pointer',
+                width: 30, height: 26, border: 'none', cursor: 'pointer', borderRadius: 8,
                 background: viewMode === v.key ? '#0071E3' : 'transparent',
                 color: viewMode === v.key ? '#FFFFFF' : '#86868B',
                 transition: 'background 0.15s ease, color 0.15s ease',
@@ -297,7 +297,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
             <div style={{ ...labelMono, color: '#86868B', marginBottom: 6 }}>Group</div>
             <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)}
               style={{
-                padding: '0 28px 0 10px', height: 32,
+                padding: '0 28px 0 10px', height: 32, borderRadius: 9,
                 fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
                 letterSpacing: '-0.02em',
                 background: '#FFFFFF', border: `1px solid ${groupFilter ? '#0071E3' : '#E5E5EA'}`,
