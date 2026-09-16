@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '../../components/ui/Badge';
 
-const STATUS_COLORS = {
-  Scheduled: '#515154',
-  Live:      '#FF9500',
-  Completed: '#34C759',
-  Cancelled: '#86868B',
+const STATUS_VARIANTS = {
+  Scheduled: 'info',
+  Live: 'warning',
+  Completed: 'success',
+  Cancelled: 'neutral',
 };
 
 const labelMono = {
@@ -80,21 +81,6 @@ function StatCard({ title, value, icon, index }) {
   );
 }
 
-function StatusBadge({ status }) {
-  const color = STATUS_COLORS[status] || STATUS_COLORS.Scheduled;
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px',
-      background: 'transparent', border: `1px solid ${color}`, color,
-      fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500,
-      letterSpacing: '-0.02em', lineHeight: '14px',
-      whiteSpace: 'nowrap',
-    }}>
-      {status}
-    </span>
-  );
-}
-
 function SessionCard({ session, index, navigate }) {
   const date = session.date?.split('T')[0];
   const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }) : '';
@@ -127,12 +113,13 @@ function SessionCard({ session, index, navigate }) {
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
         display: 'flex', alignItems: 'center', gap: 18, padding: '16px 20px',
+        borderRadius: 12,
         background: '#FFFFFF', border: '1px solid #E5E5EA',
         transition: 'border-color 0.15s ease',
         animation: `fadeInUp 0.3s ease-out ${0.05 + index * 0.04}s both`, flexWrap: 'wrap',
       }}>
       <div style={{
-        width: 56, height: 60, background: '#F2F2F7', border: '1px solid #E5E5EA',
+        width: 56, height: 60, borderRadius: 10, background: '#F2F2F7', border: '1px solid #E5E5EA',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
         <div style={{ ...labelMono, fontSize: 10, color: '#6E6E73' }}>{dayName}</div>
@@ -143,12 +130,12 @@ function SessionCard({ session, index, navigate }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
           <div style={{
             color: '#1D1D1F', fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-display)',
-            letterSpacing: '-0.02em', lineHeight: 1,
+            letterSpacing: '-0.02em', lineHeight: 1, textTransform: 'capitalize',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {session.title || session.group?.name || 'Training Session'}
           </div>
-          <StatusBadge status={status} />
+          <Badge variant={STATUS_VARIANTS[status] || 'neutral'} label={status} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {session.group?.name && session.title && (
@@ -184,7 +171,7 @@ function LiveSessionBanner({ sessions, navigate }) {
 
   return (
     <div style={{ borderRadius: 16,
-      background: '#F2F2F7', borderRadius: 10, padding: '20px 24px', marginBottom: 20,
+      background: '#F2F2F7', padding: '20px 24px', marginBottom: 20,
       border: '1px solid #FF9500',
       animation: 'fadeInUp 0.3s ease-out 0.05s both',
     }}>
@@ -214,7 +201,7 @@ function LiveSessionBanner({ sessions, navigate }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 color: '#1D1D1F', fontSize: 15, fontWeight: 500, fontFamily: 'var(--font-display)',
-                letterSpacing: '-0.02em', lineHeight: 1,
+                letterSpacing: '-0.02em', lineHeight: 1, textTransform: 'capitalize',
               }}>
                 {s.title || s.group?.name || 'Live Session'}
               </div>

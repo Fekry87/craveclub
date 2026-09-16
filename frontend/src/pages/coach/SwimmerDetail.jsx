@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { Badge } from '../../components/ui/Badge';
 
 const levelConfig = {
-  'Beginner':     { color: '#FF9500' },
-  'Intermediate': { color: '#515154' },
-  'Advanced':     { color: '#1D1D1F' },
+  'Beginner':     { color: '#FF9500', variant: 'warning' },
+  'Intermediate': { color: '#0071E3', variant: 'info' },
+  'Advanced':     { color: '#34C759', variant: 'success' },
 };
 
 const labelMono = {
@@ -66,6 +67,7 @@ function StatCard({ label, value, icon, color, delay = 0, index }) {
         flex: '1 1 0', minWidth: 130,
         padding: '20px 22px',
         background: '#FFFFFF',
+        borderRadius: 16,
         border: '1px solid #E5E5EA',
         transition: 'border-color 0.15s ease',
         display: 'flex', flexDirection: 'column', gap: 18,
@@ -248,7 +250,7 @@ export default function SwimmerDetail() {
             {/* Avatar */}
             <div style={{
               width: 100, height: 100, flexShrink: 0,
-              background: ac.bg,
+              borderRadius: '50%', background: ac.bg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 32, fontWeight: 500,
               fontFamily: 'var(--font-body)', letterSpacing: '-0.02em', color: ac.text,
@@ -264,33 +266,14 @@ export default function SwimmerDetail() {
               }}>{name}</h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
                 {/* Level badge */}
-                <span style={{
-                  padding: '3px 8px', background: 'transparent',
-                  border: `1px solid ${lc.color}`, color: lc.color,
-                  fontFamily: 'var(--font-body)', fontSize: 12, letterSpacing: '-0.02em', lineHeight: '14px',
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                }}>
-                  {swimmer.level}
-                </span>
+                <Badge variant={lc.variant} label={swimmer.level} />
                 {/* Group badges */}
                 {swimmer.groups?.map(g => (
-                  <span key={g.id} style={{
-                    padding: '3px 8px', background: 'transparent',
-                    border: '1px solid #AEAEB2', color: '#6E6E73',
-                    fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: '14px',
-                  }}>{g.name}</span>
+                  <Badge key={g.id} variant="neutral" label={g.name} />
                 ))}
                 {/* DOB */}
                 {swimmer.date_of_birth && (
-                  <span style={{
-                    padding: '3px 8px', background: 'transparent',
-                    border: '1px solid #AEAEB2', color: '#6E6E73',
-                    fontFamily: 'var(--font-body)', fontSize: 12, lineHeight: '14px',
-                    display: 'flex', alignItems: 'center', gap: 5,
-                  }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#86868B" strokeWidth="1.8" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    {swimmer.date_of_birth?.split('T')[0]}
-                  </span>
+                  <Badge variant="neutral" label={swimmer.date_of_birth?.split('T')[0]} />
                 )}
               </div>
             </div>
@@ -359,6 +342,7 @@ export default function SwimmerDetail() {
                   onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
                   style={{
                     padding: isMobile ? '14px 16px' : '16px 20px', background: '#FFFFFF',
+                    borderRadius: 12,
                     border: '1px solid #E5E5EA',
                     transition: 'border-color 0.15s ease',
                     animation: `fadeInUp 0.25s ease-out ${0.2 + i * 0.04}s both`,

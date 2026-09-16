@@ -16,6 +16,7 @@ function Section({ title, icon, children, delay = 0 }) {
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
         background: '#FFFFFF',
+        borderRadius: 16,
         padding: '22px 24px',
         border: '1px solid #E5E5EA',
         transition: 'border-color 0.15s ease',
@@ -149,7 +150,7 @@ function CoachTable({ data, isMobile }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto', border: '1px solid #E5E5EA' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid #E5E5EA', borderRadius: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
@@ -219,7 +220,7 @@ export default function AnalyticsDashboard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', color: '#515154' }}>
           <div style={{
-            width: 32, height: 32, border: '2px solid #E5E5EA',
+            width: 32, height: 32, borderRadius: '50%', border: '2px solid #E5E5EA',
             borderTopColor: '#1D1D1F',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 12px',
@@ -247,9 +248,14 @@ export default function AnalyticsDashboard() {
   const retentionRate = retention.retention_rate_30d ?? 0;
   const totalRegistrations = funnel.submitted_30d ?? 0;
 
-  // Transform data for MiniChart ({ label, value } shape)
-  const growthChartData = growth.map(d => ({ label: d.month?.slice(-5) || '', value: d.total }));
-  const trendChartData = trend.map(d => ({ label: d.week?.slice(-5) || '', value: d.rate }));
+  // Transform data for MiniChart ({ label, value } shape).
+  // Backend keys are raw ("2026-04", "2026-W31") — render "Apr" / "W31".
+  const monthLabel = (m) => {
+    if (!m || !/^\d{4}-\d{2}$/.test(m)) return m || '';
+    return new Date(`${m}-01T00:00:00`).toLocaleDateString(dateLocale(), { month: 'short' });
+  };
+  const growthChartData = growth.map(d => ({ label: monthLabel(d.month), value: d.total }));
+  const trendChartData = trend.map(d => ({ label: d.week?.includes('W') ? `W${d.week.split('W')[1]}` : (d.week || ''), value: d.rate }));
 
   return (
     <div>

@@ -5,10 +5,10 @@ import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextAr
 import { useTranslation } from 'react-i18next';
 
 const STATUS_CONFIG = {
-  Scheduled: { color: '#515154' },
-  Live:      { color: '#FF9500' },
-  Completed: { color: '#34C759' },
-  Cancelled: { color: '#86868B' },
+  Scheduled: { color: '#0071E3', bg: 'rgba(0,113,227,0.12)', text: '#0058B3' },
+  Live:      { color: '#FF9500', bg: 'rgba(255,149,0,0.16)', text: '#A35A00' },
+  Completed: { color: '#34C759', bg: 'rgba(52,199,89,0.14)', text: '#1E7A3B' },
+  Cancelled: { color: '#86868B', bg: '#F2F2F7', text: '#515154' },
 };
 
 const TYPE_CONFIG = {
@@ -24,7 +24,7 @@ const labelMono = {
 };
 
 const pillBase = {
-  background: 'transparent', display: 'inline-flex', alignItems: 'center',
+  background: 'transparent', display: 'inline-flex', alignItems: 'center', borderRadius: 980,
   fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '-0.02em', whiteSpace: 'nowrap',
 };
 
@@ -35,12 +35,12 @@ function StatusBadge({ status, size = 'default' }) {
   return (
     <span style={{
       ...pillBase,
-      padding: isSmall ? '2px 7px' : '3px 8px',
-      fontSize: isSmall ? 10 : 10, lineHeight: '14px',
-      border: `1px solid ${cfg.color}`, color: cfg.color,
+      padding: isSmall ? '2px 8px' : '3px 9px',
+      fontSize: isSmall ? 10 : 11, lineHeight: '14px',
+      background: cfg.bg, color: cfg.text,
       gap: 4,
     }}>
-      {status === 'Live' && <span style={{ width: 5, height: 5, background: '#FF9500', display: 'inline-block' }} />}
+      {status === 'Live' && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#FF9500', display: 'inline-block' }} />}
       {status}
     </span>
   );
@@ -52,9 +52,9 @@ function TypeBadge({ type, size = 'default' }) {
   return (
     <span style={{
       ...pillBase,
-      padding: isSmall ? '2px 7px' : '3px 8px',
-      fontSize: 10, lineHeight: '14px',
-      border: `1px solid ${color}`, color,
+      padding: isSmall ? '2px 8px' : '3px 9px',
+      fontSize: isSmall ? 10 : 11, lineHeight: '14px',
+      background: '#F2F2F7', color,
     }}>{type}</span>
   );
 }
@@ -87,7 +87,7 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
               display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
-            {f.color && <span style={{ width: 5, height: 5, background: f.color, display: 'inline-block' }} />}
+            {f.color && <span style={{ width: 5, height: 5, borderRadius: '50%', background: f.color, display: 'inline-block' }} />}
             {f.label}
             <span style={{ color: active ? '#AEAEB2' : '#86868B' }}>{f.count}</span>
           </button>
@@ -415,6 +415,7 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
       style={{
         background: '#FFFFFF',
+        borderRadius: 12,
         border: '1px solid #E5E5EA',
         borderInlineStart: `3px solid ${statusCfg.color}`,
         transition: 'border-color 0.15s ease',
@@ -430,7 +431,7 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
             <span style={{
               color: '#1D1D1F', fontSize: 15, fontWeight: 500, fontFamily: 'var(--font-display)',
-              letterSpacing: '-0.02em', lineHeight: 1,
+              letterSpacing: '-0.02em', lineHeight: 1, textTransform: 'capitalize',
             }}>
               {session.title || session.group?.name || 'Session'}
             </span>
@@ -464,7 +465,7 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{
                 color: '#1D1D1F', fontSize: 15, fontWeight: 500,
-                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1,
+                fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, textTransform: 'capitalize',
               }}>
                 {session.title || session.group?.name || 'Session'}
               </span>
@@ -570,7 +571,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
       </div>
 
       {/* Calendar grid */}
-      <div style={{ border: '1px solid #E5E5EA' }}>
+      <div style={{ border: '1px solid #E5E5EA', borderRadius: 12, overflow: 'hidden' }}>
         {/* Day headers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: '#F2F2F7' }}>
           {DAY_LABELS.map(d => (
@@ -591,7 +592,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 3,
                   borderBottom: '1px solid #E5E5EA',
                   borderInlineEnd: (i + 1) % 7 !== 0 ? '1px solid #E5E5EA' : 'none',
-                  background: '#FAFAFA',
+                  background: '#F5F5F7',
                 }}>
                   <span style={{ fontSize: 11, color: '#E5E5EA', fontWeight: 400, fontFamily: 'var(--font-body)' }}>{cell.day}</span>
                 </div>
@@ -627,15 +628,15 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
                   fontFamily: 'var(--font-body)', lineHeight: 1,
                   width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: isToday ? '#0071E3' : 'transparent',
-                  color: isToday ? '#1D1D1F' : isSelected ? '#F5F5F7' : count > 0 ? '#1D1D1F' : '#AEAEB2',
+                  color: isToday ? '#FFFFFF' : isSelected ? '#FFFFFF' : count > 0 ? '#1D1D1F' : '#AEAEB2',
                 }}>{cell.day}</span>
 
                 {/* Session dots */}
                 {count > 0 && (
                   <div style={{ display: 'flex', gap: 2 }}>
-                    {hasLive && <span style={{ width: 4, height: 4, background: '#FF9500' }} />}
-                    {hasScheduled && <span style={{ width: 4, height: 4, background: isSelected ? '#F5F5F7' : '#515154' }} />}
-                    {hasCompleted && <span style={{ width: 4, height: 4, background: '#34C759' }} />}
+                    {hasLive && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#FF9500' }} />}
+                    {hasScheduled && <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? '#FFFFFF' : '#0071E3' }} />}
+                    {hasCompleted && <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#34C759' }} />}
                   </div>
                 )}
               </button>
