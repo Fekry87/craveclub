@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
@@ -17,6 +17,7 @@ const TYPE_CONFIG = {
 };
 
 const SESSION_TYPES = ['General','Technique','Endurance','Speed','Test','Recovery','Custom'];
+const DONE_STATUSES = ['Completed', 'Cancelled'];
 const DAY_LABELS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 
 const labelMono = {
@@ -60,16 +61,57 @@ function TypeBadge({ type, size = 'default' }) {
 }
 
 /* ─── Status filter pills (shared) ─── */
-function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
+/* ─── Upcoming / Done primary tabs ─── */
+function TimeTabs({ timeTab, onTabChange, statusCounts, fullWidth = false }) {
+  const tabs = [
+    { key: 'upcoming', label: 'Upcoming', count: (statusCounts.Scheduled || 0) + (statusCounts.Live || 0) },
+    { key: 'done', label: 'Done', count: (statusCounts.Completed || 0) + (statusCounts.Cancelled || 0) },
+  ];
+  return (
+    <div style={{
+      borderRadius: 10, display: 'flex', padding: 2, flexShrink: 0,
+      background: '#F2F2F7', border: '1px solid #E5E5EA',
+      width: fullWidth ? '100%' : 'auto',
+    }}>
+      {tabs.map(tab => {
+        const active = timeTab === tab.key;
+        return (
+          <button key={tab.key} type="button" onClick={() => onTabChange(tab.key)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '0 14px', height: 28, border: 'none', cursor: 'pointer', borderRadius: 8,
+              flex: fullWidth ? 1 : 'none',
+              fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, letterSpacing: '-0.02em',
+              background: active ? '#FFFFFF' : 'transparent',
+              color: active ? '#1D1D1F' : '#6E6E73',
+              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
+            }}
+          >
+            {tab.label}
+            <span style={{ color: active ? '#86868B' : '#AEAEB2' }}>{tab.count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatusPills({ statusFilter, setStatusFilter, statusCounts, timeTab = 'upcoming' }) {
+  const pills = timeTab === 'done'
+    ? [
+      { key: '', label: 'All', count: (statusCounts.Completed || 0) + (statusCounts.Cancelled || 0) },
+      { key: 'Completed', label: 'Done', count: statusCounts.Completed, color: '#34C759' },
+      { key: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled, color: '#515154' },
+    ]
+    : [
+      { key: '', label: 'All', count: (statusCounts.Scheduled || 0) + (statusCounts.Live || 0) },
+      { key: 'Scheduled', label: 'Scheduled', count: statusCounts.Scheduled, color: '#0071E3' },
+      { key: 'Live', label: 'Live', count: statusCounts.Live, color: '#FF9500' },
+    ];
   return (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {[
-        { key: '', label: 'All', count: statusCounts.all },
-        { key: 'Scheduled', label: 'Scheduled', count: statusCounts.Scheduled, color: '#0071E3' },
-        { key: 'Live', label: 'Live', count: statusCounts.Live, color: '#FF9500' },
-        { key: 'Completed', label: 'Done', count: statusCounts.Completed, color: '#34C759' },
-        { key: 'Cancelled', label: 'Cancelled', count: statusCounts.Cancelled, color: '#515154' },
-      ].map(f => {
+      {pills.map(f => {
         const active = statusFilter === f.key;
         return (
           <button key={f.key} type="button" onClick={() => setStatusFilter(active && f.key ? '' : f.key)}
@@ -98,7 +140,7 @@ function StatusPills({ statusFilter, setStatusFilter, statusCounts }) {
 }
 
 /* ─── Toolbar ─────────────────────────────────────────── */
-function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, groups = [], statusCounts, viewMode, setViewMode, isMobile }) {
+function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, groups = [], statusCounts, viewMode, setViewMode, isMobile, timeTab, onTabChange }) {
   const [expanded, setExpanded] = useState(false);
   const safeGroups = Array.isArray(groups) ? groups : [];
   const activeGroupLabel = groupFilter ? (safeGroups.find(g => String(g.id) === String(groupFilter))?.name || 'Group') : 'All Groups';
@@ -112,9 +154,13 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
         padding: '12px 16px', background: '#FFFFFF',
         border: '1px solid #E5E5EA',
       }}>
-        {/* Row 1: Status pills + group select + count + view toggle */}
+        {/* Row 1: Upcoming/Done tabs + status pills + group select + count + view toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} />
+          <TimeTabs timeTab={timeTab} onTabChange={onTabChange} statusCounts={statusCounts} />
+
+          <div style={{ width: 1, height: 22, background: '#E5E5EA', flexShrink: 0 }} />
+
+          <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} timeTab={timeTab} />
 
           {/* Divider */}
           <div style={{ width: 1, height: 22, background: '#E5E5EA', flexShrink: 0 }} />
@@ -188,6 +234,10 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
   /* ─── Mobile: collapsible toolbar ─── */
   return (
     <div style={{ marginBottom: 16, animation: 'fadeIn 0.3s ease-out' }}>
+      {/* Upcoming/Done tabs */}
+      <div style={{ marginBottom: 8 }}>
+        <TimeTabs timeTab={timeTab} onTabChange={onTabChange} statusCounts={statusCounts} fullWidth />
+      </div>
       {/* Main toolbar row */}
       <div style={{ borderRadius: 16,
         display: 'flex', alignItems: 'center', gap: 8,
@@ -291,7 +341,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
         }}>
           <div style={{ marginBottom: 10 }}>
             <div style={{ ...labelMono, color: '#86868B', marginBottom: 6 }}>Status</div>
-            <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} />
+            <StatusPills statusFilter={statusFilter} setStatusFilter={setStatusFilter} statusCounts={statusCounts} timeTab={timeTab} />
           </div>
           <div>
             <div style={{ ...labelMono, color: '#86868B', marginBottom: 6 }}>Group</div>
@@ -693,6 +743,7 @@ export default function CoachSessions() {
   const [statusFilter, setStatusFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [viewMode, setViewMode] = useState('list');
+  const [timeTab, setTimeTab] = useState('upcoming');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [statusCounts, setStatusCounts] = useState({ all: 0, Scheduled: 0, Live: 0, Completed: 0, Cancelled: 0 });
@@ -718,6 +769,24 @@ export default function CoachSessions() {
   };
 
   useEffect(() => { load(); }, [statusFilter, groupFilter]);
+
+  // Switching between Upcoming and Done clears a status filter that belongs to the other tab
+  const handleTabChange = (tab) => {
+    setTimeTab(tab);
+    setStatusFilter('');
+  };
+
+  // Upcoming: today first, then the days after it (an overdue Scheduled session
+  // naturally sorts to the very top, where it needs attention).
+  // Done: most recent first.
+  const visibleSessions = useMemo(() => {
+    const isDone = (st) => DONE_STATUSES.includes(st);
+    const inTab = sessions.filter(sess => (timeTab === 'done' ? isDone(sess.status) : !isDone(sess.status)));
+    const sortKey = (sess) => `${(sess.date || '').split('T')[0]} ${sess.start_time || ''}`;
+    return [...inTab].sort((a, b) => (
+      timeTab === 'done' ? sortKey(b).localeCompare(sortKey(a)) : sortKey(a).localeCompare(sortKey(b))
+    ));
+  }, [sessions, timeTab]);
   useEffect(() => {
     api.get('/coach/groups').then(r => setGroups(r.data?.data || r.data || [])).catch(() => {});
     api.get('/coach/swimmers').then(r => setAllSwimmers(r.data || [])).catch(() => {});
@@ -902,20 +971,25 @@ export default function CoachSessions() {
         groups={groups} statusCounts={statusCounts}
         viewMode={viewMode} setViewMode={setViewMode}
         isMobile={isMobile}
+        timeTab={timeTab} onTabChange={handleTabChange}
       />
 
       {/* Content */}
       {viewMode === 'list' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'fadeInUp 0.4s ease-out' }}>
-          {sessions.length > 0 ? sessions.map((s, i) => (
+          {visibleSessions.length > 0 ? visibleSessions.map((s, i) => (
             <SessionCard key={s.id} session={s} index={i} onEdit={handleEdit} onDelete={handleDelete} onStart={handleStart} onContinue={handleContinue} isMobile={isMobile} />
           )) : (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#86868B' }}>
               <div style={{ borderRadius: 14, width: 56, height: 56, background: '#F2F2F7', border: '1px solid #E5E5EA', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
-              <div style={{ color: '#1D1D1F', fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8 }}>No sessions found</div>
-              <div style={labelMono}>Create your first session to get started</div>
+              <div style={{ color: '#1D1D1F', fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8 }}>
+                {timeTab === 'done' ? 'No completed sessions yet' : 'No upcoming sessions'}
+              </div>
+              <div style={labelMono}>
+                {timeTab === 'done' ? 'Sessions you complete will show up here' : 'Create your first session to get started'}
+              </div>
             </div>
           )}
         </div>
