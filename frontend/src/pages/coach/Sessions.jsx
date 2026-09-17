@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { PageHeader, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 import { useTranslation } from 'react-i18next';
+import { CancelSessionModal, CancellationNote } from '../../components/CancelSessionModal';
 
 const STATUS_CONFIG = {
   Scheduled: { color: '#0071E3', bg: 'rgba(0,113,227,0.12)', text: '#0058B3' },
@@ -376,7 +377,7 @@ function Toolbar({ statusFilter, setStatusFilter, groupFilter, setGroupFilter, g
 }
 
 /* ─── Action Buttons (shared between desktop/mobile) ─── */
-function SessionActions({ session, onStart, onContinue, onEdit, onDelete, layout = 'row' }) {
+function SessionActions({ session, onStart, onContinue, onEdit, onCancel, layout = 'row' }) {
   const isCol = layout === 'column';
   return (
     <div style={{ display: 'flex', flexDirection: isCol ? 'column' : 'row', alignItems: 'center', gap: 6 }}>
@@ -399,10 +400,11 @@ function SessionActions({ session, onStart, onContinue, onEdit, onDelete, layout
           <button type="button" onClick={() => onEdit(session)} title="Edit" className="pl-icon-btn">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           </button>
-          <button type="button" onClick={() => onDelete(session)} title="Delete" className="pl-icon-btn"
+          {/* Cancel, never delete: the session stays on record and swimmers are told why. */}
+          <button type="button" onClick={() => onCancel(session)} title="Cancel session" aria-label="Cancel session" className="pl-icon-btn"
             onMouseEnter={e => { e.currentTarget.style.color = '#FF3B30'; e.currentTarget.style.borderColor = '#FF3B30'; }}
             onMouseLeave={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" /></svg>
           </button>
         </div>
       )}
@@ -452,7 +454,7 @@ function SessionMeta({ session, compact, dateLabel }) {
 }
 
 /* ─── Session Card ────────────────────────────────────────────── */
-function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, compact, isMobile }) {
+function SessionCard({ session, index, onEdit, onCancel, onStart, onContinue, compact, isMobile }) {
   const date = session.date?.split('T')[0];
   const dateObj = date ? new Date(date + 'T00:00:00') : null;
   const dateLabel = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '';
@@ -500,10 +502,11 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
           {/* Meta */}
           <div style={{ marginBottom: 10 }}>
             <SessionMeta session={session} compact={compact} dateLabel={dateLabel} />
+            <CancellationNote session={session} style={{ marginTop: 6 }} />
           </div>
           {/* Actions — full width */}
           <div style={{ paddingTop: 8, borderTop: '1px solid #E5E5EA' }}>
-            <SessionActions session={session} onStart={onStart} onContinue={onContinue} onEdit={onEdit} onDelete={onDelete} layout="row" />
+            <SessionActions session={session} onStart={onStart} onContinue={onContinue} onEdit={onEdit} onCancel={onCancel} layout="row" />
           </div>
         </div>
       ) : (
@@ -532,11 +535,12 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
               </span>
               <SessionMeta session={session} compact={compact} dateLabel={dateLabel} />
             </div>
+            <CancellationNote session={session} style={{ marginTop: 2 }} />
           </div>
 
           {/* Actions — compact, right side */}
           <div style={{ flexShrink: 0 }}>
-            <SessionActions session={session} onStart={onStart} onContinue={onContinue} onEdit={onEdit} onDelete={onDelete} layout="row" />
+            <SessionActions session={session} onStart={onStart} onContinue={onContinue} onEdit={onEdit} onCancel={onCancel} layout="row" />
           </div>
         </div>
       )}
@@ -545,7 +549,7 @@ function SessionCard({ session, index, onEdit, onDelete, onStart, onContinue, co
 }
 
 /* ─── Calendar View ──────────────────────────────────────────── */
-function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobile }) {
+function CalendarView({ sessions, onStart, onContinue, onEdit, onCancel, isMobile }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -718,7 +722,7 @@ function CalendarView({ sessions, onStart, onContinue, onEdit, onDelete, isMobil
           {selectedSessions.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {selectedSessions.map((s, i) => (
-                <SessionCard key={s.id} session={s} index={i} onEdit={onEdit} onDelete={onDelete} onStart={onStart} onContinue={onContinue} compact isMobile={isMobile} />
+                <SessionCard key={s.id} session={s} index={i} onEdit={onEdit} onCancel={onCancel} onStart={onStart} onContinue={onContinue} compact isMobile={isMobile} />
               ))}
             </div>
           ) : (
@@ -757,6 +761,8 @@ export default function CoachSessions() {
   const [showAddSwimmer, setShowAddSwimmer] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  // The session whose cancel dialog is open.
+  const [cancelTarget, setCancelTarget] = useState(null);
 
   const load = () => {
     const params = {};
@@ -833,7 +839,7 @@ export default function CoachSessions() {
     setShowModal(true);
   };
 
-  const handleDelete = async (s) => { if (confirm('Delete this session?')) { await api.delete(`/coach/sessions/${s.id}`); load(); } };
+  const handleCancel = (s) => setCancelTarget(s);
   const handleStart = async (s) => { try { await api.post(`/coach/sessions/${s.id}/start`); navigate(`/coach/sessions/${s.id}/live`); } catch { alert('Could not start session'); } };
   const handleContinue = (s) => navigate(`/coach/sessions/${s.id}/live`);
 
@@ -978,17 +984,17 @@ export default function CoachSessions() {
       {viewMode === 'list' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'fadeInUp 0.4s ease-out' }}>
           {visibleSessions.length > 0 ? visibleSessions.map((s, i) => (
-            <SessionCard key={s.id} session={s} index={i} onEdit={handleEdit} onDelete={handleDelete} onStart={handleStart} onContinue={handleContinue} isMobile={isMobile} />
+            <SessionCard key={s.id} session={s} index={i} onEdit={handleEdit} onCancel={handleCancel} onStart={handleStart} onContinue={handleContinue} isMobile={isMobile} />
           )) : (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#86868B' }}>
               <div style={{ borderRadius: 14, width: 56, height: 56, background: '#F2F2F7', border: '1px solid #E5E5EA', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" strokeWidth="1.5" strokeLinecap="round"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
               <div style={{ color: '#1D1D1F', fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8 }}>
-                {timeTab === 'done' ? 'No completed sessions yet' : 'No upcoming sessions'}
+                {timeTab === 'done' ? 'No completed or cancelled sessions yet' : 'No upcoming sessions'}
               </div>
               <div style={labelMono}>
-                {timeTab === 'done' ? 'Sessions you complete will show up here' : 'Create your first session to get started'}
+                {timeTab === 'done' ? 'Sessions you complete or cancel will show up here' : 'Create your first session to get started'}
               </div>
             </div>
           )}
@@ -998,8 +1004,17 @@ export default function CoachSessions() {
           background: '#FFFFFF',
           padding: '18px', border: '1px solid #E5E5EA',
         }}>
-          <CalendarView sessions={sessions} onStart={handleStart} onContinue={handleContinue} onEdit={handleEdit} onDelete={handleDelete} isMobile={isMobile} />
+          <CalendarView sessions={sessions} onStart={handleStart} onContinue={handleContinue} onEdit={handleEdit} onCancel={handleCancel} isMobile={isMobile} />
         </div>
+      )}
+
+      {cancelTarget && (
+        <CancelSessionModal
+          session={cancelTarget}
+          endpoint={`/coach/sessions/${cancelTarget.id}/cancel`}
+          onClose={() => setCancelTarget(null)}
+          onCancelled={() => { setCancelTarget(null); load(); }}
+        />
       )}
 
     </div>

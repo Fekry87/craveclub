@@ -10,6 +10,7 @@ use App\Models\CoachProfile;
 use App\Models\DailyEvaluation;
 use App\Models\Group;
 use App\Models\TrainingSession;
+use App\Services\SessionCancellationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -47,7 +48,8 @@ class SessionManagementController extends Controller
     public function sessionIndex(Request $request): JsonResponse
     {
         // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
-        $query = TrainingSession::where('club_id', app('current_club_id'))->with(['group', 'plan']);
+        $query = TrainingSession::where('club_id', app('current_club_id'))
+            ->with(['group', 'plan', 'coach:id,name', 'group.coach:id,name', 'cancelledBy:id,name']);
         if ($date = $request->input('date')) {
             $query->where('date', $date);
         }
@@ -56,6 +58,16 @@ class SessionManagementController extends Controller
         }
         if ($branchId = $request->input('branch_id')) {
             $query->where('branch_id', $branchId);
+        }
+
+        // Counts per status for the page's tabs, before the status filter narrows
+        // the rows.
+        $statusCounts = (clone $query)->toBase()->reorder()
+            ->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status');
+
+        // `status=Completed,Cancelled` — the manager's Done and Cancelled tabs.
+        if ($status = $request->input('status')) {
+            $query->whereIn('status', array_filter(explode(',', $status)));
         }
         if ($request->boolean('with_attendance')) {
             $query->withCount([
@@ -66,7 +78,15 @@ class SessionManagementController extends Controller
 
         $sessions = $query->orderBy('date', 'desc')->orderBy('start_time')->get();
 
-        return response()->json(['data' => $sessions]);
+        return response()->json([
+            'data' => $sessions,
+            'status_counts' => [
+                'Scheduled' => (int) $statusCounts->get('Scheduled', 0),
+                'Live' => (int) $statusCounts->get('Live', 0),
+                'Completed' => (int) $statusCounts->get('Completed', 0),
+                'Cancelled' => (int) $statusCounts->get('Cancelled', 0),
+            ],
+        ]);
     }
 
     public function sessionStore(StoreSessionRequest $request): JsonResponse
@@ -119,7 +139,7 @@ class SessionManagementController extends Controller
     {
         $this->assertOwnership($session);
 
-        return response()->json($session->load(['group.swimmers', 'plan.items', 'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation']));
+        return response()->json($session->load(['group.swimmers', 'plan.items', 'attendances.swimmer', 'evaluations.swimmer', 'groupEvaluation', 'cancelledBy:id,name']));
     }
 
     public function sessionAttendance(TrainingSession $session): JsonResponse
@@ -177,11 +197,22 @@ class SessionManagementController extends Controller
         return response()->json($session->load(['group', 'plan']));
     }
 
-    public function sessionDestroy(TrainingSession $session): JsonResponse
+    /**
+     * Cancel a scheduled session. Sessions are never deleted: the record stays
+     * with the reason, and the roster (and the coach) are notified.
+     */
+    public function sessionCancel(Request $request, TrainingSession $session, SessionCancellationService $cancellation): JsonResponse
     {
         $this->assertOwnership($session);
-        $session->delete();
 
-        return response()->json(['message' => 'Session deleted']);
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        if (! $cancellation->cancel($session, $request->user(), $request->input('reason'))) {
+            return response()->json(['message' => 'Only scheduled sessions can be cancelled.'], 422);
+        }
+
+        return response()->json($session->refresh()->load(['group', 'plan', 'cancelledBy:id,name']));
     }
 }

@@ -343,7 +343,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/sessions/{session}', [SessionManagementController::class, 'sessionShow']);
             Route::get('/sessions/{session}/attendance', [SessionManagementController::class, 'sessionAttendance']);
             Route::put('/sessions/{session}', [SessionManagementController::class, 'sessionUpdate']);
-            Route::delete('/sessions/{session}', [SessionManagementController::class, 'sessionDestroy']);
+            // No DELETE: sessions are cancelled, never erased (see SessionCancellationService).
+            Route::post('/sessions/{session}/cancel', [SessionManagementController::class, 'sessionCancel']);
 
             // Branches
             Route::apiResource('branches', BranchController::class);
@@ -452,7 +453,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/sessions', [CoachApiController::class, 'sessionStore']);
             Route::get('/sessions/{session}', [CoachApiController::class, 'sessionShow']);
             Route::put('/sessions/{session}', [CoachApiController::class, 'sessionUpdate']);
-            Route::delete('/sessions/{session}', [CoachApiController::class, 'sessionDestroy']);
+            // No DELETE: sessions are cancelled, never erased (see SessionCancellationService).
 
             // Session lifecycle
             Route::post('/sessions/{session}/start', [CoachApiController::class, 'sessionStart']);
