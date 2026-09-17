@@ -97,6 +97,45 @@ class CorporateController extends Controller
     }
 
     /**
+     * Upload a photo into one of the entry screen's slots (1–3). The app
+     * cross-fades through the filled slots.
+     *
+     * Stored only in the database, like the platform logo. The proxy URL
+     * carries the content hash, so a replaced photo busts the app's cache.
+     */
+    public function uploadEntryPhoto(Request $request, int $slot): JsonResponse
+    {
+        abort_unless(in_array($slot, CorporateSetting::ENTRY_PHOTO_SLOTS, true), 404);
+
+        [$file, $mime, , $hash] = $this->validatedBrandingImage($request, 'corporate_entry_photo_uploads');
+
+        CorporateSetting::set("entry_photo_{$slot}_data", base64_encode(file_get_contents($file->getRealPath())));
+        CorporateSetting::set("entry_photo_{$slot}_mime", $mime);
+        CorporateSetting::set("entry_photo_{$slot}_version", $hash);
+
+        return response()->json([
+            'slot' => $slot,
+            'url' => rtrim($request->getSchemeAndHttpHost(), '/')."/api/v1/public/branding/entry-photo/{$slot}?v={$hash}",
+        ]);
+    }
+
+    /**
+     * Empty one of the entry screen's photo slots.
+     */
+    public function deleteEntryPhoto(int $slot): JsonResponse
+    {
+        abort_unless(in_array($slot, CorporateSetting::ENTRY_PHOTO_SLOTS, true), 404);
+
+        CorporateSetting::whereIn('key', [
+            "entry_photo_{$slot}_data",
+            "entry_photo_{$slot}_mime",
+            "entry_photo_{$slot}_version",
+        ])->delete();
+
+        return response()->json(['slot' => $slot, 'url' => null]);
+    }
+
+    /**
      * Validate an uploaded branding image and count it against a per-hour quota.
      *
      * The type is taken from the file's content, not its name, and only PNG,
