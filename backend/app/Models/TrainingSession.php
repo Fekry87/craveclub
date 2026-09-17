@@ -16,6 +16,7 @@ class TrainingSession extends Model
         'title', 'type', 'status',
         'date', 'start_time', 'end_time', 'location', 'notes',
         'started_at', 'completed_at', 'summary_notes',
+        'cancellation_reason', 'cancelled_at', 'cancelled_by_user_id',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class TrainingSession extends Model
             'date' => 'date',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -45,6 +47,11 @@ class TrainingSession extends Model
     public function coach()
     {
         return $this->belongsTo(User::class, 'coach_user_id');
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_user_id');
     }
 
     public function recurringSchedule()

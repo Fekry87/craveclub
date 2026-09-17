@@ -91,6 +91,21 @@ export default function SessionDetailPage() {
           </div>
           <Badge variant={statusVariant} label={session.status} />
         </div>
+        {session.status === 'Cancelled' && (
+          <div role="note" style={{
+            marginTop: 16, padding: '12px 16px', borderRadius: 12,
+            background: 'rgba(255,59,48,0.08)', color: '#1D1D1F',
+            fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5,
+          }}>
+            <div style={{ color: '#B12A20', fontWeight: 600, marginBottom: 2 }}>Cancelled</div>
+            <div style={{ overflowWrap: 'anywhere' }}>{session.cancellation_reason || 'No reason recorded.'}</div>
+            {(session.cancelled_by?.name || session.cancelled_at) && (
+              <div style={{ ...labelStyle, marginTop: 4 }}>
+                {[session.cancelled_by?.name, session.cancelled_at && new Date(session.cancelled_at).toLocaleString()].filter(Boolean).join(' · ')}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Details Grid */}

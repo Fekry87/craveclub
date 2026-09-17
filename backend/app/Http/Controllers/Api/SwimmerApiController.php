@@ -24,8 +24,10 @@ class SwimmerApiController extends Controller
      * invites per-swimmer feedback ("swimmer feedback, highlights..."), and nothing
      * tells the coach the group can read it. Every swimmer-facing response strips
      * it — including the ones that only carry a session as a nested relation.
+     *
+     * `cancelled_by_user_id` is internal bookkeeping; swimmers get the reason.
      */
-    private const COACH_ONLY_SESSION_FIELDS = ['summary_notes'];
+    private const COACH_ONLY_SESSION_FIELDS = ['summary_notes', 'cancelled_by_user_id'];
 
     private function getSwimmerProfile(Request $request): ?SwimmerProfile
     {
@@ -359,6 +361,8 @@ class SwimmerApiController extends Controller
             'location' => $model->location,
             'started_at' => $model->started_at,
             'completed_at' => $model->completed_at,
+            'cancellation_reason' => $model->status === 'Cancelled' ? $model->cancellation_reason : null,
+            'cancelled_at' => $model->cancelled_at,
             'notes' => $model->notes,
             'group' => $model->group ? ['id' => $model->group->id, 'name' => $model->group->name] : null,
             'plan' => $model->plan ? ['id' => $model->plan->id, 'title' => $model->plan->title] : null,

@@ -255,12 +255,14 @@ class ManagementCrudTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_manager_can_delete_session(): void
+    public function test_manager_cancels_a_session_instead_of_deleting_it(): void
     {
-        $response = $this->actingAs($this->manager, 'sanctum')
-            ->deleteJson("/api/v1/club/sessions/{$this->session->id}");
+        $this->actingAs($this->manager, 'sanctum')
+            ->postJson("/api/v1/club/sessions/{$this->session->id}/cancel", ['reason' => 'Coach is ill'])
+            ->assertOk()
+            ->assertJsonFragment(['status' => 'Cancelled']);
 
-        $response->assertOk();
+        $this->assertDatabaseHas('training_sessions', ['id' => $this->session->id, 'deleted_at' => null]);
     }
 
     // ── Subscription Plans ────────────────────────────────

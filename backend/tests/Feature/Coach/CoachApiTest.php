@@ -270,13 +270,14 @@ class CoachApiTest extends TestCase
         $this->assertDatabaseHas('training_sessions', ['id' => $this->session->id, 'location' => 'Updated Pool']);
     }
 
-    public function test_coach_can_delete_scheduled_session(): void
+    public function test_coach_cancels_a_scheduled_session_instead_of_deleting_it(): void
     {
-        $response = $this->actingAs($this->coach, 'sanctum')
-            ->deleteJson("/api/v1/coach/sessions/{$this->session->id}");
+        $this->actingAs($this->coach, 'sanctum')
+            ->postJson("/api/v1/coach/sessions/{$this->session->id}/cancel", ['reason' => 'Pool maintenance'])
+            ->assertOk()
+            ->assertJsonFragment(['status' => 'Cancelled', 'cancellation_reason' => 'Pool maintenance']);
 
-        $response->assertOk()
-            ->assertJsonFragment(['message' => 'Session deleted']);
+        $this->assertDatabaseHas('training_sessions', ['id' => $this->session->id, 'deleted_at' => null]);
     }
 
     // ── Session Lifecycle ──────────────────────────────────
