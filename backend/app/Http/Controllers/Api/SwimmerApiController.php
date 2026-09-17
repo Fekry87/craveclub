@@ -136,6 +136,7 @@ class SwimmerApiController extends Controller
 
             $subscription = [
                 'plan_name' => $registration->plan->name,
+                'training_type' => $registration->plan->training_type,
                 'duration_months' => $registration->plan->duration_months,
                 // `price` is the plan's list price; `amount_paid` is what this member was
                 // actually billed, taken from their own registration rather than

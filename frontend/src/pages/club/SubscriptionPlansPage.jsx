@@ -7,8 +7,12 @@ import { FormPage, FormPageActions } from '../../components/ui/FormPage';
 import { Badge } from '../../components/ui/Badge';
 import { cardStyle, labelStyle } from '../../components/ui/styles';
 
+// Mirrors SubscriptionPlan::TRAINING_TYPES on the backend, in display order.
+const TRAINING_TYPES = ['daily', 'two_days', 'three_days', 'private'];
+
 const emptyForm = {
   name: '',
+  training_type: 'daily',
   duration_months: 1,
   price: '',
   discount_percent: 0,
@@ -25,8 +29,13 @@ export default function SubscriptionPlansPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // The type whose plans are on screen; a new plan starts in it.
+  const [typeTab, setTypeTab] = useState('daily');
 
   useEffect(() => { loadPlans(); }, []);
+
+  const plansOfType = (type) => (plans ?? []).filter(p => (p.training_type || 'daily') === type);
+  const visiblePlans = plansOfType(typeTab);
 
   const loadPlans = () => {
     setLoadError('');
@@ -42,7 +51,7 @@ export default function SubscriptionPlansPage() {
   };
 
   const openCreate = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, training_type: typeTab });
     setError('');
     setEditPlan(null);
     setModal('create');
@@ -51,6 +60,7 @@ export default function SubscriptionPlansPage() {
   const openEdit = (plan) => {
     setForm({
       name: plan.name || '',
+      training_type: plan.training_type || 'daily',
       duration_months: plan.duration_months ?? 1,
       price: plan.price ?? '',
       discount_percent: plan.discount_percent ?? 0,
@@ -91,6 +101,7 @@ export default function SubscriptionPlansPage() {
         const updated = result.data ?? result;
         setPlans(prev => prev.map(p => p.id === editPlan.id ? updated : (payload.is_popular ? { ...p, is_popular: false } : p)));
       }
+      setTypeTab(payload.training_type);
       closeModal();
       loadPlans(); // Refresh to get accurate is_popular state
     } catch (err) {
@@ -133,9 +144,11 @@ export default function SubscriptionPlansPage() {
     }
   };
 
+  // Reordering happens inside one type: the server rewrites display_order for
+  // the ids it is given, and the page sorts each type's plans by it.
   const handleMoveUp = async (index) => {
     if (index === 0 || !plans) return;
-    const ids = plans.map(p => p.id);
+    const ids = visiblePlans.map(p => p.id);
     [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
     try {
       const result = await reorderPlans(ids);
@@ -146,8 +159,8 @@ export default function SubscriptionPlansPage() {
   };
 
   const handleMoveDown = async (index) => {
-    if (!plans || index >= plans.length - 1) return;
-    const ids = plans.map(p => p.id);
+    if (!plans || index >= visiblePlans.length - 1) return;
+    const ids = visiblePlans.map(p => p.id);
     [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]];
     try {
       const result = await reorderPlans(ids);
@@ -178,6 +191,30 @@ export default function SubscriptionPlansPage() {
           </svg>
         }
       >
+        <FormField label={t('subscriptions.trainingType')}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} role="radiogroup">
+            {TRAINING_TYPES.map(type => {
+              const active = form.training_type === type;
+              return (
+                <button key={type} type="button" role="radio" aria-checked={active}
+                  onClick={() => updateField('training_type', type)}
+                  style={{
+                    height: 36, padding: '0 14px', borderRadius: 980, cursor: 'pointer',
+                    fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500,
+                    background: active ? 'rgba(0,113,227,0.12)' : '#FFFFFF',
+                    color: active ? '#0058B3' : '#1D1D1F',
+                    border: `1px solid ${active ? '#0071E3' : '#E5E5EA'}`,
+                  }}>
+                  {t(`subscriptions.types.${type}`)}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ ...labelStyle, marginTop: 8, color: '#86868B', fontWeight: 400 }}>
+            {t('subscriptions.trainingTypeHint')}
+          </div>
+        </FormField>
+
         <FormField label={t('subscriptions.planName')}>
           <Input value={form.name} onChange={e => updateField('name', e.target.value)} placeholder={t('subscriptions.planNamePlaceholder')} />
         </FormField>
@@ -370,7 +407,27 @@ export default function SubscriptionPlansPage() {
         </Button>
       </PageHeader>
 
-      {plans.length === 0 ? (
+      {/* One tab per training type; the create button files the plan under the open tab. */}
+      <div role="tablist" aria-label={t('subscriptions.trainingType')} style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        {TRAINING_TYPES.map(type => {
+          const active = type === typeTab;
+          const count = plansOfType(type).length;
+          return (
+            <button key={type} type="button" role="tab" aria-selected={active} onClick={() => setTypeTab(type)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, height: 34, padding: '0 14px', borderRadius: 980,
+                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                background: active ? '#1D1D1F' : '#FFFFFF', color: active ? '#FFFFFF' : '#1D1D1F',
+                border: `1px solid ${active ? '#1D1D1F' : '#E5E5EA'}`,
+              }}>
+              {t(`subscriptions.types.${type}`)}
+              <span style={{ fontSize: 12, color: active ? 'rgba(255,255,255,0.7)' : '#86868B' }}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {visiblePlans.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px' }}>
           <div style={{
             width: 48, height: 48, borderRadius: 24, background: '#F2F2F7', color: '#0071E3',
@@ -384,9 +441,9 @@ export default function SubscriptionPlansPage() {
             color: '#1D1D1F', margin: '0 0 8px',
             fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600,
             letterSpacing: '-0.02em', lineHeight: 1.2,
-          }}>{t('subscriptions.noPlans')}</p>
-          <p style={{ color: '#515154', fontSize: 14, margin: '0 0 22px' }}>{t('subscriptions.noPlansHint')}</p>
-          <Button type="button" onClick={openCreate}>{t('subscriptions.createFirst')}</Button>
+          }}>{t('subscriptions.noPlansInType', { type: t(`subscriptions.types.${typeTab}`) })}</p>
+          <p style={{ color: '#515154', fontSize: 14, margin: '0 0 22px' }}>{t('subscriptions.noPlansInTypeHint')}</p>
+          <Button type="button" onClick={openCreate}>{t('subscriptions.addPlan')}</Button>
         </div>
       ) : (
         <div style={{
@@ -394,12 +451,12 @@ export default function SubscriptionPlansPage() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', alignItems: 'stretch',
           gap: 16,
         }}>
-          {plans.map((plan, i) => (
+          {visiblePlans.map((plan, i) => (
             <PlanCard
               key={plan.id}
               plan={plan}
               index={i}
-              total={plans.length}
+              total={visiblePlans.length}
               onEdit={() => openEdit(plan)}
               onDelete={() => openDelete(plan)}
               onToggle={() => handleToggle(plan)}

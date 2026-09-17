@@ -66,7 +66,7 @@ class PublicRegistrationController extends Controller
             ->where('is_active', true)
             ->orderBy('display_order')
             ->orderBy('duration_months')
-            ->get(['id', 'name', 'duration_months', 'price', 'discount_percent', 'is_popular']);
+            ->get(['id', 'name', 'training_type', 'duration_months', 'price', 'discount_percent', 'is_popular']);
 
         // `final_price` rides along via $appends — clients render it instead of each
         // re-deriving the discount and drifting apart.

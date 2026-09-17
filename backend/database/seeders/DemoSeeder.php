@@ -438,9 +438,12 @@ class DemoSeeder extends Seeder
         Sport::create(['club_id' => $club->id, 'name' => 'Aqua Fitness', 'slug' => 'aquafitness', 'description' => 'Water-based fitness and aerobics', 'is_active' => true]);
 
         // ── Subscription Plans ──
-        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Monthly', 'duration_months' => 1, 'price' => 500.00, 'discount_percent' => 0, 'is_popular' => false, 'is_active' => true, 'display_order' => 0]);
-        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Quarterly', 'duration_months' => 3, 'price' => 1200.00, 'discount_percent' => 20, 'is_popular' => true, 'is_active' => true, 'display_order' => 1]);
-        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Annual', 'duration_months' => 12, 'price' => 3600.00, 'discount_percent' => 40, 'is_popular' => false, 'is_active' => true, 'display_order' => 2]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Monthly', 'training_type' => 'daily', 'duration_months' => 1, 'price' => 500.00, 'discount_percent' => 0, 'is_popular' => false, 'is_active' => true, 'display_order' => 0]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Quarterly', 'training_type' => 'daily', 'duration_months' => 3, 'price' => 1200.00, 'discount_percent' => 20, 'is_popular' => true, 'is_active' => true, 'display_order' => 1]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Annual', 'training_type' => 'daily', 'duration_months' => 12, 'price' => 3600.00, 'discount_percent' => 40, 'is_popular' => false, 'is_active' => true, 'display_order' => 2]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Monthly', 'training_type' => 'three_days', 'duration_months' => 1, 'price' => 350.00, 'discount_percent' => 0, 'is_popular' => true, 'is_active' => true, 'display_order' => 3]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Quarterly', 'training_type' => 'three_days', 'duration_months' => 3, 'price' => 1050.00, 'discount_percent' => 15, 'is_popular' => false, 'is_active' => true, 'display_order' => 4]);
+        SubscriptionPlan::create(['club_id' => $club->id, 'name' => 'Monthly', 'training_type' => 'private', 'duration_months' => 1, 'price' => 1500.00, 'discount_percent' => 0, 'is_popular' => false, 'is_active' => true, 'display_order' => 5]);
 
         // ── Coach Schedules ──
         $defaultSlots = [
