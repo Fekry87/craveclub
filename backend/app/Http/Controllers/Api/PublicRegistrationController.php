@@ -196,7 +196,9 @@ class PublicRegistrationController extends Controller
             'years_experience' => 'required|string',
             'competed' => 'required|boolean',
             'primary_goal' => 'required|string',
-            'weekly_frequency' => 'required|string',
+            // Optional since 2026-09-17: the plan's training type says how often the
+            // member trains, so the app no longer asks separately.
+            'weekly_frequency' => 'nullable|string',
             'branch_id' => ['required', 'integer', Rule::exists('branches', 'id')->where('club_id', app('current_club_id'))],
             'plan_id' => ['required', 'integer', Rule::exists('subscription_plans', 'id')->where('club_id', app('current_club_id'))],
             'coach_id' => ['required', 'integer', Rule::exists('coach_profiles', 'id')->where('club_id', app('current_club_id'))],

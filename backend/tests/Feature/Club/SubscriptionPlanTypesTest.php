@@ -111,4 +111,21 @@ class SubscriptionPlanTypesTest extends TestCase
 
         $this->assertSame('daily', $plan->fresh()->training_type);
     }
+
+    public function test_registration_no_longer_needs_a_weekly_frequency(): void
+    {
+        // The plan's training type carries that answer now.
+        $plan = $this->plan(['training_type' => 'three_days']);
+        $branch = \App\Models\Branch::create(['club_id' => $this->club->id, 'name' => 'Main', 'address' => '1 St', 'city' => 'Cairo']);
+        $coachUser = User::create(['name' => 'Coach', 'email' => 'c@types.test', 'password' => 'password', 'role' => UserRole::COACH, 'club_id' => $this->club->id]);
+        $coach = \App\Models\CoachProfile::withoutGlobalScopes()->create(['club_id' => $this->club->id, 'user_id' => $coachUser->id, 'is_active' => true]);
+
+        $this->withHeaders(['X-Club-Slug' => $this->club->slug])->postJson('/api/v1/registrations', [
+            'full_name' => 'Laila Ahmed', 'phone' => '01012345678', 'gender' => 'female', 'birth_date' => '2000-01-15',
+            'height_cm' => 170, 'weight_kg' => 60, 'fitness_level' => 'good', 'prior_experience' => false,
+            'sport_ids' => ['1'], 'experience_level' => 'beginner', 'years_experience' => 'N/A', 'competed' => false,
+            'primary_goal' => 'Get fit', 'branch_id' => $branch->id, 'plan_id' => $plan->id, 'coach_id' => $coach->id,
+            'preferred_time' => 'flexible', 'payment_method' => 'cash', 'consent_given' => true,
+        ])->assertCreated();
+    }
 }
