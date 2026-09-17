@@ -158,10 +158,6 @@ export default function CorporateSettings() {
     }
   };
 
-  const brandColor = /^#?[0-9A-Fa-f]{6}$/.test(form.primary_color || '')
-    ? (form.primary_color.startsWith('#') ? form.primary_color : `#${form.primary_color}`)
-    : '#6C4CF5';
-  const platformInitials = (form.platform_name || 'CraveClubs').trim().slice(0, 2).toUpperCase();
 
   const splashBg = /^#?[0-9A-Fa-f]{6}$/.test(form.splash_background_color || '')
     ? (form.splash_background_color.startsWith('#') ? form.splash_background_color : `#${form.splash_background_color}`)
@@ -200,7 +196,7 @@ export default function CorporateSettings() {
           </FormField>
           <FormField label="Logo">
             <div style={{ ...labelStyle, marginTop: -2, marginBottom: 12, color: '#86868B', fontWeight: 400 }}>
-              Shown on the app's first screen, where swimmers type their club's name. It sits on a light background, so use a logo that reads on white.
+              Shown at the top of the app's first screen, over a swimming photo. The app displays it in white, so upload a PNG with a transparent background — anything that isn't transparent turns into a white block.
             </div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div>
@@ -212,38 +208,50 @@ export default function CorporateSettings() {
                   {uploadingLogo ? 'Uploading…' : form.platform_logo_url ? 'Replace logo' : 'Upload logo'}
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    // JPEG can't carry transparency, so it would render as a solid white block.
+                    accept="image/png,image/webp"
                     style={{ display: 'none' }}
                     onChange={handleLogoUpload}
                     disabled={uploadingLogo}
                   />
                 </label>
                 <div style={{ ...labelStyle, marginTop: 8, color: '#86868B', fontWeight: 400 }}>
-                  PNG with a transparent background works best · PNG, JPG or WebP · up to 2MB
+                  Transparent PNG or WebP · any colour, it's shown white · up to 2MB
                 </div>
               </div>
 
-              {/* Preview of the app's club-name screen */}
+              {/* Preview of the app's club-name screen: dark water, logo in white,
+                  the task at the bottom. The CSS filter whitens the logo the same way
+                  the app's tint does, so a non-transparent image previews as the
+                  white block it would really become. */}
               <div style={{
                 width: 150, height: 300, borderRadius: 28, overflow: 'hidden',
-                background: '#F7F6FB', border: '1px solid rgba(0,0,0,0.10)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 10, flexShrink: 0, padding: 12, boxSizing: 'border-box',
+                background: 'linear-gradient(180deg, #0B3B44 0%, #0E5560 38%, #062129 70%, #031116 100%)',
+                border: '1px solid rgba(0,0,0,0.10)',
+                display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                flexShrink: 0, padding: '26px 12px 14px', boxSizing: 'border-box',
               }}>
-                {form.platform_logo_url ? (
-                  <img src={form.platform_logo_url} alt="Platform logo" style={{ maxWidth: '70%', maxHeight: 48, objectFit: 'contain' }} />
-                ) : (
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 11, background: brandColor,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#FFFFFF', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-heading)',
-                  }}>{platformInitials}</div>
-                )}
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1B1B2F', fontFamily: 'var(--font-heading)', textAlign: 'center' }}>
-                  {form.platform_name || 'CraveClubs'}
+                <div style={{ display: 'flex', justifyContent: 'center', minHeight: 20 }}>
+                  {form.platform_logo_url ? (
+                    <img src={form.platform_logo_url} alt="Platform logo" style={{ maxWidth: 92, maxHeight: 20, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                  ) : form.splash_image_url ? (
+                    <img src={form.splash_image_url} alt="Splash logo" style={{ maxWidth: 92, maxHeight: 20, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ color: '#FFFFFF', fontSize: 11, fontWeight: 700, letterSpacing: 2, fontFamily: 'var(--font-heading)' }}>
+                      {form.platform_name || 'CraveClubs'}
+                    </span>
+                  )}
                 </div>
-                <div style={{ width: '100%', height: 20, borderRadius: 6, background: '#FFFFFF', border: '1px solid #E6E5EF', marginTop: 6 }} />
-                <div style={{ width: '100%', height: 20, borderRadius: 6, background: brandColor }} />
+                <div>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.72)', fontFamily: 'var(--font-body)', marginBottom: 3 }}>
+                    {form.platform_name || 'CraveClubs'}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', fontFamily: 'var(--font-heading)', lineHeight: 1.1 }}>
+                    Find your club
+                  </div>
+                  <div style={{ width: '100%', height: 18, borderRadius: 5, background: '#FFFFFF', marginTop: 10 }} />
+                  <div style={{ width: '100%', height: 18, borderRadius: 5, background: '#FFFFFF', marginTop: 6 }} />
+                </div>
               </div>
             </div>
           </FormField>
