@@ -49,6 +49,7 @@ class LeaderboardController extends Controller
         $settings->update($request->only([
             'rating_xp_1', 'rating_xp_2', 'rating_xp_3', 'rating_xp_4', 'rating_xp_5',
             'attendance_xp', 'streak_bonus_xp', 'streak_threshold',
+            'award_day_xp', 'award_week_xp', 'award_month_xp',
         ]));
 
         AuditService::log('leaderboard.settings_changed', LeaderboardSetting::class, $settings->id, [

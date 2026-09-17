@@ -22,6 +22,9 @@ class UpdateLeaderboardSettingsRequest extends FormRequest
             'attendance_xp' => 'required|integer|min:0|max:9999',
             'streak_bonus_xp' => 'required|integer|min:0|max:9999',
             'streak_threshold' => 'required|integer|min:2|max:50',
+            'award_day_xp' => 'sometimes|integer|min:0|max:9999',
+            'award_week_xp' => 'sometimes|integer|min:0|max:9999',
+            'award_month_xp' => 'sometimes|integer|min:0|max:9999',
         ];
     }
 }

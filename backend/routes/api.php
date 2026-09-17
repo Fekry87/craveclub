@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\SportController;
 use App\Http\Controllers\Api\SportModuleController;
 use App\Http\Controllers\Api\SubscriptionPlanController;
 use App\Http\Controllers\Api\SwimmerApiController;
+use App\Http\Controllers\Api\SwimmerAwardController;
 use App\Http\Controllers\Api\SwimmerManagementController;
 use App\Http\Controllers\Api\SwimmerReportController;
 use App\Http\Controllers\Api\TrainingPlanController;
@@ -421,6 +422,10 @@ Route::prefix('v1')->group(function () {
                 Route::put('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardUpdateTier']);
                 Route::delete('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardDestroyTier']);
                 Route::post('/leaderboard/tiers/reset', [LeaderboardController::class, 'leaderboardResetTiers']);
+
+                // Awards (Man of the Day / Week / Month): manager may award any swimmer
+                Route::post('/awards', [SwimmerAwardController::class, 'store']);
+                Route::get('/awards/recent', [SwimmerAwardController::class, 'recent']);
             });
 
             // ── Sport-scoped management (optional sport context layer) ──
@@ -481,6 +486,12 @@ Route::prefix('v1')->group(function () {
             // Weekly Report (Coach view)
             Route::get('/swimmers/{swimmer}/weekly-report', [SwimmerReportController::class, 'coachSwimmer']);
 
+            // Awards: coach may award swimmers in groups they coach only
+            Route::middleware('feature:leaderboard')->group(function () {
+                Route::post('/awards', [SwimmerAwardController::class, 'store']);
+                Route::get('/awards/recent', [SwimmerAwardController::class, 'recent']);
+            });
+
             // Training Plans (Coach)
             Route::get('/training-plans', [TrainingPlanController::class, 'coachPlans']);
             Route::post('/training-plans/{plan}/assign', [TrainingPlanController::class, 'assign']);
@@ -514,6 +525,11 @@ Route::prefix('v1')->group(function () {
             // Feature-gated: Leaderboard
             Route::middleware(['feature:leaderboard'])->group(function () {
                 Route::get('/leaderboard', [SwimmerApiController::class, 'leaderboard']);
+
+                // Awards: celebration queue + hall-of-fame feed
+                Route::get('/awards/pending', [SwimmerAwardController::class, 'pending']);
+                Route::post('/awards/{award}/seen', [SwimmerAwardController::class, 'markSeen'])->whereNumber('award');
+                Route::get('/awards/recent', [SwimmerAwardController::class, 'recent']);
             });
         });
     });

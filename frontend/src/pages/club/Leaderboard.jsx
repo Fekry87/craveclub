@@ -142,6 +142,9 @@ export default function Leaderboard() {
         attendance_xp: settings.attendance_xp,
         streak_bonus_xp: settings.streak_bonus_xp,
         streak_threshold: settings.streak_threshold,
+        award_day_xp: settings.award_day_xp,
+        award_week_xp: settings.award_week_xp,
+        award_month_xp: settings.award_month_xp,
       });
       showToast('XP settings saved');
       fetchAll();
@@ -455,6 +458,48 @@ export default function Leaderboard() {
               </div>
             </div>
 
+            {/* Award XP (Man of the Day / Week / Month) */}
+            <div style={{ borderRadius: 16,
+              padding: '18px',
+              background: '#FFFFFF',
+              border: '1px solid #E5E5EA',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{ borderRadius: 10,
+                  width: 30, height: 30, background: '#F2F2F7',
+                  border: '1px solid #E5E5EA',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z" /><path d="M7 6H4a1 1 0 00-1 1v1a4 4 0 004 4M17 6h3a1 1 0 011 1v1a4 4 0 01-4 4" /></svg>
+                </div>
+                <div>
+                  <div style={{
+                    color: '#1D1D1F', fontSize: 15, fontFamily: 'var(--font-display)', fontWeight: 600,
+                    letterSpacing: '-0.02em', lineHeight: 1,
+                  }}>{t('awards.points.title')}</div>
+                  <div style={{ ...monoLabel, marginTop: 6 }}>{t('awards.points.description')}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {['day', 'week', 'month'].map((key) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ ...monoLabel, minWidth: 120 }}>{t(`awards.points.${key}`)}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="9999"
+                      aria-label={t(`awards.points.${key}`)}
+                      value={settings[`award_${key}_xp`] ?? 0}
+                      onChange={e => setSettings({ ...settings, [`award_${key}_xp`]: parseInt(e.target.value) || 0 })}
+                      style={{ ...numberInputStyle, width: 80 }}
+                      {...numberFocusProps}
+                    />
+                    <span style={monoLabel}>{t('awards.points.perAward')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Formula preview */}
             <div style={{ borderRadius: 16,
               padding: '14px 16px',
@@ -463,7 +508,7 @@ export default function Leaderboard() {
             }}>
               <div style={{ ...monoLabel, marginBottom: 10 }}>XP Formula Preview</div>
               <div style={{ color: '#515154', fontSize: 13, lineHeight: 1.8, fontFamily: 'var(--font-body)' }}>
-                <div>Total XP = <span style={{ color: '#1D1D1F', fontWeight: 500 }}>Rating XP</span> + <span style={{ color: '#0071E3', fontWeight: 500 }}>Attendance XP</span> + <span style={{ color: '#1D1D1F', fontWeight: 500 }}>Streak XP</span></div>
+                <div>Total XP = <span style={{ color: '#1D1D1F', fontWeight: 500 }}>Rating XP</span> + <span style={{ color: '#0071E3', fontWeight: 500 }}>Attendance XP</span> + <span style={{ color: '#1D1D1F', fontWeight: 500 }}>Streak XP</span> + <span style={{ color: '#A35A00', fontWeight: 500 }}>Award XP</span></div>
                 <div style={{ ...monoLabel, marginTop: 6, textTransform: 'none' }}>
                   Example: 5-star rating ({settings.rating_xp_5} XP) + session ({settings.attendance_xp} XP) = {settings.rating_xp_5 + settings.attendance_xp} XP
                 </div>

@@ -9,6 +9,7 @@ use App\Models\GroupEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
 use App\Models\Registration;
+use App\Models\SwimmerAward;
 use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
@@ -603,13 +604,19 @@ class SwimmerApiController extends Controller
             }
         }
 
-        $totalXp = $ratingXp + $attendanceXp + $streakXp;
+        // Award XP (Man of the Day / Week / Month)
+        $awardXp = (int) SwimmerAward::where('swimmer_id', $swimmerId)
+            ->where('club_id', $clubId)
+            ->sum('xp_value');
+
+        $totalXp = $ratingXp + $attendanceXp + $streakXp + $awardXp;
 
         return [
             'total_xp' => $totalXp,
             'rating_xp' => $ratingXp,
             'attendance_xp' => $attendanceXp,
             'streak_xp' => $streakXp,
+            'award_xp' => $awardXp,
             'evaluation_count' => count($evaluations),
             'attended_count' => $attendedCount,
         ];

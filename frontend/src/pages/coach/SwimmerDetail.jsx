@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
+import { AwardModal, AwardButton } from '../../components/AwardModal';
 
 const levelConfig = {
   'Beginner':     { color: '#FF9500', variant: 'warning' },
@@ -157,6 +158,7 @@ export default function SwimmerDetail() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [evalOpen, setEvalOpen] = useState(false);
+  const [awardOpen, setAwardOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
   const load = () => {
@@ -278,8 +280,9 @@ export default function SwimmerDetail() {
               </div>
             </div>
 
-            {/* Rate & Comment button */}
-            <div style={{ flexShrink: 0 }}>
+            {/* Award + Rate & Comment buttons */}
+            <div style={{ flexShrink: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <AwardButton className="pl-btn pl-btn-secondary" onClick={() => setAwardOpen(true)} />
               <button type="button" onClick={() => setEvalOpen(true)} className="pl-btn pl-btn-accent">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -395,6 +398,18 @@ export default function SwimmerDetail() {
           </div>
         )}
       </div>
+
+      {awardOpen && (
+        <AwardModal
+          swimmer={swimmer}
+          endpoint="/coach/awards"
+          onClose={() => setAwardOpen(false)}
+          onAwarded={(award, type) => {
+            setToast(t('awards.given', { name: award.swimmer_name, title: t(`awards.types.${type}`), xp: award.xp_value }));
+            setTimeout(() => setToast(null), 3500);
+          }}
+        />
+      )}
 
       {/* Evaluate Modal */}
       <EvaluateModal
