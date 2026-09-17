@@ -64,15 +64,20 @@ class GroupScheduleTest extends TestCase
 
     // ── Day count must match the type ─────────────────────────────────
 
-    public function test_daily_group_requires_exactly_seven_days(): void
+    public function test_daily_group_accepts_any_day_count(): void
     {
-        $this->createGroup(['group_type' => 'daily', 'days_of_week' => [0, 1, 2, 3, 4]])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['days_of_week']);
-
-        $this->createGroup(['group_type' => 'daily', 'days_of_week' => [0, 1, 2, 3, 4, 5, 6]])
+        // "Daily" means the club's training days, not all seven: a club closed on
+        // Friday still runs a daily group.
+        $this->createGroup(['group_type' => 'daily', 'days_of_week' => [0, 1, 2, 3, 4, 6]])
             ->assertStatus(201)
             ->assertJsonPath('group_type', 'daily');
+
+        $this->createGroup(['name' => 'Full week', 'group_type' => 'daily', 'days_of_week' => [0, 1, 2, 3, 4, 5, 6], 'start_time' => '19:00', 'end_time' => '20:00'])
+            ->assertStatus(201);
+
+        $this->createGroup(['name' => 'No days', 'group_type' => 'daily', 'days_of_week' => []])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['days_of_week']);
     }
 
     public function test_three_day_group_requires_exactly_three_days(): void

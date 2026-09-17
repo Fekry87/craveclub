@@ -219,7 +219,8 @@
       "4": "Thu",
       "5": "Fri",
       "6": "Sat"
-    }
+    },
+    "anyDays": "Pick the days this group trains ({{selected}} selected)"
   },
   "sessions": {
     "title": "Sessions",

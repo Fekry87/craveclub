@@ -22,11 +22,12 @@ class TrainingType
     public const ALL = [self::DAILY, self::TWO_DAYS, self::THREE_DAYS, self::PRIVATE];
 
     /**
-     * How many weekdays a group of each type must meet on. Private groups keep their
-     * own custom schedule, so there is no fixed count for them.
+     * How many weekdays a group of each type must meet on. Daily and private groups
+     * keep their own custom schedule — "daily" means the club's training days, not
+     * literally all seven — so there is no fixed count for them.
      */
     public const DAY_COUNTS = [
-        self::DAILY => 7,
+        self::DAILY => null,
         self::THREE_DAYS => 3,
         self::TWO_DAYS => 2,
         self::PRIVATE => null,

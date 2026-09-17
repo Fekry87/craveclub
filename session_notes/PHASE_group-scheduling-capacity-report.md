@@ -10,7 +10,7 @@ A group now carries its own fixed weekly template: a **type** (`daily | three_da
 
 | Piece | File |
 |---|---|
-| Shared vocabulary for plans *and* groups | `app/Enums/TrainingType.php` (`ALL`, `DAY_COUNTS`, `expectedDayCount()`) — `SubscriptionPlan::TRAINING_TYPES` now points at it |
+| Shared vocabulary for plans *and* groups | `app/Enums/TrainingType.php` (`ALL`, `DAY_COUNTS` — daily/private free-form, three_days 3, two_days 2 — `expectedDayCount()`) — `SubscriptionPlan::TRAINING_TYPES` now points at it |
 | `groups` columns | migration `000077`: `group_type`, `capacity`, `days_of_week` (json), `start_time`, `end_time` |
 | `registrations.group_id` | migration `000078`: nullable FK → groups, `nullOnDelete` |
 | Model | `Group`: fillable + casts, `remaining_spots` (uses `swimmers_count`/loaded relation when present, so lists don't N+1), `isFull()`, `days_of_week_labels`; `Registration::group()` |
@@ -29,7 +29,7 @@ A group now carries its own fixed weekly template: a **type** (`daily | three_da
 
 ## Tests — `tests/Feature/GroupScheduleTest.php` (16 tests, 65 assertions)
 
-- daily needs exactly 7 days (fewer → 422); three_days needs exactly 3; private accepts any count; end must follow start
+- daily and private accept any day count (at least one); three_days needs exactly 3; two_days exactly 2; end must follow start
 - same coach + same day + non-overlapping → 201; overlapping → 422 with `conflicting_group`, nothing created; different days → 201 whatever the time; different coaches never conflict
 - editing a group does not conflict with itself; editing into another group's slot → 422
 - `remaining_spots` decreases as members join; `isFull()` flips at capacity

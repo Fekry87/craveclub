@@ -8,8 +8,9 @@ import { apiErrorMessage } from '../../lib/apiError';
 
 // Same vocabulary as subscription plans (App\Enums\TrainingType on the backend).
 const GROUP_TYPES = ['daily', 'three_days', 'two_days', 'private'];
-// How many training days each type must have; private is free-form.
-const DAY_COUNTS = { daily: 7, three_days: 3, two_days: 2, private: null };
+// How many training days each type must have. Daily and private are free-form:
+// "daily" means the club's training days, not literally all seven.
+const DAY_COUNTS = { daily: null, three_days: 3, two_days: 2, private: null };
 const DAY_ORDER = [0, 1, 2, 3, 4, 5, 6];
 
 const EMPTY_FORM = {
@@ -188,7 +189,7 @@ export default function Groups() {
           <DayPicker value={form.days_of_week} onChange={days => setForm({ ...form, days_of_week: days })} t={t} />
           <div style={{ ...labelStyle, marginTop: 8, color: dayCountError ? '#B12A20' : '#86868B' }}>
             {dayCountError || (expectedDays === null
-              ? t('subscriptions.types.private')
+              ? t('groups.anyDays', { selected: form.days_of_week.length })
               : t('groups.dayCountRule', { type: t(`subscriptions.types.${form.group_type}`), count: expectedDays, selected: form.days_of_week.length }))}
           </div>
         </FormField>
