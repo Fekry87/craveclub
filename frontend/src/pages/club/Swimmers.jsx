@@ -91,23 +91,21 @@ function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, onAward, inde
         row={swimmer}
         onEdit={onEdit}
         onDelete={onDelete}
-        actions={(row) => (
-          <>
-            <AwardButton compact style={{ flex: 1 }} onClick={() => onAward(row)} />
-            {row.user && (
-              <button
-                type="button"
-                className="pl-btn pl-btn-secondary pl-btn-sm"
-                style={{ flex: 1 }}
-                title="Reset this swimmer's password"
-                onClick={() => onResetPassword(row)}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="4.5" /><path d="M10.7 12.3 19 4m-3 0h3v3" /></svg>
-                Reset
-              </button>
-            )}
-          </>
+        primaryAction={(row) => (
+          <AwardButton style={{ flex: 1, justifyContent: 'center' }} onClick={() => onAward(row)} />
         )}
+        actions={swimmer.user ? (row) => (
+          <button
+            type="button"
+            className="pl-btn pl-btn-secondary pl-btn-sm"
+            style={{ flex: 1 }}
+            title="Reset this swimmer's password"
+            onClick={() => onResetPassword(row)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="4.5" /><path d="M10.7 12.3 19 4m-3 0h3v3" /></svg>
+            Reset
+          </button>
+        ) : undefined}
       />
     </div>
   );
