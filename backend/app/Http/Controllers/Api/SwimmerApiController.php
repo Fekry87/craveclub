@@ -647,6 +647,7 @@ class SwimmerApiController extends Controller
                 'first_name' => $swimmer->first_name,
                 'last_initial' => mb_substr($swimmer->last_name ?? '', 0, 1).'.',
                 'full_name' => $swimmer->first_name.' '.$swimmer->last_name,
+                'avatar_url' => $swimmer->avatar_url,
                 'total_xp' => $xpData['total_xp'],
                 'level' => $levelInfo['level'],
                 'level_name' => $levelInfo['name'],

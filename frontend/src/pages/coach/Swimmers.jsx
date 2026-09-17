@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { PageHeader, Button, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { PageHeader, Button, useIsMobile, Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
 
@@ -15,15 +15,9 @@ const labelStyle = {
   fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: '#6E6E73',
 };
 
-function getInitials(firstName, lastName) {
-  return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
-}
-
 /* ───── Swimmer Card (matches manager portal style) ───── */
 function SwimmerCard({ swimmer, index, onClick }) {
   const name = `${swimmer.first_name} ${swimmer.last_name}`;
-  const color = getAvatarColor(name);
-  const initials = getInitials(swimmer.first_name, swimmer.last_name);
   const lc = levelConfig[swimmer.level] || levelConfig['Beginner'];
 
   return (
@@ -62,14 +56,7 @@ function SwimmerCard({ swimmer, index, onClick }) {
 
       {/* Avatar */}
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
-        <div style={{
-          borderRadius: '50%',
-          width: 72, height: 72, background: color.bg,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 25, fontWeight: 600,
-          fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
-          color: color.text,
-        }}>{initials}</div>
+        <Avatar src={swimmer.avatar_url} name={name} size={72} fontSize={25} />
       </div>
 
       {/* Card body */}

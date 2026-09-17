@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
-import { getAvatarColor } from '../../components/CrudTable';
+import { Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle } from '../../components/ui/styles';
 
@@ -159,18 +159,13 @@ export default function SessionDetailPage() {
           {session.attendance?.length > 0 ? (
             <div>
               {session.attendance.map((a, i) => {
-                const ac = getAvatarColor(a.swimmer_name || 'S');
                 return (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '10px 0',
                     borderBottom: i < session.attendance.length - 1 ? '1px solid #F2F2F7' : 'none',
                   }}>
-                    <div style={{ borderRadius: 10,
-                      width: 30, height: 30, background: ac.bg, color: ac.text, flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 600,
-                    }}>{(a.swimmer_name || '?')[0]}</div>
+                    <Avatar src={a.avatar_url} name={a.swimmer_name || '?'} size={30} radius={10} fontSize={12} />
                     <div style={{
                       flex: 1, minWidth: 0, color: '#1D1D1F', fontSize: 13,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

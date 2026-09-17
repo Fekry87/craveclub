@@ -843,6 +843,7 @@ class CoachApiController extends Controller
                 'first_name' => $swimmer->first_name,
                 'last_name' => $swimmer->last_name,
                 'full_name' => $swimmer->fullName,
+                'avatar_url' => $swimmer->avatar_url,
                 'level' => $swimmer->level,
                 'date_of_birth' => $swimmer->date_of_birth,
                 'groups' => $swimmer->groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]),

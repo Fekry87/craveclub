@@ -139,6 +139,8 @@ class RegistrationController extends Controller
                     'guardian_email' => $registration->guardian_email,
                     // Normalize case so filters don't split into "Beginner"/"beginner" buckets
                     'level' => ucfirst(strtolower($registration->experience_level ?? 'beginner')),
+                    // The photo from Step 1 becomes the swimmer's profile photo.
+                    'photo_token' => $registration->photo_token,
                 ]);
 
                 // 6. Place the swimmer in a group: the one the applicant chose, else the

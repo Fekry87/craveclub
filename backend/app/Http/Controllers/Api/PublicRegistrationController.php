@@ -247,6 +247,9 @@ class PublicRegistrationController extends Controller
             'preferred_time' => 'required|string',
             'payment_method' => 'required|in:cash',
             'avatar_url' => 'nullable|string',
+            // Step 1's optional photo: a data URL, already cropped square and
+            // shrunk by the app. Validated by its bytes in ProfilePhotoService.
+            'photo' => 'nullable|string|max:3000000',
             'medical_notes' => 'nullable|string|max:500',
             // PDPL: explicit data-processing consent. Optional at the API level so
             // older mobile builds keep working; the portal wizard always sends it.
@@ -271,6 +274,12 @@ class PublicRegistrationController extends Controller
 
         $consentGivenAt = ! empty($validated['consent_given']) ? now() : null;
         unset($validated['consent_given']);
+
+        // Refuse a bad photo here, as a 422, before anything is written.
+        $photo = ! empty($validated['photo'])
+            ? app(\App\Services\ProfilePhotoService::class)->parse($validated['photo'])
+            : null;
+        unset($validated['photo'], $validated['avatar_url']);
 
         $clubId = app('current_club_id');
 
@@ -300,10 +309,15 @@ class PublicRegistrationController extends Controller
         $sportModuleId = $this->resolveSportModuleId($clubId, $validated['sport_ids']);
 
         try {
-            $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId, $consentGivenAt) {
+            $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId, $consentGivenAt, $photo) {
+                $photoToken = $photo
+                    ? app(\App\Services\ProfilePhotoService::class)->store($photo, $clubId)->token
+                    : null;
+
                 return Registration::create(array_merge($validated, [
                     'reference_code' => 'REG-'.strtoupper(\Illuminate\Support\Str::random(8)),
                     'club_id' => $clubId,
+                    'photo_token' => $photoToken,
                     'sport_module_id' => $sportModuleId,
                     // final_price, not price: `price` is the list price and the portal
                     // advertises the discounted figure, so billing the list price charged

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
-import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
+import { FormPage, FormPageActions, FormField, Input, TextArea, Button, PageHeader, Avatar } from '../../components/CrudTable';
 import { CardActions, CardInfoRow } from '../../components/ui/Cards';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
@@ -27,14 +27,8 @@ const GuardianIcon = () => (
   <svg width="16" height="16" {...svgProps}><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
 );
 
-function getInitials(firstName, lastName) {
-  return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
-}
-
 function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, onAward, index, t }) {
   const name = `${swimmer.first_name} ${swimmer.last_name}`;
-  const color = getAvatarColor(name);
-  const initials = getInitials(swimmer.first_name, swimmer.last_name);
   const lc = levelConfig[swimmer.level] || { variant: 'neutral' };
   const dob = swimmer.date_of_birth?.split('T')[0];
 
@@ -53,16 +47,7 @@ function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, onAward, inde
     >
       {/* Avatar + name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: 28,
-          background: color.bg, color: color.text,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, fontWeight: 600,
-          fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
-          flexShrink: 0,
-        }}>
-          {initials}
-        </div>
+        <Avatar src={swimmer.avatar_url} name={name} size={56} fontSize={20} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <h3 style={{
             margin: 0, color: '#1D1D1F', fontSize: 17, fontWeight: 600,

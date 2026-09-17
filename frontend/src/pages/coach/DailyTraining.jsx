@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Button, PageHeader, getAvatarColor } from '../../components/CrudTable';
+import { Button, PageHeader, getAvatarColor, Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { inputStyle, inputFocusProps, cardStyle } from '../../components/ui/styles';
 
@@ -197,7 +197,6 @@ export default function DailyTraining() {
             </div>
             <div style={{ padding: '6px 24px 20px' }}>
               {swimmers.map((s, i) => {
-                const avatar = getAvatarColor(`${s.first_name} ${s.last_name}`);
                 const present = !!attendance[s.id];
                 return (
                   <div key={s.id} style={{ borderBottom: i < swimmers.length - 1 ? '1px solid #F2F2F7' : 'none', padding: '14px 0' }}>
@@ -205,15 +204,8 @@ export default function DailyTraining() {
                       <label style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#1D1D1F', minWidth: 180, cursor: 'pointer', flex: '1 1 auto' }}>
                         <input type="checkbox" checked={present} onChange={e => setAttendance({ ...attendance, [s.id]: e.target.checked })}
                           style={{ width: 18, height: 18, accentColor: '#0071E3', cursor: 'pointer', flexShrink: 0 }} />
-                        <span style={{
-                          width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-                          background: present ? avatar.bg : '#F2F2F7',
-                          color: present ? avatar.text : '#AEAEB2',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 600, letterSpacing: '-0.02em',
-                        }}>
-                          {(s.first_name || '?').charAt(0).toUpperCase()}
-                        </span>
+                        <Avatar src={s.avatar_url} name={`${s.first_name} ${s.last_name}`} size={34} fontSize={14}
+                          style={present ? undefined : { background: '#F2F2F7', color: '#AEAEB2', opacity: 0.85 }} />
                         <span style={{ fontWeight: 500, fontSize: 15, fontFamily: 'var(--font-body)', color: present ? '#1D1D1F' : '#86868B' }}>{s.first_name} {s.last_name}</span>
                       </label>
                       {present ? (
