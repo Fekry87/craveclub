@@ -9,6 +9,7 @@ use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
 use App\Models\CoachSchedule;
+use App\Models\Group;
 use App\Models\Registration;
 use App\Models\Sport;
 use App\Models\SubscriptionPlan;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PublicRegistrationController extends Controller
 {
@@ -165,6 +167,60 @@ class PublicRegistrationController extends Controller
         ]);
     }
 
+    /** Shown when the group filled up between choosing it and submitting. */
+    public const GROUP_FULL_MESSAGE = 'This group has just filled up. Please choose another group.';
+
+    /**
+     * The club's groups a swimmer can register into, for the group step.
+     *
+     * `coach_id` (a coach_profiles id, as /coaches returns) narrows the list to
+     * that coach's groups — the step only offers the coach just chosen. Each
+     * row carries its type, schedule and how many spots are left, counting
+     * members and registrations still waiting for approval.
+     */
+    public function groups(Request $request): JsonResponse
+    {
+        $request->validate(['coach_id' => 'nullable|integer']);
+
+        $query = Group::where('club_id', app('current_club_id'))
+            ->with('coach:id,name')
+            ->withCount(['swimmers', 'pendingRegistrations']);
+
+        if ($request->filled('coach_id')) {
+            $coach = CoachProfile::where('id', $request->integer('coach_id'))
+                ->where('club_id', app('current_club_id'))
+                ->first();
+            // An unknown coach has no groups, rather than everyone's.
+            $query->where('coach_user_id', $coach?->user_id ?? -1);
+        }
+
+        $order = array_flip(Group::TYPES);
+        $groups = $query->get()
+            ->sortBy(fn (Group $g) => [$order[$g->group_type] ?? 99, $g->name])
+            ->values()
+            ->map(fn (Group $g) => self::groupRow($g));
+
+        return response()->json(['data' => $groups]);
+    }
+
+    private static function groupRow(Group $g): array
+    {
+        return [
+            'id' => $g->id,
+            'name' => $g->name,
+            'description' => $g->description,
+            'group_type' => $g->group_type,
+            'coach_name' => $g->coach?->name,
+            'days_of_week' => $g->days_of_week ?? [],
+            'days_of_week_labels' => $g->dayLabels(),
+            'start_time' => $g->timeShort($g->start_time),
+            'end_time' => $g->timeShort($g->end_time),
+            'capacity' => $g->capacity,
+            'remaining_spots' => $g->remainingSpots(),
+            'is_full' => $g->isFull(),
+        ];
+    }
+
     /**
      * The one message the swimmer sees for an email that belongs to an account,
      * whether it is caught up front (Step 1) or at submission.
@@ -238,6 +294,8 @@ class PublicRegistrationController extends Controller
             'branch_id' => ['required', 'integer', Rule::exists('branches', 'id')->where('club_id', app('current_club_id'))],
             'plan_id' => ['required', 'integer', Rule::exists('subscription_plans', 'id')->where('club_id', app('current_club_id'))],
             'coach_id' => ['required', 'integer', Rule::exists('coach_profiles', 'id')->where('club_id', app('current_club_id'))],
+            // The group step (2026-09-17). Optional so older app builds still submit.
+            'group_id' => ['nullable', 'integer', Rule::exists('groups', 'id')->where('club_id', app('current_club_id'))],
             'preferred_time' => 'required|string',
             'payment_method' => 'required|in:cash',
             'avatar_url' => 'nullable|string',
@@ -275,6 +333,14 @@ class PublicRegistrationController extends Controller
             abort(422, 'Coach does not belong to this club.');
         }
 
+        // The group must be one of the chosen coach's.
+        if (! empty($validated['group_id'])) {
+            $group = Group::where('id', $validated['group_id'])->where('club_id', $clubId)->first();
+            if (! $group || $group->coach_user_id !== $coach->user_id) {
+                throw ValidationException::withMessages(['group_id' => 'That group is not one of this coach\'s groups.']);
+            }
+        }
+
         // Resolve sport_module_id: honour the applicant's chosen sport when it maps to one
         // of the club's active modules, otherwise fall back to the club's first module by
         // its own sort order. The previous ->value() without an ORDER BY filed multi-sport
@@ -283,6 +349,15 @@ class PublicRegistrationController extends Controller
 
         try {
             $registration = DB::transaction(function () use ($validated, $clubId, $plan, $sportModuleId, $consentGivenAt) {
+                // Spots are counted under a lock on the group, so two swimmers
+                // submitting for the last spot at once can't both get it.
+                if (! empty($validated['group_id'])) {
+                    $group = Group::where('id', $validated['group_id'])->lockForUpdate()->first();
+                    if ($group && $group->isFull()) {
+                        throw ValidationException::withMessages(['group_id' => self::GROUP_FULL_MESSAGE]);
+                    }
+                }
+
                 return Registration::create(array_merge($validated, [
                     'reference_code' => 'REG-'.strtoupper(\Illuminate\Support\Str::random(8)),
                     'club_id' => $clubId,
@@ -295,6 +370,8 @@ class PublicRegistrationController extends Controller
                     'consent_given_at' => $consentGivenAt,
                 ]));
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Something went wrong. Please try again.',

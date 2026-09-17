@@ -25,6 +25,12 @@ class GroupManagementController extends Controller
         );
     }
 
+    /** What the portal's group form may set. */
+    private const FIELDS = [
+        'name', 'description', 'coach_user_id',
+        'group_type', 'capacity', 'days_of_week', 'start_time', 'end_time',
+    ];
+
     public function groupIndex(Request $request): JsonResponse
     {
         // Explicit club scope (defense-in-depth on top of the BelongsToClub global scope).
@@ -38,7 +44,7 @@ class GroupManagementController extends Controller
 
     public function groupStore(StoreGroupRequest $request): JsonResponse
     {
-        $data = $request->only(['name', 'description', 'coach_user_id']);
+        $data = $request->only(self::FIELDS);
 
         if ($request->filled('sport_module_id')) {
             $request->validate(['sport_module_id' => 'integer|exists:sport_modules,id']);
@@ -71,7 +77,7 @@ class GroupManagementController extends Controller
 
     public function sportStore(StoreGroupRequest $request): JsonResponse
     {
-        $data = $request->only(['name', 'description', 'coach_user_id']);
+        $data = $request->only(self::FIELDS);
         $data['sport_module_id'] = app('current_sport_module_id');
 
         $group = Group::create($data);
@@ -90,7 +96,7 @@ class GroupManagementController extends Controller
     {
         $this->assertOwnership($group);
 
-        $group->update($request->only(['name', 'description', 'coach_user_id']));
+        $group->update($request->only(self::FIELDS));
 
         return response()->json($group->load(['coach', 'swimmers']));
     }

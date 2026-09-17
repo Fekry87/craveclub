@@ -206,6 +206,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/coaches', [PublicRegistrationController::class, 'coaches']);
         Route::get('/coaches/{coach}', [PublicRegistrationController::class, 'coachShow']);
         Route::get('/coaches/{coach}/schedule', [PublicRegistrationController::class, 'coachSchedule']);
+        // The group step: a coach's groups with their type, schedule and spots left.
+        Route::get('/groups', [PublicRegistrationController::class, 'groups']);
         // Step 1 asks whether the email is free before the other seven steps.
         Route::post('/registrations/check-email', [PublicRegistrationController::class, 'checkEmail']);
         Route::post('/registrations', [PublicRegistrationController::class, 'store']);

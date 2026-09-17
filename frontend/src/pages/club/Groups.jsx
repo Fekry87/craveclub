@@ -16,7 +16,10 @@ export default function Groups() {
   const [showMembers, setShowMembers] = useState(null);
   const [selectedSwimmers, setSelectedSwimmers] = useState([]);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', coach_user_id: '' });
+  const EMPTY_FORM = { name: '', description: '', coach_user_id: '', group_type: 'daily', capacity: '', days_of_week: [], start_time: '', end_time: '' };
+  const [form, setForm] = useState(EMPTY_FORM);
+  const TYPES = ['daily', 'two_days', 'three_days', 'private'];
+  const DAYS = [0, 1, 2, 3, 4, 5, 6];
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -33,8 +36,15 @@ export default function Groups() {
     setSaving(true);
     setSaveError(null);
     try {
-      if (editId) await api.put(`/club/groups/${editId}`, form);
-      else await api.post('/club/groups', form);
+      // Empty capacity means no limit; the API wants null, not "".
+      const payload = {
+        ...form,
+        capacity: form.capacity === '' ? null : Number(form.capacity),
+        start_time: form.start_time || null,
+        end_time: form.end_time || null,
+      };
+      if (editId) await api.put(`/club/groups/${editId}`, payload);
+      else await api.post('/club/groups', payload);
       setShowModal(false); setEditId(null); load();
     } catch (err) {
       setSaveError(apiErrorMessage(err));
@@ -45,7 +55,12 @@ export default function Groups() {
 
   const handleEdit = (g) => {
     setEditId(g.id);
-    setForm({ name: g.name, description: g.description || '', coach_user_id: g.coach_user_id || '' });
+    setForm({
+      name: g.name, description: g.description || '', coach_user_id: g.coach_user_id || '',
+      group_type: g.group_type || 'daily', capacity: g.capacity ?? '',
+      days_of_week: g.days_of_week || [],
+      start_time: (g.start_time || '').slice(0, 5), end_time: (g.end_time || '').slice(0, 5),
+    });
     setShowModal(true);
   };
 
@@ -67,9 +82,17 @@ export default function Groups() {
 
   const closeForm = () => { setShowModal(false); setEditId(null); };
 
+  const spotsOf = (g) => {
+    if (g.capacity == null) return t('groups.unlimited');
+    const left = Math.max(0, g.capacity - (g.swimmers?.length || 0));
+    return left === 0 ? t('groups.full') : t('groups.spotsLeft', { count: left });
+  };
+
   const columns = [
     { key: 'name', label: t('groups.name') },
+    { key: 'group_type', label: t('groups.type'), render: r => t(`subscriptions.types.${r.group_type || 'daily'}`) },
     { key: 'coach', label: t('groups.coach'), render: r => r.coach?.name || <span style={{ color: '#86868B' }}>{t('groups.unassigned')}</span> },
+    { key: 'spots', label: t('groups.spots'), render: r => <span style={{ color: r.capacity != null && r.capacity - (r.swimmers?.length || 0) <= 0 ? '#B12A20' : '#1D1D1F' }}>{spotsOf(r)}</span> },
     { key: 'swimmers', label: t('dashboard.swimmers'), render: r => (
       <span style={{ ...labelStyle, color: '#1D1D1F' }}>
         
@@ -86,6 +109,33 @@ export default function Groups() {
           <Select value={form.coach_user_id} onChange={e => setForm({ ...form, coach_user_id: e.target.value })}
             options={coaches.map(c => ({ value: c.user_id, label: c.user?.name }))} />
         </FormField>
+        <FormField label={t('groups.type')}>
+          <Select value={form.group_type} onChange={e => setForm({ ...form, group_type: e.target.value })}
+            options={TYPES.map(type => ({ value: type, label: t(`subscriptions.types.${type}`) }))} />
+          <div style={{ ...labelStyle, marginTop: 6 }}>{t('groups.typeHint')}</div>
+        </FormField>
+        <FormField label={t('groups.days')}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {DAYS.map(day => {
+              const on = form.days_of_week.includes(day);
+              return (
+                <button type="button" key={day} aria-pressed={on}
+                  onClick={() => setForm({ ...form, days_of_week: on ? form.days_of_week.filter(d => d !== day) : [...form.days_of_week, day].sort() })}
+                  style={{
+                    padding: '7px 12px', borderRadius: 999, fontSize: 13, cursor: 'pointer',
+                    border: `1px solid ${on ? '#0071E3' : '#D2D2D7'}`,
+                    background: on ? 'rgba(0,113,227,0.1)' : '#FFFFFF', color: on ? '#0071E3' : '#1D1D1F',
+                  }}>{t(`groups.dayShort.${day}`)}</button>
+              );
+            })}
+          </div>
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <FormField label={t('groups.startTime')}><Input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} /></FormField>
+          <FormField label={t('groups.endTime')}><Input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} /></FormField>
+          <FormField label={t('groups.capacity')}><Input type="number" min="1" max="500" placeholder={t('groups.unlimited')} value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} /></FormField>
+        </div>
+        <div style={{ ...labelStyle, marginTop: -6, marginBottom: 12 }}>{t('groups.capacityHint')}</div>
         <FormField label={t('groups.description')}><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
         {saveError && (
           <div role="alert" style={{
@@ -106,7 +156,7 @@ export default function Groups() {
   return (
     <div>
       <PageHeader title={t('groups.title')} search={search} onSearch={setSearch} searchPlaceholder={t('groups.searchPlaceholder')}>
-        <Button onClick={() => { setEditId(null); setForm({ name: '', description: '', coach_user_id: '' }); setShowModal(true); }}>
+        <Button onClick={() => { setEditId(null); setForm(EMPTY_FORM); setShowModal(true); }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           {t('groups.newGroup')}
         </Button>

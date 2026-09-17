@@ -140,14 +140,19 @@ class RegistrationController extends Controller
                     'level' => ucfirst(strtolower($registration->experience_level ?? 'beginner')),
                 ]);
 
-                // 6. Auto-assign to coach's group
+                // 6. Put the swimmer in the group they chose while registering;
+                //    without one (older app builds, the portal form), the coach's
+                //    first group as before.
                 $groupAssigned = false;
                 if ($registration->coach_id) {
                     $coachProfile = $registration->coach;
                     if ($coachProfile) {
-                        $group = Group::where('club_id', $clubId)
-                            ->where('coach_user_id', $coachProfile->user_id)
-                            ->first();
+                        $group = ($registration->group_id
+                                ? Group::where('club_id', $clubId)->find($registration->group_id)
+                                : null)
+                            ?? Group::where('club_id', $clubId)
+                                ->where('coach_user_id', $coachProfile->user_id)
+                                ->first();
 
                         if ($group) {
                             GroupMembership::create([

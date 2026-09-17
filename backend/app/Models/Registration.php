@@ -12,7 +12,7 @@ class Registration extends Model
 
     protected $fillable = [
         'reference_code',
-        'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'plan_id',
+        'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'group_id', 'plan_id',
         'full_name', 'phone', 'email', 'guardian_name', 'guardian_phone', 'guardian_email',
         'consent_given_at',
         'gender', 'birth_date', 'avatar_url',
@@ -57,6 +57,12 @@ class Registration extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'plan_id');
+    }
+
+    /** The group the swimmer chose while registering; approval puts them in it. */
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class, 'group_id');
     }
 
     public function sportModule(): BelongsTo

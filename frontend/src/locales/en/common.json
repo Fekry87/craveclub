@@ -197,7 +197,27 @@
     "swimmerCount": "{{count}} swimmer",
     "swimmerCount_plural": "{{count}} swimmers",
     "noGroups": "No groups found",
-    "noGroupsHint": "Add your first group to get started"
+    "noGroupsHint": "Add your first group to get started",
+    "type": "Training type",
+    "typeHint": "Swimmers pick a group inside the type of the plan they chose.",
+    "capacity": "Capacity",
+    "capacityHint": "Leave empty for no limit. Pending registrations count against it.",
+    "days": "Training days",
+    "startTime": "Starts",
+    "endTime": "Ends",
+    "spots": "Spots",
+    "spotsLeft": "{{count}} left",
+    "full": "Full",
+    "unlimited": "No limit",
+    "dayShort": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
   },
   "sessions": {
     "title": "Sessions",
