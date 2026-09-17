@@ -109,7 +109,7 @@ export default function Sessions() {
             <MobileCardWrapper key={row.id} index={i} accentColor="#1D1D1F">
               {/* Header: date block + group name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-                <div style={{
+                <div style={{ borderRadius: 10,
                   width: 52, height: 56,
                   border: '1px solid #E5E5EA',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',

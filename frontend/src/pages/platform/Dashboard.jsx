@@ -42,7 +42,7 @@ function MetricCard({ title, value, icon, index = 0, delay = 0 }) {
     <div
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 16,
         flex: '1 1 200px', background: '#FFFFFF', padding: '20px 22px',
         border: '1px solid #E5E5EA', transition: 'border-color 0.15s ease',
         display: 'flex', flexDirection: 'column', gap: 18,
@@ -69,7 +69,7 @@ function ClubCard({ club, index }) {
     <div
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 12,
         display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
         background: '#FFFFFF', border: '1px solid #E5E5EA',
         transition: 'border-color 0.15s ease',

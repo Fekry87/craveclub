@@ -546,7 +546,7 @@ export default function TrainingPlansPage() {
         <PageHeader title="Training Plans" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'stretch', gap: 16 }}>
           {[0, 1, 2].map(i => (
-            <div key={i} style={{
+            <div key={i} style={{ borderRadius: 16,
               height: 240, background: '#FFFFFF',
               border: '1px solid #E5E5EA',
               animation: `fadeIn 0.3s ease-out ${i * 0.08}s both`,
@@ -660,14 +660,14 @@ export default function TrainingPlansPage() {
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>}
         >
           {(editPlan.assignments_count ?? 0) > 0 && (
-            <div style={{ padding: '12px 14px', background: '#FFFFFF', border: '1px solid #FF9500', marginBottom: 12 }}>
+            <div style={{ borderRadius: 12, padding: '12px 14px', background: '#FFFFFF', border: '1px solid #FF9500', marginBottom: 12 }}>
               <p style={{ color: '#FF9500', fontSize: 13, margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" /></svg>
                 This plan has {editPlan.assignments_count} active assignment{editPlan.assignments_count > 1 ? 's' : ''}.
               </p>
             </div>
           )}
-          <div style={{ padding: '16px', background: '#FFFFFF', border: '1px solid #FF3B30', marginBottom: 4 }}>
+          <div style={{ borderRadius: 12, padding: '16px', background: '#FFFFFF', border: '1px solid #FF3B30', marginBottom: 4 }}>
             <p style={{ color: '#FF3B30', fontSize: 13, margin: 0, lineHeight: 1.6 }}>
               This action cannot be undone. The plan and all its data will be permanently removed.
             </p>

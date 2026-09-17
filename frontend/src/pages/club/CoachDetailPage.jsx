@@ -196,7 +196,7 @@ function AtRiskSwimmers({ swimmers, isMobile }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto', border: '1px solid #E5E5EA' }}>
+    <div style={{ borderRadius: 12, overflowX: 'auto', border: '1px solid #E5E5EA' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
@@ -215,8 +215,8 @@ function AtRiskSwimmers({ swimmers, isMobile }) {
               <td style={{ padding: '10px 14px', color: '#1D1D1F', fontSize: 13, fontWeight: 500, borderBottom: '1px solid #E5E5EA' }}>{s.name}</td>
               <td style={{ padding: '10px 14px', borderBottom: '1px solid #E5E5EA' }}>
                 <span style={{
-                  padding: '2px 8px', fontSize: 10, fontFamily: 'var(--font-body)',
-                  background: 'transparent', border: '1px solid #FF3B30', color: '#FF3B30',
+                  padding: '2px 9px', fontSize: 10, fontFamily: 'var(--font-body)', fontWeight: 500,
+                  background: 'rgba(255,59,48,0.12)', color: '#B12A20', borderRadius: 980,
                 }}>{s.attendance_rate}%</span>
               </td>
               <td style={{ padding: '10px 14px', color: '#515154', fontSize: 12, borderBottom: '1px solid #E5E5EA' }}>{s.last_seen || '—'}</td>
