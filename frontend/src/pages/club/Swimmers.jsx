@@ -276,7 +276,7 @@ export default function Swimmers() {
 
       {/* Pending deletion warning */}
       {pendingDeletion.length > 0 && (
-        <div style={{
+        <div style={{ borderRadius: 16,
           marginBottom: 20, padding: '16px 20px', background: '#FFFFFF',
           border: '1px solid #FF9500',
         }}>

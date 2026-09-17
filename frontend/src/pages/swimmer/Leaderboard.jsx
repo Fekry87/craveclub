@@ -170,7 +170,7 @@ function PodiumColumn({ entry, rank, isMobile }) {
       </div>
 
       {/* Podium pedestal */}
-      <div style={{
+      <div style={{ borderRadius: '12px 12px 0 0',
         width: '100%', height: podiumH,
         background: rank === 1 ? '#F2F2F7' : '#FFFFFF',
         border: '1px solid #E5E5EA', borderBottom: 'none',
@@ -219,7 +219,7 @@ function RankRow({ entry, index = 0, isMobile }) {
         }}>{entry.rank}</span>
       </div>
       {/* Avatar */}
-      <div style={{
+      <div style={{ borderRadius: '50%',
         width: isMobile ? 34 : 38, height: isMobile ? 34 : 38, flexShrink: 0,
         background: '#F2F2F7', border: '1px solid #E5E5EA',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -336,7 +336,7 @@ export default function SwimmerLeaderboard() {
               <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18, marginBottom: isMobile ? 16 : 20 }}>
                 {/* Avatar */}
                 <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{
+                  <div style={{ borderRadius: '50%',
                     width: isMobile ? 62 : 72, height: isMobile ? 62 : 72,
                     background: '#F2F2F7', border: '1px solid #E5E5EA',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -368,7 +368,7 @@ export default function SwimmerLeaderboard() {
                 </div>
 
                 {/* Rank badge */}
-                <div style={{
+                <div style={{ borderRadius: 12,
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
                   padding: isMobile ? '8px 12px' : '10px 16px',
                   border: '1px solid #E5E5EA', flexShrink: 0,
@@ -382,7 +382,7 @@ export default function SwimmerLeaderboard() {
               </div>
 
               {/* ── XP Total Bar ── */}
-              <div style={{
+              <div style={{ borderRadius: 12,
                 padding: isMobile ? '12px 14px' : '14px 16px',
                 border: '1px solid #E5E5EA',
                 marginBottom: isMobile ? 10 : 12,
@@ -421,7 +421,7 @@ export default function SwimmerLeaderboard() {
                   { value: my_xp.attendance_xp, label: 'Attend', detail: `${my_xp.attended_count} sessions` },
                   { value: my_xp.streak_xp, label: 'Streaks', detail: 'Bonus XP' },
                 ].map((item, i) => (
-                  <div key={item.label} style={{
+                  <div key={item.label} style={{ borderRadius: 12,
                     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
                     justifyContent: 'center', gap: 8,
                     padding: isMobile ? '12px 4px' : '14px 6px',
@@ -499,7 +499,7 @@ export default function SwimmerLeaderboard() {
                       }}>You</span>
                     )}
                     {/* Avatar */}
-                    <div style={{
+                    <div style={{ borderRadius: '50%',
                       width: isMobile ? 36 : 42, height: isMobile ? 36 : 42,
                       background: '#F2F2F7', border: '1px solid #E5E5EA',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
