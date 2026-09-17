@@ -100,6 +100,7 @@ export default function CorporateSettings() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [uploadingSplash, setUploadingSplash] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     api.get('/corporate/settings').then(r => {
@@ -134,6 +135,33 @@ export default function CorporateSettings() {
       e.target.value = '';
     }
   };
+
+  // The logo is stored server-side (the bucket can't be read), so it is
+  // uploaded rather than linked; the response carries the URL the app will use.
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    setSaveError(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await api.post('/corporate/settings/platform-logo', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setForm(f => ({ ...f, platform_logo_url: r.data.url || r.data.platform_logo_url }));
+    } catch (err) {
+      setSaveError(apiErrorMessage(err));
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const brandColor = /^#?[0-9A-Fa-f]{6}$/.test(form.primary_color || '')
+    ? (form.primary_color.startsWith('#') ? form.primary_color : `#${form.primary_color}`)
+    : '#6C4CF5';
+  const platformInitials = (form.platform_name || 'CraveClubs').trim().slice(0, 2).toUpperCase();
 
   const splashBg = /^#?[0-9A-Fa-f]{6}$/.test(form.splash_background_color || '')
     ? (form.splash_background_color.startsWith('#') ? form.splash_background_color : `#${form.splash_background_color}`)
@@ -170,8 +198,54 @@ export default function CorporateSettings() {
           <FormField label="Tagline">
             <Input value={form.tagline} onChange={e => setForm({ ...form, tagline: e.target.value })} placeholder="Club Management Platform" />
           </FormField>
-          <FormField label="Logo URL">
-            <Input value={form.platform_logo_url} onChange={e => setForm({ ...form, platform_logo_url: e.target.value })} placeholder="https://example.com/logo.png" />
+          <FormField label="Logo">
+            <div style={{ ...labelStyle, marginTop: -2, marginBottom: 12, color: '#86868B', fontWeight: 400 }}>
+              Shown on the app's first screen, where swimmers type their club's name. It sits on a light background, so use a logo that reads on white.
+            </div>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div>
+                <label
+                  className="pl-btn pl-btn-secondary pl-btn-sm"
+                  style={{ cursor: uploadingLogo ? 'default' : 'pointer', opacity: uploadingLogo ? 0.6 : 1 }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
+                  {uploadingLogo ? 'Uploading…' : form.platform_logo_url ? 'Replace logo' : 'Upload logo'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    style={{ display: 'none' }}
+                    onChange={handleLogoUpload}
+                    disabled={uploadingLogo}
+                  />
+                </label>
+                <div style={{ ...labelStyle, marginTop: 8, color: '#86868B', fontWeight: 400 }}>
+                  PNG with a transparent background works best · PNG, JPG or WebP · up to 2MB
+                </div>
+              </div>
+
+              {/* Preview of the app's club-name screen */}
+              <div style={{
+                width: 150, height: 300, borderRadius: 28, overflow: 'hidden',
+                background: '#F7F6FB', border: '1px solid rgba(0,0,0,0.10)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 10, flexShrink: 0, padding: 12, boxSizing: 'border-box',
+              }}>
+                {form.platform_logo_url ? (
+                  <img src={form.platform_logo_url} alt="Platform logo" style={{ maxWidth: '70%', maxHeight: 48, objectFit: 'contain' }} />
+                ) : (
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 11, background: brandColor,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#FFFFFF', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-heading)',
+                  }}>{platformInitials}</div>
+                )}
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1B1B2F', fontFamily: 'var(--font-heading)', textAlign: 'center' }}>
+                  {form.platform_name || 'CraveClubs'}
+                </div>
+                <div style={{ width: '100%', height: 20, borderRadius: 6, background: '#FFFFFF', border: '1px solid #E6E5EF', marginTop: 6 }} />
+                <div style={{ width: '100%', height: 20, borderRadius: 6, background: brandColor }} />
+              </div>
+            </div>
           </FormField>
         </div>
 
@@ -190,7 +264,7 @@ export default function CorporateSettings() {
         <div style={sectionCardStyle('0.18s')}>
           <SectionTitle>App splash screen</SectionTitle>
           <div style={{ ...labelStyle, marginTop: -4, marginBottom: 16, color: '#86868B', fontWeight: 400 }}>
-            Shown when the mobile app launches, before the club list. Pick a background color and upload a centered logo.
+            Shown when the mobile app launches, before the club-name screen. Pick a background color and upload a centered logo.
           </div>
           <FormField label="Background color">
             <ColorPicker value={form.splash_background_color} onChange={v => setForm({ ...form, splash_background_color: v })} />
