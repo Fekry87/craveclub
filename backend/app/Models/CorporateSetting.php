@@ -18,7 +18,19 @@ class CorporateSetting extends Model
      * upload limit would be shipped (as ~2.7 MB of base64) to every user on
      * every sign-in.
      */
-    public const IMAGE_DATA_KEYS = ['splash_image_data', 'platform_logo_data'];
+    public const IMAGE_DATA_KEYS = [
+        'splash_image_data',
+        'platform_logo_data',
+        'entry_photo_1_data',
+        'entry_photo_2_data',
+        'entry_photo_3_data',
+    ];
+
+    /**
+     * Photo slots on the app's club-name entry screen, which cycles through
+     * whichever of them are filled.
+     */
+    public const ENTRY_PHOTO_SLOTS = [1, 2, 3];
 
     /**
      * Get a setting value by key.

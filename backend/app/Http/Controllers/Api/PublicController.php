@@ -114,6 +114,15 @@ class PublicController extends Controller
             ? rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/platform-logo?v='.$settings['platform_logo_version']
             : ($settings['platform_logo_url'] ?? null);
 
+        // Filled slots only, in slot order. Empty means the app keeps its own
+        // bundled photo.
+        $entryPhotoUrls = [];
+        foreach (CorporateSetting::ENTRY_PHOTO_SLOTS as $slot) {
+            if ($version = $settings["entry_photo_{$slot}_version"] ?? null) {
+                $entryPhotoUrls[] = rtrim($request->getSchemeAndHttpHost(), '/')."/api/v1/public/branding/entry-photo/{$slot}?v={$version}";
+            }
+        }
+
         return response()->json([
             'platform_name' => $settings['platform_name'] ?? 'CraveClubs',
             'platform_logo_url' => $logoUrl,
@@ -122,6 +131,7 @@ class PublicController extends Controller
             'tagline' => $settings['tagline'] ?? 'Club Management Platform',
             'splash_background_color' => $settings['splash_background_color'] ?? ($settings['primary_color'] ?? '#6C4CF5'),
             'splash_image_url' => $splashUrl,
+            'entry_photo_urls' => $entryPhotoUrls,
         ]);
     }
 
@@ -182,11 +192,35 @@ class PublicController extends Controller
      */
     public function platformLogo()
     {
-        $data = CorporateSetting::get('platform_logo_data');
+        return $this->streamStoredImage('platform_logo');
+    }
+
+    /**
+     * Public proxy for one of the entry screen's photos, stored the same way as
+     * the platform logo.
+     */
+    public function entryPhoto(int $slot)
+    {
+        abort_unless(in_array($slot, CorporateSetting::ENTRY_PHOTO_SLOTS, true), 404);
+
+        return $this->streamStoredImage("entry_photo_{$slot}");
+    }
+
+    /**
+     * Stream an image kept as base64 in corporate settings under
+     * `{prefix}_data` / `{prefix}_mime`.
+     *
+     * The content type is re-checked against the upload allow-list before it is
+     * sent, so whatever ends up in the settings table can only ever be served as
+     * one of those image types — never as a document the browser would run.
+     */
+    private function streamStoredImage(string $prefix)
+    {
+        $data = CorporateSetting::get("{$prefix}_data");
         $contents = $data ? base64_decode($data, true) : false;
         abort_if($contents === false || $contents === '', 404);
 
-        $mime = CorporateSetting::get('platform_logo_mime');
+        $mime = CorporateSetting::get("{$prefix}_mime");
         abort_unless(in_array($mime, ['image/png', 'image/jpeg', 'image/webp'], true), 404);
 
         return response($contents, 200, [

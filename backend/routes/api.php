@@ -195,6 +195,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);
     Route::get('/public/branding/platform-logo', [PublicController::class, 'platformLogo']);
+    Route::get('/public/branding/entry-photo/{slot}', [PublicController::class, 'entryPhoto'])->whereNumber('slot');
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
 
     // ── Public Registration API (club resolved via X-Club-Slug header) ──
@@ -255,6 +256,8 @@ Route::prefix('v1')->group(function () {
             Route::put('/settings', [CorporateController::class, 'updateSettings']);
             Route::post('/settings/splash-image', [CorporateController::class, 'uploadSplashImage']);
             Route::post('/settings/platform-logo', [CorporateController::class, 'uploadPlatformLogo']);
+            Route::post('/settings/entry-photos/{slot}', [CorporateController::class, 'uploadEntryPhoto'])->whereNumber('slot');
+            Route::delete('/settings/entry-photos/{slot}', [CorporateController::class, 'deleteEntryPhoto'])->whereNumber('slot');
 
             // Enhanced metrics
             Route::get('/metrics', [CorporateController::class, 'metrics']);
