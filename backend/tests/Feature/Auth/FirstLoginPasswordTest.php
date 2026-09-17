@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\UserRole;
+use App\Http\Controllers\Api\PublicRegistrationController;
 use App\Models\Branch;
 use App\Models\Club;
 use App\Models\ClubFeature;
@@ -118,8 +119,32 @@ class FirstLoginPasswordTest extends TestCase
 
     public function test_an_email_already_used_by_an_account_is_refused_at_registration(): void
     {
-        $this->submit(['email' => 'manager@first.test'])->assertStatus(422)->assertJsonValidationErrors('email');
+        $this->submit(['email' => 'manager@first.test'])->assertStatus(422)
+            ->assertJsonPath('errors.email.0', PublicRegistrationController::EMAIL_TAKEN_MESSAGE);
         $this->submit(['email' => 'not-an-email'])->assertStatus(422)->assertJsonValidationErrors('email');
+    }
+
+    /**
+     * Step 1 asks up front, with the same rule and the same message the
+     * submission uses, so a taken email is caught before the other seven steps.
+     */
+    public function test_step_one_can_check_the_email_before_the_rest_of_the_form(): void
+    {
+        $check = fn (?string $email) => $this->withHeaders(['X-Club-Slug' => $this->club->slug])
+            ->postJson('/api/v1/registrations/check-email', ['email' => $email]);
+
+        $check('laila@example.com')->assertOk()->assertJsonPath('available', true);
+        $check('manager@first.test')->assertStatus(422)
+            ->assertJsonPath('errors.email.0', PublicRegistrationController::EMAIL_TAKEN_MESSAGE);
+        $check('not-an-email')->assertStatus(422)->assertJsonValidationErrors('email');
+        // Without one the generated address is used, so nothing to refuse.
+        $check(null)->assertOk();
+
+        // It needs the club header like every other registration route
+        // (withHeaders sticks to the test case, so drop it first).
+        $this->flushHeaders()
+            ->postJson('/api/v1/registrations/check-email', ['email' => 'laila@example.com'])
+            ->assertStatus(422)->assertJsonPath('message', 'X-Club-Slug header is required.');
     }
 
     public function test_an_email_taken_between_registration_and_approval_falls_back_to_the_generated_one(): void

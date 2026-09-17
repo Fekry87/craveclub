@@ -166,6 +166,39 @@ class PublicRegistrationController extends Controller
     }
 
     /**
+     * The one message the swimmer sees for an email that belongs to an account,
+     * whether it is caught up front (Step 1) or at submission.
+     */
+    public const EMAIL_TAKEN_MESSAGE = 'This email is already registered. Sign in instead, or use a different email.';
+
+    /**
+     * Rules for the swimmer's own email. Shared by the up-front check and the
+     * submission so the app cannot pass one and fail the other.
+     */
+    private static function emailRules(): array
+    {
+        return ['nullable', 'email', 'max:255', Rule::unique('users', 'email')];
+    }
+
+    /**
+     * Check the swimmer's email before they fill in the other seven steps.
+     *
+     * Runs the same rule the submission runs and answers 422 with the same
+     * field error, so Step 1 can refuse an email that would only have failed at
+     * the end. Answers 200 with nothing else — it reveals no more than the
+     * submission itself already did.
+     */
+    public function checkEmail(Request $request): JsonResponse
+    {
+        $request->validate(
+            ['email' => self::emailRules()],
+            ['email.unique' => self::EMAIL_TAKEN_MESSAGE],
+        );
+
+        return response()->json(['available' => true]);
+    }
+
+    /**
      * Submit a new registration.
      */
     public function store(Request $request): JsonResponse
@@ -183,7 +216,7 @@ class PublicRegistrationController extends Controller
             'phone' => 'required|string|min:10|max:20',
             // Becomes the account's login address at approval; without one the
             // generated swimmer_<phone>@club<N> address is used as before.
-            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => self::emailRules(),
             'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => 'nullable|string|max:20',
             'guardian_email' => 'nullable|email|max:255',
@@ -212,7 +245,7 @@ class PublicRegistrationController extends Controller
             // PDPL: explicit data-processing consent. Optional at the API level so
             // older mobile builds keep working; the portal wizard always sends it.
             'consent_given' => 'sometimes|boolean',
-        ]);
+        ], ['email.unique' => self::EMAIL_TAKEN_MESSAGE]);
 
         // Count the attempt only once the payload is well-formed. Counting before
         // validation burns an honest applicant's whole hourly quota on five typos.
