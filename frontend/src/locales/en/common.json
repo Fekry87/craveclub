@@ -197,7 +197,29 @@
     "swimmerCount": "{{count}} swimmer",
     "swimmerCount_plural": "{{count}} swimmers",
     "noGroups": "No groups found",
-    "noGroupsHint": "Add your first group to get started"
+    "noGroupsHint": "Add your first group to get started",
+    "type": "Group type",
+    "capacity": "Capacity",
+    "capacityHint": "Maximum number of swimmers in this group",
+    "schedule": "Schedule",
+    "days": "Training days",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "dayCountRule": "A {{type}} group must meet on exactly {{count}} days ({{selected}} selected)",
+    "endAfterStart": "End time must be after the start time",
+    "noSchedule": "No schedule yet",
+    "spots": "{{taken}}/{{capacity}} spots",
+    "unlimited": "Unlimited",
+    "full": "Full",
+    "dayNames": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
   },
   "sessions": {
     "title": "Sessions",
@@ -269,7 +291,9 @@
     "confirmReject": "Are you sure you want to reject <b>{{name}}</b>'s registration?",
     "rejectWarning": "This action cannot be undone. The swimmer will not be created and the registration will be marked as rejected.",
     "firstLoginNote": "They sign in with this email or their phone number and the temporary password, and the app makes them set their own password before anything else.",
-    "emailLoginHint": "On their first sign-in the app makes them set a new password of their own."
+    "emailLoginHint": "On their first sign-in the app makes them set a new password of their own.",
+    "typeMismatch": "Heads up: the plan is {{plan}} but the group is {{group}}. The swimmer was approved anyway; move them to another group if that is wrong.",
+    "groupPlaced": "Group"
   },
   "subscriptions": {
     "title": "Subscriptions",

@@ -191,6 +191,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/public/club-lookup', [PublicController::class, 'clubLookup']);
         Route::get('/clubs/{slug}', [PublicController::class, 'clubBySlug']);
         Route::get('/clubs/{slug}/sports', [PublicController::class, 'clubSports']);
+        Route::get('/clubs/{slug}/groups', [PublicController::class, 'clubGroups']);
     });
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);

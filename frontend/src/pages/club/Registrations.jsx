@@ -530,11 +530,30 @@ export default function Registrations() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0' }}>
                       <span style={{ ...labelStyle }}>{t('registrations.groupAssigned')}</span>
                       <span style={{ color: approveResult.group_assigned ? '#34C759' : '#FF9500', fontSize: 13, textAlign: 'end' }}>
-                        {approveResult.group_assigned ? t('common.yes') : t('registrations.noGroupFound')}
+                        {approveResult.group_assigned
+                          ? (approveResult.group_name || t('common.yes'))
+                          : t('registrations.noGroupFound')}
                       </span>
                     </div>
                   </div>
                 </div>
+
+                {/* The plan and the group disagree on training frequency. Approval went
+                    through; the manager decides whether that placement is right. */}
+                {approveResult.type_mismatch_warning && (
+                  <div role="alert" style={{
+                    marginTop: 14, padding: '10px 14px', borderRadius: 10,
+                    background: 'rgba(255,149,0,0.14)', color: '#A35A00',
+                    fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.45,
+                    display: 'flex', gap: 8, alignItems: 'flex-start',
+                  }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><path d="M12 9v4M12 17h.01" /></svg>
+                    <span>{t('registrations.typeMismatch', {
+                      plan: t(`subscriptions.types.${approveResult.plan_training_type}`, { defaultValue: approveResult.plan_training_type }),
+                      group: t(`subscriptions.types.${approveResult.group_type}`, { defaultValue: approveResult.group_type }),
+                    })}</span>
+                  </div>
+                )}
               </div>
 
               <ModalActions>

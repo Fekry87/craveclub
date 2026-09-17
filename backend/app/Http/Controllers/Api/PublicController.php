@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
 use App\Models\CorporateSetting;
+use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -92,6 +93,49 @@ class PublicController extends Controller
             ->get(['sport_modules.id', 'sport_modules.name', 'sport_modules.slug', 'sport_modules.description', 'sport_modules.icon', 'sport_modules.color']);
 
         return response()->json(['data' => $modules]);
+    }
+
+    /**
+     * A club's joinable groups, grouped by training type, for the app's registration
+     * flow (by slug, no header required; `?sport=slug` narrows to one sport like the
+     * other public endpoints). Only groups with a schedule are offered — a group with
+     * no days set has nothing a member could choose.
+     */
+    public function clubGroups(Request $request, string $slug): JsonResponse
+    {
+        $club = Club::where('slug', $slug)->where('is_active', true)->first();
+
+        if (! $club) {
+            return response()->json(['data' => (object) []]);
+        }
+
+        $query = Group::where('club_id', $club->id)
+            ->whereNotNull('days_of_week')
+            ->withCount('swimmers')
+            ->with('coach:id,name');
+
+        if ($sport = $request->query('sport')) {
+            $query->whereHas('sportModule', fn ($q) => $q->where('slug', $sport));
+        }
+
+        $groups = $query->orderBy('start_time')->orderBy('name')->get()
+            ->map(fn (Group $group) => [
+                'id' => $group->id,
+                'name' => $group->name,
+                'group_type' => $group->group_type,
+                'coach_name' => $group->coach?->name,
+                'coach_user_id' => $group->coach_user_id,
+                'days_of_week' => $group->days_of_week,
+                'days_of_week_labels' => $group->days_of_week_labels,
+                'start_time' => $group->start_time ? substr($group->start_time, 0, 5) : null,
+                'end_time' => $group->end_time ? substr($group->end_time, 0, 5) : null,
+                'capacity' => $group->capacity,
+                'remaining_spots' => $group->remaining_spots,
+                'is_full' => $group->isFull(),
+            ])
+            ->groupBy('group_type');
+
+        return response()->json(['data' => $groups]);
     }
 
     /**

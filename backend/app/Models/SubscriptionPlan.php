@@ -17,7 +17,8 @@ class SubscriptionPlan extends Model
      * the app shows one tab per type the club has active plans in. Order here
      * is display order.
      */
-    public const TRAINING_TYPES = ['daily', 'two_days', 'three_days', 'private'];
+    /** @deprecated read App\Enums\TrainingType::ALL — kept so existing callers keep working */
+    public const TRAINING_TYPES = \App\Enums\TrainingType::ALL;
 
     protected $fillable = [
         'club_id', 'name', 'training_type', 'duration_months', 'price',

@@ -238,6 +238,9 @@ class PublicRegistrationController extends Controller
             'branch_id' => ['required', 'integer', Rule::exists('branches', 'id')->where('club_id', app('current_club_id'))],
             'plan_id' => ['required', 'integer', Rule::exists('subscription_plans', 'id')->where('club_id', app('current_club_id'))],
             'coach_id' => ['required', 'integer', Rule::exists('coach_profiles', 'id')->where('club_id', app('current_club_id'))],
+            // The group the applicant picked by type + schedule. Optional so the portal
+            // wizard and older app builds, which choose a coach only, keep working.
+            'group_id' => ['nullable', 'integer', Rule::exists('groups', 'id')->where('club_id', app('current_club_id'))->whereNull('deleted_at')],
             'preferred_time' => 'required|string',
             'payment_method' => 'required|in:cash',
             'avatar_url' => 'nullable|string',
@@ -246,6 +249,18 @@ class PublicRegistrationController extends Controller
             // older mobile builds keep working; the portal wizard always sends it.
             'consent_given' => 'sometimes|boolean',
         ], ['email.unique' => self::EMAIL_TAKEN_MESSAGE]);
+
+        // Friendly early answer for a group that is already full. The authoritative
+        // check runs under a row lock at approval, when the seat is actually taken.
+        if (! empty($validated['group_id'])) {
+            $chosen = \App\Models\Group::where('club_id', app('current_club_id'))->find($validated['group_id']);
+            if ($chosen && $chosen->isFull()) {
+                return response()->json([
+                    'message' => 'This group is full. Please choose another group.',
+                    'errors' => ['group_id' => ['This group is full. Please choose another group.']],
+                ], 422);
+            }
+        }
 
         // Count the attempt only once the payload is well-formed. Counting before
         // validation burns an honest applicant's whole hourly quota on five typos.
