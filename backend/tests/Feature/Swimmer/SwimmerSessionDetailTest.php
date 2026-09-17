@@ -192,6 +192,21 @@ class SwimmerSessionDetailTest extends TestCase
         }
     }
 
+    public function test_the_sessions_list_carries_the_clubs_attendance_xp(): void
+    {
+        // The card must show the club's figure, not a constant — the same number
+        // the detail page shows for that session.
+        LeaderboardSetting::forClub($this->club->id)->update(['attendance_xp' => 5]);
+        $session = $this->makeSession();
+
+        $this->actingAs($this->swimmer, 'sanctum')
+            ->getJson('/api/v1/swimmer/sessions', ['X-Club-Slug' => $this->club->slug])
+            ->assertOk()
+            ->assertJsonPath('data.0.xp_per_attendance', 5);
+
+        $this->show($session)->assertJsonPath('xp.per_attendance', 5);
+    }
+
     public function test_a_completed_session_carries_my_attendance_evaluation_and_xp(): void
     {
         $session = $this->makeSession(['status' => 'Completed', 'completed_at' => now()]);

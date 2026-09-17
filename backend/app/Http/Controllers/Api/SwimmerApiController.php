@@ -287,7 +287,15 @@ class SwimmerApiController extends Controller
             ->orderBy('date', 'desc')
             ->paginate($request->input('per_page', 15));
 
-        $sessions->getCollection()->makeHidden(self::COACH_ONLY_SESSION_FIELDS);
+        // Attendance XP is a per-club setting. The session card used to print a
+        // hardcoded "+25 XP", so a club set to 5 showed 25 on the card and 5 on
+        // the detail page for the same session. Send the real figure with each
+        // row so the card needs no second request.
+        $xpPerAttendance = (int) LeaderboardSetting::forClub($profile->club_id)->attendance_xp;
+
+        $sessions->getCollection()
+            ->makeHidden(self::COACH_ONLY_SESSION_FIELDS)
+            ->each->setAttribute('xp_per_attendance', $xpPerAttendance);
 
         return response()->json($sessions);
     }
