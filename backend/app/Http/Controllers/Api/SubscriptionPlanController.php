@@ -28,6 +28,7 @@ class SubscriptionPlanController extends Controller
 
         $request->validate([
             'name' => 'required|string|min:2|max:255',
+            'training_type' => ['required', Rule::in(SubscriptionPlan::TRAINING_TYPES)],
             'duration_months' => 'required|integer|min:1|max:36',
             'price' => 'required|numeric|min:0',
             'discount_percent' => 'integer|min:0|max:100',
@@ -38,13 +39,16 @@ class SubscriptionPlanController extends Controller
 
         try {
             $plan = DB::transaction(function () use ($request, $clubId) {
-                // If marking as popular, clear other popular plans first (atomic)
+                // One popular plan per training type: the app highlights it on
+                // that type's tab, so a daily plan and a private plan can both be.
                 if ($request->boolean('is_popular')) {
-                    SubscriptionPlan::where('club_id', $clubId)->update(['is_popular' => false]);
+                    SubscriptionPlan::where('club_id', $clubId)
+                        ->where('training_type', $request->input('training_type'))
+                        ->update(['is_popular' => false]);
                 }
 
                 // Auto-assign display_order if not provided
-                $data = $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order']);
+                $data = $request->only(['name', 'training_type', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order']);
                 if (! $request->has('display_order')) {
                     $data['display_order'] = SubscriptionPlan::where('club_id', $clubId)->max('display_order') + 1;
                 }
@@ -77,6 +81,7 @@ class SubscriptionPlanController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|min:2|max:255',
+            'training_type' => ['sometimes', Rule::in(SubscriptionPlan::TRAINING_TYPES)],
             'duration_months' => 'sometimes|integer|min:1|max:36',
             'price' => 'sometimes|numeric|min:0',
             'discount_percent' => 'integer|min:0|max:100',
@@ -87,15 +92,18 @@ class SubscriptionPlanController extends Controller
 
         try {
             DB::transaction(function () use ($request, $clubId, $subscriptionPlan) {
-                // If marking as popular, clear other popular plans first (atomic)
+                $type = $request->input('training_type', $subscriptionPlan->training_type);
+
+                // One popular plan per training type (see store).
                 if ($request->boolean('is_popular')) {
                     SubscriptionPlan::where('club_id', $clubId)
+                        ->where('training_type', $type)
                         ->where('id', '!=', $subscriptionPlan->id)
                         ->update(['is_popular' => false]);
                 }
 
                 $subscriptionPlan->update(
-                    $request->only(['name', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order'])
+                    $request->only(['name', 'training_type', 'duration_months', 'price', 'discount_percent', 'is_popular', 'is_active', 'display_order'])
                 );
             });
 

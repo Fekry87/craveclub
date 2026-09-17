@@ -272,6 +272,7 @@ class ManagementCrudTest extends TestCase
         $response = $this->actingAs($this->manager, 'sanctum')
             ->postJson('/api/v1/club/subscription-plans', [
                 'name' => 'Monthly',
+                'training_type' => 'daily',
                 'duration_months' => 1,
                 'price' => 99.99,
                 'is_active' => true,
