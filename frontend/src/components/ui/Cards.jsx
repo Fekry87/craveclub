@@ -48,11 +48,20 @@ export function CardInfoRow({ icon, label, value }) {
   );
 }
 
-export function CardActions({ row, onEdit, onDelete, actions }) {
+/**
+ * `primaryAction` renders on its own full-width row above the button row, for a
+ * highlighted action that must not squeeze Edit/Delete out of the card.
+ * `actions` renders inline before Edit/Delete; keep it to one small button.
+ */
+export function CardActions({ row, onEdit, onDelete, actions, primaryAction }) {
   const { t } = useTranslation();
-  if (!onEdit && !onDelete && !actions) return null;
+  if (!onEdit && !onDelete && !actions && !primaryAction) return null;
   return (
-    <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid #F2F2F7' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid #F2F2F7' }}>
+      {primaryAction && (
+        <div style={{ display: 'flex' }}>{primaryAction(row)}</div>
+      )}
+      <div style={{ display: 'flex', gap: 8, minWidth: 0 }}>
       {actions && actions(row)}
       {onEdit && (
         <button type="button" className="pl-btn pl-btn-secondary pl-btn-sm" style={{ flex: 1 }} onClick={() => onEdit(row)}>
@@ -66,6 +75,7 @@ export function CardActions({ row, onEdit, onDelete, actions }) {
           {t('actions.delete')}
         </button>
       )}
+      </div>
     </div>
   );
 }
