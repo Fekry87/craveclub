@@ -36,8 +36,10 @@ class SwimmerLogin
     }
 
     /**
-     * Every account in the club whose login address was derived from this phone —
-     * the canonical one plus any numbered collision variants.
+     * Every account in the club this phone signs into: those with the phone
+     * stored on them (accounts created since swimmers could register with their
+     * own email) plus those whose generated address was derived from it — the
+     * canonical one and any numbered collision variants.
      */
     public static function query(int $clubId, ?string $phone): Builder
     {
@@ -45,7 +47,8 @@ class SwimmerLogin
 
         return User::where('club_id', $clubId)
             ->where(function ($q) use ($digits, $clubId) {
-                $q->where('email', self::email($clubId, $digits))
+                $q->where('login_phone', $digits)
+                    ->orWhere('email', self::email($clubId, $digits))
                     // Escape the underscore: unescaped it is a LIKE wildcard and would
                     // also match a different phone that happens to share a prefix.
                     ->orWhere('email', 'like', 'swimmer_'.$digits.'\_%@club'.$clubId.self::DOMAIN_SUFFIX);
@@ -62,6 +65,12 @@ class SwimmerLogin
         $digits = self::digits($phone);
 
         return $digits === '' ? null : self::query($clubId, $digits)->first();
+    }
+
+    /** The phone an account signs in with: stored on it, or parsed from a generated address. */
+    public static function phoneOf(User $user): ?string
+    {
+        return $user->login_phone ?: self::phoneFromEmail($user->email);
     }
 
     /** The phone digits a generated login address was built from, if it is one. */
@@ -84,7 +93,7 @@ class SwimmerLogin
      */
     public static function isReachableByPhone(User $user): bool
     {
-        $phone = self::phoneFromEmail($user->email);
+        $phone = self::phoneOf($user);
 
         if ($phone === null || $user->club_id === null) {
             return false;

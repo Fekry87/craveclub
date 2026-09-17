@@ -13,7 +13,7 @@ class Registration extends Model
     protected $fillable = [
         'reference_code',
         'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'plan_id',
-        'full_name', 'phone', 'guardian_name', 'guardian_phone', 'guardian_email',
+        'full_name', 'phone', 'email', 'guardian_name', 'guardian_phone', 'guardian_email',
         'consent_given_at',
         'gender', 'birth_date', 'avatar_url',
         'height_cm', 'weight_kg', 'fitness_level', 'prior_experience',

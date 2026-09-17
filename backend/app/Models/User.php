@@ -14,7 +14,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'name', 'avatar', 'email', 'password', 'role', 'club_id',
+        'name', 'avatar', 'email', 'login_phone', 'password', 'must_change_password', 'role', 'club_id',
         'deletion_requested_at', 'scheduled_purge_at',
     ];
 
@@ -27,6 +27,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
             'role' => UserRole::class,
             'deletion_requested_at' => 'datetime',
             'scheduled_purge_at' => 'datetime',

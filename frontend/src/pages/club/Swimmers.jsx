@@ -481,8 +481,8 @@ export default function Swimmers() {
         <Modal title="New login credentials" onClose={() => setResetResult(null)}>
           <p style={{ margin: '0 0 16px', color: '#6E6E73', fontSize: 14, lineHeight: 1.5 }}>
             Share these with <strong>{resetResult.name}</strong>. They sign in on the
-            {resetResult.phone_login_works === false ? ' email below' : ' phone number or this email'},
-            then change the password from their profile.
+            {resetResult.phone_login_works === false ? ' email below' : ' phone number or this email'}.
+            The app then makes them set a new password of their own before anything else.
           </p>
           {resetResult.phone_login_works === false && (
             <div style={{
