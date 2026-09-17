@@ -108,6 +108,7 @@ export default function Step8_ReviewPayment() {
       const payload = {
         full_name:        basicProfile.fullName,
         phone:            basicProfile.phone,
+        email:            basicProfile.email || null,
         gender:           basicProfile.gender,
         birth_date:       basicProfile.birthDate,
         avatar_url:       basicProfile.avatarUrl ?? null,
@@ -188,6 +189,7 @@ export default function Step8_ReviewPayment() {
         rows={[
           { label: 'Name',   value: basicProfile?.fullName },
           { label: 'Phone',  value: basicProfile?.phone },
+          { label: 'Email',  value: basicProfile?.email || '\u2014' },
           { label: 'Gender', value: capitalize(basicProfile?.gender) },
           { label: 'Age',    value: basicProfile?.birthDate
             ? calculateAge(basicProfile.birthDate) + ' years'

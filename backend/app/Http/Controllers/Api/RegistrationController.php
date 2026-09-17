@@ -92,15 +92,20 @@ class RegistrationController extends Controller
                 $firstName = $nameParts[0];
                 $lastName = $nameParts[1] ?? '';
 
-                // 2. Generate unique email for swimmer account
-                $email = SwimmerLogin::email($clubId, $registration->phone);
-                $counter = 1;
+                // 2. Login address: the email the swimmer registered with, if it is
+                // still free; otherwise the generated swimmer_<phone>@club<N> one.
                 // withTrashed(): `users.email` is UNIQUE at the database level and soft
                 // deletes leave the row in place, so a skipped trashed match would collide
                 // on insert and surface as an opaque 500 for the whole 30-day window.
-                while (User::withTrashed()->where('email', $email)->exists()) {
-                    $email = SwimmerLogin::email($clubId, $registration->phone, $counter);
-                    $counter++;
+                $taken = fn (string $candidate) => User::withTrashed()->where('email', $candidate)->exists();
+                $email = $registration->email && ! $taken($registration->email) ? $registration->email : null;
+                if ($email === null) {
+                    $email = SwimmerLogin::email($clubId, $registration->phone);
+                    $counter = 1;
+                    while ($taken($email)) {
+                        $email = SwimmerLogin::email($clubId, $registration->phone, $counter);
+                        $counter++;
+                    }
                 }
 
                 // 3. Generate temporary password
@@ -110,7 +115,11 @@ class RegistrationController extends Controller
                 $user = User::create([
                     'name' => $registration->full_name,
                     'email' => $email,
+                    // Phone sign-in looks this up, whichever address the account got.
+                    'login_phone' => SwimmerLogin::digits($registration->phone),
                     'password' => $tempPassword, // auto-hashed via 'hashed' cast
+                    // The club relays this password; the swimmer replaces it on first sign-in.
+                    'must_change_password' => true,
                     'role' => UserRole::SWIMMER,
                     'club_id' => $clubId,
                 ]);

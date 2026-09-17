@@ -181,6 +181,9 @@ class PublicRegistrationController extends Controller
         $validated = $request->validate([
             'full_name' => 'required|string|min:2|max:255',
             'phone' => 'required|string|min:10|max:20',
+            // Becomes the account's login address at approval; without one the
+            // generated swimmer_<phone>@club<N> address is used as before.
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')],
             'guardian_name' => 'nullable|string|max:255',
             'guardian_phone' => 'nullable|string|max:20',
             'guardian_email' => 'nullable|email|max:255',
