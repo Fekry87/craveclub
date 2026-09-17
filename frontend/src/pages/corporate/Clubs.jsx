@@ -191,7 +191,7 @@ function ClubCard({ club, index, onEdit, onDelete, onClick }) {
       onClick={onClick}
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 16,
         background: '#FFFFFF',
         border: '1px solid #E5E5EA',
         cursor: 'pointer', transition: 'border-color 0.15s ease',

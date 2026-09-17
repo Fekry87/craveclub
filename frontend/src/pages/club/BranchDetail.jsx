@@ -213,9 +213,9 @@ export default function BranchDetail() {
                   </div>
                   {item.branch_id && (
                     <span style={{
-                      padding: '2px 8px', fontSize: 10, background: 'transparent', color: '#FF9500',
-                      fontFamily: 'var(--font-body)',
-                      border: '1px solid #FF9500',
+                      padding: '2px 9px', fontSize: 10, background: 'rgba(255,149,0,0.16)', color: '#A35A00',
+                      fontFamily: 'var(--font-body)', fontWeight: 500,
+                      borderRadius: 980,
                     }}>
                       Other branch
                     </span>
@@ -419,8 +419,8 @@ export default function BranchDetail() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {enabledFeatures.map(f => (
                 <span key={f.key} style={{
-                  padding: '3px 10px', background: 'transparent', color: '#6E6E73',
-                  fontSize: 10, fontFamily: 'var(--font-body)', border: '1px solid #E5E5EA',
+                  padding: '3px 10px', background: '#F2F2F7', color: '#515154',
+                  fontSize: 10, fontFamily: 'var(--font-body)', fontWeight: 500, borderRadius: 980,
                 }}>
                   {f.icon} {f.label}
                 </span>
@@ -517,7 +517,7 @@ export default function BranchDetail() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {branch.sessions.map((session, i) => (
-                  <div key={session.id} style={{
+                  <div key={session.id} style={{ borderRadius: 12,
                     display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
                     background: '#FFFFFF',
                     border: '1px solid #E5E5EA', animation: `fadeInUp 0.3s ease-out ${i * 0.04}s both`,
@@ -624,7 +624,7 @@ function EntityCard({ index, name, subtitle, detail, badge, badgeColor, onUnassi
     <div
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 12,
         display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
         background: '#FFFFFF',
         border: '1px solid #E5E5EA', transition: 'border-color 0.15s ease',

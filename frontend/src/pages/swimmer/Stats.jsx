@@ -17,7 +17,7 @@ function StatCard({ title, value, subtitle, icon, color, delay = 0, isMobile, in
     <div
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 16,
         flex: isMobile ? '1 1 calc(50% - 8px)' : '1 1 180px',
         background: '#FFFFFF',
         padding: isMobile ? '20px 18px' : '22px 24px',
@@ -98,7 +98,7 @@ function MonthlyRatingCard({ month, index, isMobile }) {
 
   if (isMobile) {
     return (
-      <div style={{
+      <div style={{ borderRadius: 16,
         padding: '18px 20px', background: '#FFFFFF',
         border: '1px solid #E5E5EA',
         animation: `fadeInUp 0.3s ease-out ${index * 0.04}s both`,
@@ -129,7 +129,7 @@ function MonthlyRatingCard({ month, index, isMobile }) {
     <div
       onMouseEnter={e => { e.currentTarget.style.borderColor = '#D2D2D7'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E5EA'; }}
-      style={{
+      style={{ borderRadius: 12,
         display: 'flex', alignItems: 'center', gap: 20, padding: '18px 22px',
         background: '#FFFFFF',
         border: '1px solid #E5E5EA',

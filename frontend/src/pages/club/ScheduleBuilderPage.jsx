@@ -215,7 +215,7 @@ const navBtnStyle = { borderRadius: 16,
 function Legend({ color, label }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{ width: 10, height: 10, background: color, border: '1px solid #E5E5EA' }} />
+      <div style={{ borderRadius: '50%', width: 10, height: 10, background: color, border: '1px solid #E5E5EA' }} />
       <span style={{
         fontSize: 11, color: '#6E6E73', fontFamily: 'var(--font-body)',
       }}>{label}</span>

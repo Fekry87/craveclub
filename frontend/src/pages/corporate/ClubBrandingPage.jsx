@@ -31,7 +31,7 @@ function BrandingColorPicker({ label, value, onChange }) {
           alignItems: 'center', justifyContent: 'center',
           borderInlineEnd: '1px solid #E5E5EA', position: 'relative',
         }}>
-          <div style={{
+          <div style={{ borderRadius: 6,
             width: 24, height: 24, background: isValid ? `#${value}` : '#E5E5EA',
             border: '1px solid #E5E5EA',
           }} />
