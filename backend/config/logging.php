@@ -133,12 +133,16 @@ return [
             'days' => 90,
         ],
 
+        // Production's channel. It writes to stderr, not to a file: the
+        // container's disk is thrown away on every deploy, so a file only
+        // ever held the errors since the last release — a 500 from an hour
+        // before a deploy was gone when someone came to read it. php-fpm
+        // forwards worker stderr to the container's, which the host keeps.
         'json' => [
             'driver' => 'monolog',
-            'handler' => Monolog\Handler\RotatingFileHandler::class,
+            'handler' => StreamHandler::class,
             'handler_with' => [
-                'filename' => storage_path('logs/laravel.json.log'),
-                'maxFiles' => 30,
+                'stream' => 'php://stderr',
             ],
             'level' => env('LOG_LEVEL', 'debug'),
             'tap' => [App\Logging\AddRequestContext::class],

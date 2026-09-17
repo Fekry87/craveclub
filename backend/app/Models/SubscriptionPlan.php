@@ -12,8 +12,15 @@ class SubscriptionPlan extends Model
 {
     use SoftDeletes;
 
+    /**
+     * How often a plan's member trains. Every plan belongs to exactly one, and
+     * the app shows one tab per type the club has active plans in. Order here
+     * is display order.
+     */
+    public const TRAINING_TYPES = ['daily', 'two_days', 'three_days', 'private'];
+
     protected $fillable = [
-        'club_id', 'name', 'duration_months', 'price',
+        'club_id', 'name', 'training_type', 'duration_months', 'price',
         'discount_percent', 'is_popular', 'is_active', 'display_order',
     ];
 

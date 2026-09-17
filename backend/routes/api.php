@@ -194,6 +194,8 @@ Route::prefix('v1')->group(function () {
     });
     Route::get('/public/branding', [PublicController::class, 'corporateBranding']);
     Route::get('/public/branding/splash-image', [PublicController::class, 'splashImage']);
+    Route::get('/public/branding/platform-logo', [PublicController::class, 'platformLogo']);
+    Route::get('/public/branding/entry-photo/{slot}', [PublicController::class, 'entryPhoto'])->whereNumber('slot');
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
 
     // ── Public Registration API (club resolved via X-Club-Slug header) ──
@@ -204,6 +206,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/coaches', [PublicRegistrationController::class, 'coaches']);
         Route::get('/coaches/{coach}', [PublicRegistrationController::class, 'coachShow']);
         Route::get('/coaches/{coach}/schedule', [PublicRegistrationController::class, 'coachSchedule']);
+        // Step 1 asks whether the email is free before the other seven steps.
+        Route::post('/registrations/check-email', [PublicRegistrationController::class, 'checkEmail']);
         Route::post('/registrations', [PublicRegistrationController::class, 'store']);
         Route::get('/registrations/{reference}', [PublicRegistrationController::class, 'status']);
 
@@ -253,6 +257,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/settings', [CorporateController::class, 'settings']);
             Route::put('/settings', [CorporateController::class, 'updateSettings']);
             Route::post('/settings/splash-image', [CorporateController::class, 'uploadSplashImage']);
+            Route::post('/settings/platform-logo', [CorporateController::class, 'uploadPlatformLogo']);
+            Route::post('/settings/entry-photos/{slot}', [CorporateController::class, 'uploadEntryPhoto'])->whereNumber('slot');
+            Route::delete('/settings/entry-photos/{slot}', [CorporateController::class, 'deleteEntryPhoto'])->whereNumber('slot');
 
             // Enhanced metrics
             Route::get('/metrics', [CorporateController::class, 'metrics']);
@@ -338,7 +345,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/sessions/{session}', [SessionManagementController::class, 'sessionShow']);
             Route::get('/sessions/{session}/attendance', [SessionManagementController::class, 'sessionAttendance']);
             Route::put('/sessions/{session}', [SessionManagementController::class, 'sessionUpdate']);
-            Route::delete('/sessions/{session}', [SessionManagementController::class, 'sessionDestroy']);
+            // No DELETE: sessions are cancelled, never erased (see SessionCancellationService).
+            Route::post('/sessions/{session}/cancel', [SessionManagementController::class, 'sessionCancel']);
 
             // Branches
             Route::apiResource('branches', BranchController::class);
@@ -447,7 +455,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/sessions', [CoachApiController::class, 'sessionStore']);
             Route::get('/sessions/{session}', [CoachApiController::class, 'sessionShow']);
             Route::put('/sessions/{session}', [CoachApiController::class, 'sessionUpdate']);
-            Route::delete('/sessions/{session}', [CoachApiController::class, 'sessionDestroy']);
+            // No DELETE: sessions are cancelled, never erased (see SessionCancellationService).
 
             // Session lifecycle
             Route::post('/sessions/{session}/start', [CoachApiController::class, 'sessionStart']);

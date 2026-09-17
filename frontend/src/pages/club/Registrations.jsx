@@ -389,6 +389,7 @@ export default function Registrations() {
                   <th style={{ ...thStyle, width: 56, color: '#6E6E73' }}>#</th>
                   <th style={thStyle}>{t('registrations.columns.name')}</th>
                   <th style={thStyle}>{t('registrations.columns.phone')}</th>
+                  <th style={thStyle}>{t('registrations.columns.email')}</th>
                   <th style={thStyle}>{t('registrations.columns.branch')}</th>
                   <th style={thStyle}>{t('registrations.columns.coach')}</th>
                   <th style={thStyle}>{t('registrations.columns.plan')}</th>
@@ -415,6 +416,7 @@ export default function Registrations() {
                       {reg.swimmer_name ?? reg.full_name}
                     </td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.swimmer_phone ?? reg.phone}</td>
+                    <td style={{ ...tdStyle, color: '#515154' }}>{reg.email ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.branch_name ?? reg.branch?.name ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.coach_name ?? reg.coach?.user?.name ?? '\u2014'}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.plan_name ?? reg.plan?.name ?? '\u2014'}</td>
@@ -521,6 +523,9 @@ export default function Registrations() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid #F2F2F7' }}>
                       <span style={{ ...labelStyle }}>{t('registrations.tempPassword')}</span>
                       <span style={{ color: '#0071E3', fontFamily: 'var(--font-body)', fontSize: 12, textAlign: 'end' }}>{approveResult.temp_password}</span>
+                    </div>
+                    <div style={{ ...labelStyle, padding: '8px 0', color: '#86868B', fontWeight: 400, lineHeight: 1.5, borderBottom: '1px solid #F2F2F7' }}>
+                      {t('registrations.firstLoginNote')}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0' }}>
                       <span style={{ ...labelStyle }}>{t('registrations.groupAssigned')}</span>

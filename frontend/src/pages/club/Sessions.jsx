@@ -1,10 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { DataTable, FormPage, FormPageActions, FormField, Input, Select, TextArea, Button, PageHeader, CardActions, MobileCardWrapper } from '../../components/CrudTable';
 import { dateLocale } from '../../lib/dates';
 import { labelStyle } from '../../components/ui/styles';
 import { apiErrorMessage } from '../../lib/apiError';
+import { Badge } from '../../components/ui/Badge';
+import { CancelSessionModal, CancellationNote } from '../../components/CancelSessionModal';
+
+// The manager's three views of the schedule. Done and Cancelled are kept apart:
+// "what happened" and "what was called off" answer different questions.
+const TABS = [
+  { key: 'upcoming', label: 'Upcoming', statuses: ['Scheduled', 'Live'] },
+  { key: 'done', label: 'Done', statuses: ['Completed'] },
+  { key: 'cancelled', label: 'Cancelled', statuses: ['Cancelled'] },
+];
+
+const STATUS_BADGE = {
+  Scheduled: { variant: 'info', label: 'Scheduled' },
+  Live: { variant: 'warning', label: 'Live' },
+  Completed: { variant: 'success', label: 'Done' },
+  Cancelled: { variant: 'danger', label: 'Cancelled' },
+};
+
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_BADGE[status] || { variant: 'neutral', label: status };
+  return <Badge variant={cfg.variant} label={cfg.label} />;
+};
+
+const coachName = (s) => s.coach?.name || s.group?.coach?.name;
 
 export default function Sessions() {
   const { t } = useTranslation();
@@ -16,13 +41,26 @@ export default function Sessions() {
   const [form, setForm] = useState({ group_id: '', plan_id: '', date: '', start_time: '', end_time: '', location: '', notes: '' });
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState('upcoming');
+  const [statusCounts, setStatusCounts] = useState({});
+  const [cancelTarget, setCancelTarget] = useState(null);
 
+  const loadSessions = (tabKey = tab) => {
+    const statuses = TABS.find(x => x.key === tabKey).statuses.join(',');
+    api.get('/club/sessions', { params: { status: statuses } }).then(r => {
+      setSessions(r.data.data || []);
+      setStatusCounts(r.data.status_counts || {});
+    }).catch(() => {});
+  };
   const load = () => {
-    api.get('/club/sessions').then(r => setSessions(r.data.data || [])).catch(() => {});
+    loadSessions();
     api.get('/club/groups').then(r => setGroups(r.data.data || [])).catch(() => {});
     api.get('/club/plans').then(r => setPlans(r.data.data || [])).catch(() => {});
   };
   useEffect(() => { load(); }, []);
+
+  const switchTab = (key) => { setTab(key); setSessions([]); loadSessions(key); };
+  const tabCount = (t) => t.statuses.reduce((n, st) => n + (statusCounts[st] || 0), 0);
 
   const handleSave = async () => {
     // Without this, a 422 threw out of the handler: the form never closed, the
@@ -46,20 +84,39 @@ export default function Sessions() {
     setForm({ group_id: s.group_id, plan_id: s.plan_id || '', date: s.date?.split('T')[0] || '', start_time: s.start_time?.substring(0, 5) || '', end_time: s.end_time?.substring(0, 5) || '', location: s.location || '', notes: s.notes || '' });
     setShowModal(true);
   };
-  const handleDelete = async (s) => { if (confirm('Delete?')) { await api.delete(`/club/sessions/${s.id}`); load(); } };
+  // Sessions are cancelled with a reason, never deleted.
+  const sessionActions = (row) => (row.status === 'Scheduled' ? (
+    <>
+      <button type="button" className="pl-btn pl-btn-ghost pl-btn-sm" onClick={() => handleEdit(row)}>{t('actions.edit')}</button>
+      <button type="button" className="pl-btn pl-btn-danger pl-btn-sm" onClick={() => setCancelTarget(row)}>{t('actions.cancel')}</button>
+    </>
+  ) : (
+    <Link to={`/club/sessions/${row.id}`} className="pl-btn pl-btn-ghost pl-btn-sm">{t('actions.view')}</Link>
+  ));
 
   const closeForm = () => { setShowModal(false); setEditId(null); };
 
   const columns = [
-    { key: 'date', label: t('sessions.date'), render: r => r.date?.split('T')[0] },
+    { key: 'date', label: t('sessions.date'), render: r => <span style={{ whiteSpace: 'nowrap' }}>{r.date?.split('T')[0]}</span> },
     { key: 'time', label: t('sessions.time'), render: r => (
-      <span style={{ ...labelStyle, color: '#1D1D1F' }}>
+      <span style={{ ...labelStyle, color: '#1D1D1F', whiteSpace: 'nowrap' }}>
         {r.start_time?.substring(0,5)} – {r.end_time?.substring(0,5)}
       </span>
     )},
     { key: 'group', label: t('sessions.group'), render: r => r.group?.name },
-    { key: 'plan', label: t('sessions.plan'), render: r => r.plan?.title || <span style={{ color: '#86868B' }}>{t('sessions.none')}</span> },
-    { key: 'location', label: t('sessions.location') },
+    { key: 'coach', label: 'Coach', render: r => coachName(r) || <span style={{ color: '#86868B' }}>—</span> },
+    { key: 'status', label: 'Status', render: r => <StatusBadge status={r.status} /> },
+    ...(tab === 'cancelled'
+      ? [{ key: 'reason', label: 'Reason', render: r => (
+          <div style={{ minWidth: 180, maxWidth: 320, whiteSpace: 'normal', lineHeight: 1.45 }}>
+            <div style={{ color: '#1D1D1F', overflowWrap: 'break-word' }}>{r.cancellation_reason || '—'}</div>
+            {r.cancelled_by?.name && <div style={{ ...labelStyle, marginTop: 2 }}>by {r.cancelled_by.name}</div>}
+          </div>
+        ) }]
+      : [
+          { key: 'plan', label: t('sessions.plan'), render: r => r.plan?.title || <span style={{ color: '#86868B' }}>{t('sessions.none')}</span> },
+          { key: 'location', label: t('sessions.location') },
+        ]),
   ];
 
   if (showModal) {
@@ -99,8 +156,27 @@ export default function Sessions() {
           {t('sessions.newSession')}
         </Button>
       </PageHeader>
-      <DataTable columns={columns} data={sessions} onEdit={handleEdit} onDelete={handleDelete}
-        mobileCard={(row, i, { onEdit: e, onDelete: d }) => {
+
+      <div role="tablist" aria-label="Session status" style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        {TABS.map(x => {
+          const active = x.key === tab;
+          return (
+            <button key={x.key} type="button" role="tab" aria-selected={active} onClick={() => switchTab(x.key)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, height: 34, padding: '0 14px', borderRadius: 980,
+                fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                background: active ? '#1D1D1F' : '#FFFFFF', color: active ? '#FFFFFF' : '#1D1D1F',
+                border: `1px solid ${active ? '#1D1D1F' : '#E5E5EA'}`,
+              }}>
+              {x.label}
+              <span style={{ fontSize: 12, color: active ? 'rgba(255,255,255,0.7)' : '#86868B' }}>{tabCount(x)}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <DataTable columns={columns} data={sessions} actions={sessionActions}
+        mobileCard={(row, i) => {
           const date = row.date?.split('T')[0];
           const dayName = date ? new Date(date + 'T00:00:00').toLocaleDateString(dateLocale(), { weekday: 'short' }) : '';
           const dayNum = date ? new Date(date + 'T00:00:00').getDate() : '';
@@ -127,7 +203,9 @@ export default function Sessions() {
                     {row.start_time?.substring(0,5)} – {row.end_time?.substring(0,5)}
                   </span>
                 </div>
+                <StatusBadge status={row.status} />
                 </div>
+              <CancellationNote session={row} style={{ marginBottom: 10 }} />
               {/* Info */}
               {(row.plan?.title || row.location) && (
                 <div style={{ borderTop: '1px solid #E5E5EA' }}>
@@ -145,11 +223,20 @@ export default function Sessions() {
                   )}
                 </div>
               )}
-              <CardActions row={row} onEdit={e} onDelete={d} />
+              <CardActions row={row} actions={sessionActions} />
             </MobileCardWrapper>
           );
         }}
       />
+
+      {cancelTarget && (
+        <CancelSessionModal
+          session={cancelTarget}
+          endpoint={`/club/sessions/${cancelTarget.id}/cancel`}
+          onClose={() => setCancelTarget(null)}
+          onCancelled={() => { setCancelTarget(null); loadSessions(); }}
+        />
+      )}
     </div>
   );
 }

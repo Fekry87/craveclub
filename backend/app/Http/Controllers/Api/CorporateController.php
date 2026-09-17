@@ -51,28 +51,7 @@ class CorporateController extends Controller
      */
     public function uploadSplashImage(Request $request): JsonResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:2048',
-        ]);
-
-        $file = $request->file('file');
-        $allowedMimes = [
-            'image/png' => 'png',
-            'image/jpeg' => 'jpg',
-            'image/webp' => 'webp',
-        ];
-        $mime = $file->getMimeType();
-        abort_if(! isset($allowedMimes[$mime]), 422, 'Invalid file type');
-
-        $uploadKey = 'corporate_splash_uploads';
-        $uploads = SafeCache::get($uploadKey, 0);
-        if ($uploads >= 20) {
-            abort(429, 'Upload limit exceeded. Try again later.');
-        }
-        SafeCache::put($uploadKey, $uploads + 1, now()->addHour());
-
-        $ext = $allowedMimes[$mime];
-        $hash = substr(md5_file($file->getRealPath()), 0, 8);
+        [$file, $mime, $ext, $hash] = $this->validatedBrandingImage($request, 'corporate_splash_uploads');
         $storagePath = "corporate/splash-{$hash}.{$ext}";
 
         $diskName = config('filesystems.disks.s3.bucket') ? 's3' : 'public';
@@ -93,6 +72,100 @@ class CorporateController extends Controller
         CorporateSetting::set('splash_image_url', $proxyUrl);
 
         return response()->json(['url' => $proxyUrl, 'splash_image_url' => $proxyUrl]);
+    }
+
+    /**
+     * Upload the platform logo shown on the app's club-name entry screen.
+     *
+     * Stored only in the database. The bucket is read-denied, so a disk copy
+     * could never be served — writing one would just be another way for the
+     * upload to fail. The proxy URL carries the content hash, so a new logo
+     * busts the app's image cache.
+     */
+    public function uploadPlatformLogo(Request $request): JsonResponse
+    {
+        [$file, $mime, , $hash] = $this->validatedBrandingImage($request, 'corporate_logo_uploads');
+
+        CorporateSetting::set('platform_logo_data', base64_encode(file_get_contents($file->getRealPath())));
+        CorporateSetting::set('platform_logo_mime', $mime);
+        CorporateSetting::set('platform_logo_version', $hash);
+
+        $proxyUrl = rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/platform-logo?v='.$hash;
+        CorporateSetting::set('platform_logo_url', $proxyUrl);
+
+        return response()->json(['url' => $proxyUrl, 'platform_logo_url' => $proxyUrl]);
+    }
+
+    /**
+     * Upload a photo into one of the entry screen's slots (1–3). The app
+     * cross-fades through the filled slots.
+     *
+     * Stored only in the database, like the platform logo. The proxy URL
+     * carries the content hash, so a replaced photo busts the app's cache.
+     */
+    public function uploadEntryPhoto(Request $request, int $slot): JsonResponse
+    {
+        abort_unless(in_array($slot, CorporateSetting::ENTRY_PHOTO_SLOTS, true), 404);
+
+        [$file, $mime, , $hash] = $this->validatedBrandingImage($request, 'corporate_entry_photo_uploads');
+
+        CorporateSetting::set("entry_photo_{$slot}_data", base64_encode(file_get_contents($file->getRealPath())));
+        CorporateSetting::set("entry_photo_{$slot}_mime", $mime);
+        CorporateSetting::set("entry_photo_{$slot}_version", $hash);
+
+        return response()->json([
+            'slot' => $slot,
+            'url' => rtrim($request->getSchemeAndHttpHost(), '/')."/api/v1/public/branding/entry-photo/{$slot}?v={$hash}",
+        ]);
+    }
+
+    /**
+     * Empty one of the entry screen's photo slots.
+     */
+    public function deleteEntryPhoto(int $slot): JsonResponse
+    {
+        abort_unless(in_array($slot, CorporateSetting::ENTRY_PHOTO_SLOTS, true), 404);
+
+        CorporateSetting::whereIn('key', [
+            "entry_photo_{$slot}_data",
+            "entry_photo_{$slot}_mime",
+            "entry_photo_{$slot}_version",
+        ])->delete();
+
+        return response()->json(['slot' => $slot, 'url' => null]);
+    }
+
+    /**
+     * Validate an uploaded branding image and count it against a per-hour quota.
+     *
+     * The type is taken from the file's content, not its name, and only PNG,
+     * JPEG and WebP pass. SVG is refused on purpose: it is a document that can
+     * carry script, and these images are served from the API's own origin.
+     *
+     * @return array{0: \Illuminate\Http\UploadedFile, 1: string, 2: string, 3: string} file, mime, extension, content hash
+     */
+    private function validatedBrandingImage(Request $request, string $quotaKey): array
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $allowedMimes = [
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+        ];
+        $mime = $file->getMimeType();
+        abort_if(! isset($allowedMimes[$mime]), 422, 'Invalid file type');
+
+        $uploads = SafeCache::get($quotaKey, 0);
+        if ($uploads >= 20) {
+            abort(429, 'Upload limit exceeded. Try again later.');
+        }
+        SafeCache::put($quotaKey, $uploads + 1, now()->addHour());
+
+        return [$file, $mime, $allowedMimes[$mime], substr(md5_file($file->getRealPath()), 0, 8)];
     }
 
     // ── Enhanced Metrics ────────────────────────────────────

@@ -14,6 +14,7 @@ export default function Step1_BasicProfile() {
   // ── Local form state (pre-fill from context if navigating back) ──
   const [fullName, setFullName] = useState(state.basicProfile.fullName);
   const [phone, setPhone] = useState(state.basicProfile.phone);
+  const [email, setEmail] = useState(state.basicProfile.email ?? '');
   const [gender, setGender] = useState(state.basicProfile.gender);
   const [birthDate, setBirthDate] = useState(state.basicProfile.birthDate);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -62,6 +63,8 @@ export default function Step1_BasicProfile() {
       errs.fullName = 'Full name is required (min 2 characters)';
     if (phone.replace(/\D/g, '').length < 10)
       errs.phone = t('forms.phoneInvalid', { defaultValue: 'Valid phone number is required' });
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()))
+      errs.email = 'Enter a valid email address';
     if (!gender)
       errs.gender = 'Please select gender';
     if (!birthDate)
@@ -83,7 +86,7 @@ export default function Step1_BasicProfile() {
     }
     dispatch({
       type: 'UPDATE_BASIC_PROFILE',
-      payload: { fullName: fullName.trim(), phone, gender, birthDate, avatarUrl: avatarPreview },
+      payload: { fullName: fullName.trim(), phone, email: email.trim().toLowerCase(), gender, birthDate, avatarUrl: avatarPreview },
     });
     dispatch({ type: 'SET_STEP', payload: 2 });
     navigate('/club/registration/physical');
@@ -173,6 +176,21 @@ export default function Step1_BasicProfile() {
         {errors.phone && (
           <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
             {errors.phone}
+          </span>
+        )}
+      </FormField>
+
+      {/* ── Email — becomes the login address once approved ───── */}
+      <FormField label="Email (optional)">
+        <Input
+          placeholder="name@example.com"
+          type="email"
+          value={email}
+          onChange={e => { setEmail(e.target.value); clearError('email'); }}
+        />
+        {errors.email && (
+          <span style={{ fontSize: 12, color: '#FF3B30', marginTop: 4, display: 'block' }}>
+            {errors.email}
           </span>
         )}
       </FormField>

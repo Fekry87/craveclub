@@ -152,6 +152,8 @@ class AuthController extends Controller
         }
 
         $user->password = $request->new_password;
+        // A password the swimmer chose themselves: the first-sign-in gate lifts.
+        $user->must_change_password = false;
         $user->save();
 
         $currentTokenId = optional($request->user()->currentAccessToken())->id;

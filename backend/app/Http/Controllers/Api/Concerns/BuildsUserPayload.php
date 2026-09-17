@@ -22,6 +22,9 @@ trait BuildsUserPayload
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role->value,
+            // True after approval or a manager reset: the app keeps the swimmer on
+            // the change-password screen until they pick their own.
+            'must_change_password' => (bool) $user->must_change_password,
             'club_id' => $user->club_id,
             'club' => $user->club,
             'features' => $user->club_id ? ClubFeature::forClub($user->club_id) : null,

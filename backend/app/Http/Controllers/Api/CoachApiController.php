@@ -19,6 +19,7 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Services\SessionCancellationService;
 use App\Support\SafeCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -192,7 +193,7 @@ class CoachApiController extends Controller
 
         // Now apply status filter for the actual results
         $query = TrainingSession::whereIn('group_id', $groupIds)
-            ->with(['group', 'plan']);
+            ->with(['group', 'plan', 'cancelledBy:id,name']);
 
         if ($status = $request->input('status')) {
             $query->where('status', $status);
@@ -344,18 +345,6 @@ class CoachApiController extends Controller
         }
 
         return response()->json($session->load(['group', 'plan']));
-    }
-
-    public function sessionDestroy(Request $request, int $id): JsonResponse
-    {
-        $groupIds = $this->coachGroupIds($request);
-        $session = TrainingSession::whereIn('group_id', $groupIds)
-            ->where('status', 'Scheduled')
-            ->findOrFail($id);
-
-        $session->delete();
-
-        return response()->json(['message' => 'Session deleted']);
     }
 
     // ─── SESSION LIFECYCLE ────────────────────────────────────────
@@ -737,19 +726,24 @@ class CoachApiController extends Controller
         ]);
     }
 
-    public function sessionCancel(Request $request, int $id): JsonResponse
+    /**
+     * Cancel one of the coach's scheduled sessions. Sessions are never deleted:
+     * the record stays with the reason, and the roster is notified.
+     */
+    public function sessionCancel(Request $request, int $id, SessionCancellationService $cancellation): JsonResponse
     {
-        $groupIds = $this->coachGroupIds($request);
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
 
+        $groupIds = $this->coachGroupIds($request);
         $session = TrainingSession::whereIn('group_id', $groupIds)->findOrFail($id);
 
-        if ($session->status !== 'Scheduled') {
+        if (! $cancellation->cancel($session, $request->user(), $request->input('reason'))) {
             return response()->json(['message' => 'Only scheduled sessions can be cancelled.'], 422);
         }
 
-        $session->update(['status' => 'Cancelled']);
-
-        return response()->json($session);
+        return response()->json($session->refresh()->load(['group', 'plan', 'cancelledBy:id,name']));
     }
 
     // ─── COACH PROFILE / SETTINGS ──────────────────────────────────

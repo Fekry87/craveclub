@@ -237,6 +237,7 @@
     "columns": {
       "name": "Name",
       "phone": "Phone",
+      "email": "Email",
       "branch": "Branch",
       "coach": "Coach",
       "plan": "Plan",
@@ -266,10 +267,22 @@
     "approving": "Approving...",
     "rejecting": "Rejecting...",
     "confirmReject": "Are you sure you want to reject <b>{{name}}</b>'s registration?",
-    "rejectWarning": "This action cannot be undone. The swimmer will not be created and the registration will be marked as rejected."
+    "rejectWarning": "This action cannot be undone. The swimmer will not be created and the registration will be marked as rejected.",
+    "firstLoginNote": "They sign in with this email or their phone number and the temporary password, and the app makes them set their own password before anything else.",
+    "emailLoginHint": "On their first sign-in the app makes them set a new password of their own."
   },
   "subscriptions": {
     "title": "Subscriptions",
+    "trainingType": "Training type *",
+    "trainingTypeHint": "Members pick a type first, then a plan inside it. Each type has its own plans and discounts.",
+    "types": {
+      "daily": "Daily",
+      "two_days": "Two days a week",
+      "three_days": "Three days a week",
+      "private": "Private training"
+    },
+    "noPlansInType": "No {{type}} plans yet",
+    "noPlansInTypeHint": "Add the monthly, quarterly or annual plans for this type.",
     "perMonthShort": "/mo",
     "newPlan": "New Plan",
     "editPlan": "Edit Plan",
@@ -290,7 +303,7 @@
     "discount": "Discount %",
     "afterDiscount": "After discount:",
     "mostPopular": "Most Popular",
-    "popularOnHint": "This plan will be highlighted. Only one plan can be popular.",
+    "popularOnHint": "This plan will be highlighted on its training type's tab. One popular plan per type.",
     "popularOffHint": "Highlight this plan for new members.",
     "activeStatus": "Active Status",
     "activeOnHint": "Plan is visible to new members",

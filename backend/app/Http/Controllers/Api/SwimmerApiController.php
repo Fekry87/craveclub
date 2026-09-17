@@ -24,8 +24,10 @@ class SwimmerApiController extends Controller
      * invites per-swimmer feedback ("swimmer feedback, highlights..."), and nothing
      * tells the coach the group can read it. Every swimmer-facing response strips
      * it — including the ones that only carry a session as a nested relation.
+     *
+     * `cancelled_by_user_id` is internal bookkeeping; swimmers get the reason.
      */
-    private const COACH_ONLY_SESSION_FIELDS = ['summary_notes'];
+    private const COACH_ONLY_SESSION_FIELDS = ['summary_notes', 'cancelled_by_user_id'];
 
     private function getSwimmerProfile(Request $request): ?SwimmerProfile
     {
@@ -134,6 +136,7 @@ class SwimmerApiController extends Controller
 
             $subscription = [
                 'plan_name' => $registration->plan->name,
+                'training_type' => $registration->plan->training_type,
                 'duration_months' => $registration->plan->duration_months,
                 // `price` is the plan's list price; `amount_paid` is what this member was
                 // actually billed, taken from their own registration rather than
@@ -271,25 +274,123 @@ class SwimmerApiController extends Controller
         return $streak;
     }
 
+    /**
+     * The swimmer's sessions, one tab at a time.
+     *
+     * `scope` does the splitting the app used to do itself over whatever pages it
+     * had loaded. That broke as soon as a club generated sessions weeks ahead:
+     * sorted newest first, the first page was all far-future sessions, so the
+     * Completed tab read 0 until the swimmer happened to scroll, and any refresh
+     * (which reloads page one) emptied it again.
+     *
+     * - upcoming:  today onwards (Scheduled, Live, Cancelled) plus anything Live;
+     *              soonest first
+     * - completed: Completed, and Cancelled sessions whose day has passed; most
+     *              recent first
+     * - today:     every session on the swimmer's today, by start time (Home)
+     * - all:       upcoming soonest first, then the past most recent first
+     * - (none):    newest first, as before, for app builds that don't send a scope
+     *
+     * `today` is the device's local date: the server runs on UTC, which is still
+     * "yesterday" for the first hours of an Egyptian morning. It is only trusted
+     * within a day of the server's date.
+     *
+     * Every response carries `counts` for all three tabs, so the badges are right
+     * before any tab has been opened.
+     */
     public function sessions(Request $request): JsonResponse
     {
+        $request->validate([
+            'scope' => 'nullable|in:all,upcoming,completed,today',
+            'today' => 'nullable|date_format:Y-m-d',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
         $profile = $this->getSwimmerProfile($request);
         if (! $profile) {
             return response()->json(['message' => 'Swimmer profile not found'], 404);
         }
 
         $groupIds = $profile->groups()->pluck('groups.id');
+        $today = $this->swimmerToday($request);
+        $scope = $request->input('scope');
 
-        $sessions = TrainingSession::whereIn('group_id', $groupIds)
-            ->with(['group', 'plan', 'attendances' => function ($q) use ($profile) {
-                $q->where('swimmer_id', $profile->id);
-            }])
-            ->orderBy('date', 'desc')
-            ->paginate($request->input('per_page', 15));
+        $base = TrainingSession::whereIn('group_id', $groupIds);
 
-        $sessions->getCollection()->makeHidden(self::COACH_ONLY_SESSION_FIELDS);
+        $query = (clone $base)->with(['group', 'plan', 'attendances' => function ($q) use ($profile) {
+            $q->where('swimmer_id', $profile->id);
+        }]);
 
-        return response()->json($sessions);
+        match ($scope) {
+            'upcoming' => $this->scopeUpcoming($query, $today)->orderBy('date')->orderBy('start_time'),
+            'completed' => $this->scopeCompleted($query, $today)->orderByDesc('date')->orderByDesc('start_time'),
+            'today' => $query->whereDate('date', $today)->orderBy('start_time'),
+            'all' => $query
+                ->orderByRaw('CASE WHEN date >= ? THEN 0 ELSE 1 END', [$today])
+                ->orderByRaw('CASE WHEN date >= ? THEN date END ASC', [$today])
+                ->orderByRaw('CASE WHEN date < ? THEN date END DESC', [$today])
+                ->orderBy('start_time'),
+            default => $query->orderBy('date', 'desc'),
+        };
+
+        $sessions = $query->paginate((int) $request->input('per_page', 15));
+
+        // Attendance XP is a per-club setting. The session card used to print a
+        // hardcoded "+25 XP", so a club set to 5 showed 25 on the card and 5 on
+        // the detail page for the same session. Send the real figure with each
+        // row so the card needs no second request.
+        $xpPerAttendance = (int) LeaderboardSetting::forClub($profile->club_id)->attendance_xp;
+
+        $sessions->getCollection()
+            ->makeHidden(self::COACH_ONLY_SESSION_FIELDS)
+            ->each->setAttribute('xp_per_attendance', $xpPerAttendance);
+
+        $payload = $sessions->toArray();
+        $payload['today'] = $today;
+        $payload['counts'] = [
+            'all' => (clone $base)->count(),
+            'upcoming' => $this->scopeUpcoming(clone $base, $today)->count(),
+            'completed' => $this->scopeCompleted(clone $base, $today)->count(),
+        ];
+
+        return response()->json($payload);
+    }
+
+    private function scopeUpcoming($query, string $today)
+    {
+        return $query->where(fn ($q) => $q
+            ->where('status', 'Live')
+            ->orWhere(fn ($q) => $q
+                ->whereDate('date', '>=', $today)
+                ->whereIn('status', ['Scheduled', 'Cancelled'])));
+    }
+
+    private function scopeCompleted($query, string $today)
+    {
+        return $query->where(fn ($q) => $q
+            ->where('status', 'Completed')
+            ->orWhere(fn ($q) => $q
+                ->where('status', 'Cancelled')
+                ->whereDate('date', '<', $today)));
+    }
+
+    /**
+     * The swimmer's local date: the device's, when it is within a day of the
+     * server's UTC date, otherwise the server's.
+     */
+    private function swimmerToday(Request $request): string
+    {
+        $server = now()->startOfDay();
+        $claimed = $request->input('today');
+
+        if ($claimed) {
+            $device = \Carbon\Carbon::createFromFormat('Y-m-d', $claimed)->startOfDay();
+            if (abs($device->diffInDays($server)) <= 1) {
+                return $device->toDateString();
+            }
+        }
+
+        return $server->toDateString();
     }
 
     /**
@@ -351,6 +452,8 @@ class SwimmerApiController extends Controller
             'location' => $model->location,
             'started_at' => $model->started_at,
             'completed_at' => $model->completed_at,
+            'cancellation_reason' => $model->status === 'Cancelled' ? $model->cancellation_reason : null,
+            'cancelled_at' => $model->cancelled_at,
             'notes' => $model->notes,
             'group' => $model->group ? ['id' => $model->group->id, 'name' => $model->group->name] : null,
             'plan' => $model->plan ? ['id' => $model->plan->id, 'title' => $model->plan->title] : null,

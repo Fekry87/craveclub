@@ -155,6 +155,8 @@ class SwimmerManagementController extends Controller
         $tempPassword = \App\Support\TempPassword::generate();
 
         $user->password = $tempPassword;
+        // Relayed by the manager, so the swimmer must replace it on first sign-in.
+        $user->must_change_password = true;
         $user->save();
         $user->tokens()->delete();
 
@@ -166,7 +168,7 @@ class SwimmerManagementController extends Controller
         // only the oldest account holding it. When the club has a second account for
         // the same phone, this password is real but unusable that way — the manager
         // has to relay the email instead, so say so rather than let it look broken.
-        $phone = \App\Support\SwimmerLogin::phoneFromEmail($user->email);
+        $phone = \App\Support\SwimmerLogin::phoneOf($user);
         $reachableByPhone = \App\Support\SwimmerLogin::isReachableByPhone($user);
 
         return response()->json([

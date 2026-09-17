@@ -74,7 +74,7 @@ export function NotificationBell({ navigate, onDark = false }) {
     setOpen(false);
     const d = notif.data;
     if (d?.swimmer_id) navigate(`/club/swimmers`);
-    else if (d?.session_id) navigate(`/club/sessions`);
+    else if (d?.session_id) navigate(window.location.pathname.startsWith('/coach') ? '/coach/sessions' : '/club/sessions');
     else if (d?.registration_id) navigate(`/club/registrations`);
   };
 
