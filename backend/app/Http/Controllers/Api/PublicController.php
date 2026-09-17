@@ -107,9 +107,16 @@ class PublicController extends Controller
             ? rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/splash-image?v='.substr(md5($settings['splash_image_path']), 0, 8)
             : ($settings['splash_image_url'] ?? ($settings['platform_logo_url'] ?? null));
 
+        // An uploaded logo wins over a typed URL. The URL is rebuilt from this
+        // request's host rather than trusting the one stored at upload time, so
+        // it stays right whichever host the upload came in through.
+        $logoUrl = ($settings['platform_logo_version'] ?? null)
+            ? rtrim($request->getSchemeAndHttpHost(), '/').'/api/v1/public/branding/platform-logo?v='.$settings['platform_logo_version']
+            : ($settings['platform_logo_url'] ?? null);
+
         return response()->json([
             'platform_name' => $settings['platform_name'] ?? 'CraveClubs',
-            'platform_logo_url' => $settings['platform_logo_url'] ?? null,
+            'platform_logo_url' => $logoUrl,
             'primary_color' => $settings['primary_color'] ?? '#8b5cf6',
             'secondary_color' => $settings['secondary_color'] ?? '#22d3ee',
             'tagline' => $settings['tagline'] ?? 'Club Management Platform',
@@ -148,7 +155,9 @@ class PublicController extends Controller
         abort_if(! $contents, 404);
 
         $mime = CorporateSetting::get('splash_image_mime');
-        if (! $mime) {
+        // Only ever send an image type; anything else falls back to the
+        // extension guess below rather than being served as-is.
+        if (! in_array($mime, ['image/png', 'image/jpeg', 'image/webp'], true)) {
             $ext = strtolower(pathinfo((string) $path, PATHINFO_EXTENSION));
             $mime = match ($ext) {
                 'jpg', 'jpeg' => 'image/jpeg',
@@ -160,6 +169,30 @@ class PublicController extends Controller
         return response($contents, 200, [
             'Content-Type' => $mime,
             'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /**
+     * Public proxy for the uploaded platform logo, stored as bytes in the
+     * database (the storage bucket is read-denied).
+     *
+     * The content type is re-checked against the upload allow-list before it is
+     * sent, so whatever ends up in the settings table can only ever be served as
+     * one of those image types — never as a document the browser would run.
+     */
+    public function platformLogo()
+    {
+        $data = CorporateSetting::get('platform_logo_data');
+        $contents = $data ? base64_decode($data, true) : false;
+        abort_if($contents === false || $contents === '', 404);
+
+        $mime = CorporateSetting::get('platform_logo_mime');
+        abort_unless(in_array($mime, ['image/png', 'image/jpeg', 'image/webp'], true), 404);
+
+        return response($contents, 200, [
+            'Content-Type' => $mime,
+            'Cache-Control' => 'public, max-age=86400',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 }
