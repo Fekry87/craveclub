@@ -7,6 +7,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { labelStyle, cardStyle } from '../../components/ui/styles';
 import { apiErrorMessage } from '../../lib/apiError';
+import { AwardModal, AwardButton } from '../../components/AwardModal';
 
 const levelConfig = {
   'Beginner':     { color: '#0071E3', variant: 'accent' },
@@ -30,7 +31,7 @@ function getInitials(firstName, lastName) {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase() || '?';
 }
 
-function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, index, t }) {
+function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, onAward, index, t }) {
   const name = `${swimmer.first_name} ${swimmer.last_name}`;
   const color = getAvatarColor(name);
   const initials = getInitials(swimmer.first_name, swimmer.last_name);
@@ -90,18 +91,23 @@ function SwimmerCard({ swimmer, onEdit, onDelete, onResetPassword, index, t }) {
         row={swimmer}
         onEdit={onEdit}
         onDelete={onDelete}
-        actions={swimmer.user ? (row) => (
-          <button
-            type="button"
-            className="pl-btn pl-btn-secondary pl-btn-sm"
-            style={{ flex: 1 }}
-            title="Reset this swimmer's password"
-            onClick={() => onResetPassword(row)}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="4.5" /><path d="M10.7 12.3 19 4m-3 0h3v3" /></svg>
-            Reset
-          </button>
-        ) : undefined}
+        actions={(row) => (
+          <>
+            <AwardButton compact style={{ flex: 1 }} onClick={() => onAward(row)} />
+            {row.user && (
+              <button
+                type="button"
+                className="pl-btn pl-btn-secondary pl-btn-sm"
+                style={{ flex: 1 }}
+                title="Reset this swimmer's password"
+                onClick={() => onResetPassword(row)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="4.5" /><path d="M10.7 12.3 19 4m-3 0h3v3" /></svg>
+                Reset
+              </button>
+            )}
+          </>
+        )}
       />
     </div>
   );
@@ -136,6 +142,8 @@ export default function Swimmers() {
   const [form, setForm] = useState({ first_name: '', last_name: '', level: '', date_of_birth: '', guardian_name: '', guardian_phone: '', guardian_email: '', medical_notes: '', create_login: false, email: '', password: '' });
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [awardTarget, setAwardTarget] = useState(null);
+  const [awardToast, setAwardToast] = useState(null);
 
   const load = () => api.get('/club/swimmers', { params: { search } })
     .then(r => setSwimmers(r.data.data || []))
@@ -420,6 +428,7 @@ export default function Swimmers() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onResetPassword={handleResetPassword}
+              onAward={setAwardTarget}
               t={t}
             />
           ))}
@@ -475,6 +484,27 @@ export default function Swimmers() {
           }}>{t('swimmers.noSwimmers')}</div>
           <div style={{ color: '#6E6E73', fontSize: 13 }}>{t('swimmers.noSwimmersHint')}</div>
         </div>
+      )}
+
+      {awardTarget && (
+        <AwardModal
+          swimmer={awardTarget}
+          endpoint="/club/awards"
+          onClose={() => setAwardTarget(null)}
+          onAwarded={(award, type) => {
+            setAwardToast(t('awards.given', { name: award.swimmer_name, title: t(`awards.types.${type}`), xp: award.xp_value }));
+            setTimeout(() => setAwardToast(null), 3500);
+          }}
+        />
+      )}
+
+      {awardToast && (
+        <div role="status" style={{
+          position: 'fixed', top: 24, insetInlineEnd: 24, zIndex: 1000,
+          padding: '12px 20px', background: 'rgba(52,199,89,0.12)', borderRadius: 12,
+          color: '#1E7A3B', fontFamily: 'var(--font-body)', fontSize: 13,
+          animation: 'fadeInUp 0.3s ease-out',
+        }}>{awardToast}</div>
       )}
 
       {resetResult && (

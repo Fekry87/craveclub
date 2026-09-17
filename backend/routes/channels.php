@@ -22,3 +22,8 @@ Broadcast::channel('club.{clubId}.coach', function ($user, $clubId) {
 Broadcast::channel('swimmer.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+// Every member of a club (swimmers, coaches, manager): club-wide celebrations
+Broadcast::channel('club.{clubId}.members', function ($user, $clubId) {
+    return $user->club_id === (int) $clubId;
+});

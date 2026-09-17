@@ -544,5 +544,32 @@
     "minutesShort": "{{count}}m",
     "hoursShort": "{{count}}h",
     "daysShort": "{{count}}d"
+  },
+  "awards": {
+    "give": "Give Award",
+    "short": "Award",
+    "type": "Award type",
+    "pickFor": "Choose a title for {{name}}. The XP is added to their leaderboard score right away, and every swimmer in the club sees the celebration.",
+    "types": {
+      "day": "Man of the Day",
+      "week": "Man of the Week",
+      "month": "Man of the Month"
+    },
+    "typeHint": {
+      "day": "Best effort in today's session",
+      "week": "Stand-out swimmer of the week",
+      "month": "The month's top performer"
+    },
+    "confirm": "Give award",
+    "giving": "Giving...",
+    "given": "{{name}} is now {{title}} (+{{xp}} XP)",
+    "points": {
+      "title": "Award XP",
+      "description": "Points a swimmer earns for Man of the Day / Week / Month",
+      "day": "Man of the Day",
+      "week": "Man of the Week",
+      "month": "Man of the Month",
+      "perAward": "XP per award"
+    }
   }
 }

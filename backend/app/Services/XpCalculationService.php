@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\DailyEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
+use App\Models\SwimmerAward;
 use App\Models\SwimmerProfile;
 use Illuminate\Support\Facades\Cache;
 
@@ -60,11 +61,17 @@ class XpCalculationService
                 }
             }
 
+            // Award XP — single sum query (Man of the Day / Week / Month)
+            $awardXp = (int) SwimmerAward::where('swimmer_id', $swimmerId)
+                ->where('club_id', $clubId)
+                ->sum('xp_value');
+
             return [
-                'total_xp' => $ratingXp + $attendanceXp + $streakXp,
+                'total_xp' => $ratingXp + $attendanceXp + $streakXp + $awardXp,
                 'rating_xp' => $ratingXp,
                 'attendance_xp' => $attendanceXp,
                 'streak_xp' => $streakXp,
+                'award_xp' => $awardXp,
             ];
         });
     }
@@ -87,7 +94,7 @@ class XpCalculationService
 
     /**
      * Get top N swimmers with XP and level info.
-     * Uses batch queries to avoid N+1 (3 queries total instead of 3*N).
+     * Uses batch queries to avoid N+1 (4 queries total instead of 4*N).
      */
     public function getTopSwimmers(int $clubId, int $limit = 5): array
     {
@@ -132,6 +139,13 @@ class XpCalculationService
             ->get()
             ->groupBy('swimmer_id');
 
+        // Batch: award XP totals for all swimmers (1 query)
+        $awardXpTotals = SwimmerAward::whereIn('swimmer_id', $swimmerIds)
+            ->where('club_id', $clubId)
+            ->selectRaw('swimmer_id, SUM(xp_value) as total')
+            ->groupBy('swimmer_id')
+            ->pluck('total', 'swimmer_id');
+
         $results = [];
         foreach ($swimmers as $swimmer) {
             // Rating XP from batch
@@ -158,7 +172,10 @@ class XpCalculationService
                 }
             }
 
-            $totalXp = $ratingXp + $attendanceXp + $streakXp;
+            // Award XP from batch
+            $awardXp = (int) $awardXpTotals->get($swimmer->id, 0);
+
+            $totalXp = $ratingXp + $attendanceXp + $streakXp + $awardXp;
             $level = $this->getLevelFromTiers($totalXp, $tiers);
 
             $results[] = [
