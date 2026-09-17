@@ -180,10 +180,19 @@ class ManagementCrudTest extends TestCase
             ->postJson('/api/v1/club/groups', [
                 'name' => 'New Group',
                 'coach_user_id' => $this->coachUser->id,
+                // A group is a weekly commitment: type, seats and meeting times are part
+                // of creating one (GroupScheduleTest covers the rules in depth).
+                'group_type' => 'two_days',
+                'capacity' => 12,
+                'days_of_week' => [1, 3],
+                'start_time' => '16:00',
+                'end_time' => '17:00',
             ]);
 
-        $response->assertStatus(201);
-        $this->assertDatabaseHas('groups', ['name' => 'New Group']);
+        $response->assertStatus(201)
+            ->assertJsonPath('group_type', 'two_days')
+            ->assertJsonPath('remaining_spots', 12);
+        $this->assertDatabaseHas('groups', ['name' => 'New Group', 'capacity' => 12]);
     }
 
     public function test_group_create_validates_required_fields(): void

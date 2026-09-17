@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\UserRole;
+use App\Exceptions\GroupFullException;
 use App\Exceptions\RegistrationNotPendingException;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
@@ -140,24 +141,35 @@ class RegistrationController extends Controller
                     'level' => ucfirst(strtolower($registration->experience_level ?? 'beginner')),
                 ]);
 
-                // 6. Auto-assign to coach's group
+                // 6. Place the swimmer in a group: the one the applicant chose, else the
+                //    coach's group as before. The group row is locked while its seats
+                //    are counted so two approvals cannot both take the last one.
                 $groupAssigned = false;
-                if ($registration->coach_id) {
-                    $coachProfile = $registration->coach;
-                    if ($coachProfile) {
-                        $group = Group::where('club_id', $clubId)
-                            ->where('coach_user_id', $coachProfile->user_id)
-                            ->first();
+                $group = null;
+                if ($locked->group_id) {
+                    $group = Group::where('club_id', $clubId)
+                        ->where('id', $locked->group_id)
+                        ->lockForUpdate()
+                        ->first();
+                } elseif ($registration->coach_id && ($coachProfile = $registration->coach)) {
+                    $group = Group::where('club_id', $clubId)
+                        ->where('coach_user_id', $coachProfile->user_id)
+                        ->lockForUpdate()
+                        ->first();
+                }
 
-                        if ($group) {
-                            GroupMembership::create([
-                                'club_id' => $clubId,
-                                'group_id' => $group->id,
-                                'swimmer_id' => $swimmerProfile->id,
-                            ]);
-                            $groupAssigned = true;
-                        }
+                if ($group) {
+                    if ($group->capacity !== null
+                        && GroupMembership::where('group_id', $group->id)->count() >= $group->capacity) {
+                        throw new GroupFullException($group->name);
                     }
+
+                    GroupMembership::create([
+                        'club_id' => $clubId,
+                        'group_id' => $group->id,
+                        'swimmer_id' => $swimmerProfile->id,
+                    ]);
+                    $groupAssigned = true;
                 }
 
                 // 7. Update registration status + stamp the subscription window
@@ -173,6 +185,12 @@ class RegistrationController extends Controller
                     'subscription_ends_at' => $subscriptionEnds,
                 ]);
 
+                // A plan and a group each say how often the member trains. When they
+                // disagree the manager should know, but it is their call — warn, don't block.
+                $planType = $locked->plan?->training_type;
+                $groupType = $group?->group_type;
+                $typeMismatch = $groupAssigned && $planType && $groupType && $planType !== $groupType;
+
                 return [
                     'registration' => $locked,
                     'swimmer' => [
@@ -181,6 +199,10 @@ class RegistrationController extends Controller
                         'email' => $email,
                         'temp_password' => $tempPassword,
                         'group_assigned' => $groupAssigned,
+                        'group_name' => $group?->name,
+                        'group_type' => $groupType,
+                        'plan_training_type' => $planType,
+                        'type_mismatch_warning' => $typeMismatch,
                     ],
                 ];
             });
@@ -219,6 +241,12 @@ class RegistrationController extends Controller
             // Lost the race to a concurrent approval — not an error, just already done.
             return response()->json([
                 'message' => 'Only pending registrations can be updated.',
+            ], 422);
+        } catch (GroupFullException $e) {
+            // The seat went to a concurrent approval; nothing was created.
+            return response()->json([
+                'message' => "This group just filled up — \"{$e->getMessage()}\" has no spots left. Move the swimmer to another group.",
+                'group_full' => true,
             ], 422);
         } catch (\Exception $e) {
             Log::error('Registration approval failed', ['error' => $e->getMessage(), 'registration_id' => $registration->id]);
