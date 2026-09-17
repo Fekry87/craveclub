@@ -133,7 +133,9 @@ class PublicApiTest extends TestCase
             ->getJson('/api/v1/coaches');
 
         $response->assertOk()
-            ->assertJsonFragment(['name' => 'Coach John']);
+            ->assertJsonFragment(['name' => 'Coach John'])
+            // The app's group step matches groups to a coach by this id.
+            ->assertJsonFragment(['user_id' => $coachUser->id]);
     }
 
     // ── Club by Slug ─────────────────────────────────────────

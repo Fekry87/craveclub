@@ -90,6 +90,9 @@ class PublicRegistrationController extends Controller
         // Coach email/phone are NOT returned to anonymous callers (email is also a login id).
         $coaches = $query->get()->map(fn ($coach) => [
             'id' => $coach->id,
+            // Groups point at the coach's users.id (coach_user_id); the app's group
+            // step cuts /clubs/{slug}/groups down to the chosen coach with it.
+            'user_id' => $coach->user_id,
             'name' => $coach->user->name ?? null,
             'photo' => $coach->user->avatar ?? null,
             'avatar_url' => $coach->user->avatar ?? null,
