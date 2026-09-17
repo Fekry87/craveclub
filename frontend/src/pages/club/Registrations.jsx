@@ -413,7 +413,10 @@ export default function Registrations() {
                       {ri + 1}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 500 }}>
-                      {reg.swimmer_name ?? reg.full_name}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Avatar src={reg.avatar_url} name={reg.swimmer_name ?? reg.full_name} size={30} fontSize={12} />
+                        <span>{reg.swimmer_name ?? reg.full_name}</span>
+                      </div>
                     </td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.swimmer_phone ?? reg.phone}</td>
                     <td style={{ ...tdStyle, color: '#515154' }}>{reg.email ?? '\u2014'}</td>

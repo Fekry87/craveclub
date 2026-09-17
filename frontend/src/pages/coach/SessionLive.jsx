@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
 import { apiErrorMessage } from '../../lib/apiError';
-import { useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { useIsMobile, Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 
 const caption = {
@@ -292,8 +292,6 @@ export default function SessionLive() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {swimmers.map((sw, i) => {
               const present = !!attendance[sw.id];
-              const ac = getAvatarColor(`${sw.first_name} ${sw.last_name}`);
-              const initials = `${sw.first_name?.[0] || ''}${sw.last_name?.[0] || ''}`.toUpperCase();
               const ev = evaluations[sw.id] || { rating: 0, notes: '' };
               const isExpanded = expandedSwimmer === sw.id;
 
@@ -309,13 +307,7 @@ export default function SessionLive() {
                     flexWrap: isMobile ? 'wrap' : 'nowrap',
                   }}>
                     {/* Avatar */}
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%', background: ac.bg, flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 600, color: ac.text,
-                      fontFamily: 'var(--font-body)',
-                      opacity: present ? 1 : 0.5,
-                    }}>{initials}</div>
+                    <Avatar src={sw.avatar_url} name={`${sw.first_name} ${sw.last_name}`} size={36} fontSize={13} style={{ opacity: present ? 1 : 0.5 }} />
 
                     {/* Name */}
                     <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setExpandedSwimmer(isExpanded ? null : sw.id)}>

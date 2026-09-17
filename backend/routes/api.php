@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PlatformController;
+use App\Http\Controllers\Api\ProfilePhotoController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\PublicRegistrationController;
 use App\Http\Controllers\Api\RecurringScheduleController;
@@ -199,6 +200,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/public/branding/platform-logo', [PublicController::class, 'platformLogo']);
     Route::get('/public/branding/entry-photo/{slot}', [PublicController::class, 'entryPhoto'])->whereNumber('slot');
     Route::get('/branding/{slug}', [ClubBrandingController::class, 'show']);
+
+    // Swimmer photos, streamed by their random token (portal <img> and app
+    // Image cannot send a Bearer header; the 40-char token is the secret).
+    Route::get('/photos/{token}', [ProfilePhotoController::class, 'show'])
+        ->where('token', '[a-z0-9]{40}')
+        ->middleware('throttle:120,1');
 
     // ── Public Registration API (club resolved via X-Club-Slug header) ──
     Route::middleware(['club.header', 'throttle:60,1'])->group(function () {
@@ -507,6 +514,8 @@ Route::prefix('v1')->group(function () {
             // Always available (core)
             Route::get('/dashboard', [SwimmerApiController::class, 'dashboard']);
             Route::get('/profile', [SwimmerApiController::class, 'profile']);
+            Route::post('/profile/photo', [ProfilePhotoController::class, 'uploadOwn']);
+            Route::delete('/profile/photo', [ProfilePhotoController::class, 'deleteOwn']);
             Route::get('/sessions', [SwimmerApiController::class, 'sessions']);
             Route::get('/sessions/{session}', [SwimmerApiController::class, 'sessionShow'])->whereNumber('session');
             Route::get('/stats', [SwimmerApiController::class, 'stats']);

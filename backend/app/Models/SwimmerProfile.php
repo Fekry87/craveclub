@@ -13,12 +13,24 @@ class SwimmerProfile extends Model
     protected $fillable = [
         'club_id', 'user_id', 'branch_id', 'first_name', 'last_name', 'level',
         'date_of_birth', 'guardian_name', 'guardian_phone', 'guardian_email', 'medical_notes',
-        'xp_points', 'xp_rank',
+        'xp_points', 'xp_rank', 'photo_token',
     ];
+
+    /**
+     * Every list that serializes a swimmer (manager, coach, groups, rosters)
+     * carries the photo URL without each builder having to remember it.
+     */
+    protected $appends = ['avatar_url'];
 
     protected function casts(): array
     {
         return ['date_of_birth' => 'date'];
+    }
+
+    /** Public proxy URL of the swimmer's photo, null when none was uploaded. */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return ProfilePhoto::urlFor($this->photo_token);
     }
 
     public function user()

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/axios';
-import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { AwardModal, AwardButton } from '../../components/AwardModal';
 
@@ -194,8 +194,6 @@ export default function SwimmerDetail() {
 
   const { swimmer, stats, evaluations } = detail;
   const name = swimmer.full_name || `${swimmer.first_name} ${swimmer.last_name}`;
-  const ac = getAvatarColor(name);
-  const initials = `${swimmer.first_name?.[0] || ''}${swimmer.last_name?.[0] || ''}`.toUpperCase();
   const lc = levelConfig[swimmer.level] || levelConfig['Beginner'];
 
   return (
@@ -250,14 +248,7 @@ export default function SwimmerDetail() {
         }}>
           <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? 16 : 24, flexDirection: isMobile ? 'column' : 'row' }}>
             {/* Avatar */}
-            <div style={{
-              width: 100, height: 100, flexShrink: 0,
-              borderRadius: '50%', background: ac.bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 32, fontWeight: 500,
-              fontFamily: 'var(--font-body)', letterSpacing: '-0.02em', color: ac.text,
-              border: '1px solid #E5E5EA',
-              }}>{initials}</div>
+            <Avatar src={swimmer.avatar_url} name={name} size={100} fontSize={32} style={{ border: '1px solid #E5E5EA' }} />
 
             {/* Name & Meta */}
             <div style={{ flex: 1, minWidth: 0, textAlign: isMobile ? 'center' : 'start' }}>

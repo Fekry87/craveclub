@@ -15,13 +15,25 @@ class Registration extends Model
         'club_id', 'sport_module_id', 'branch_id', 'coach_id', 'group_id', 'plan_id',
         'full_name', 'phone', 'email', 'guardian_name', 'guardian_phone', 'guardian_email',
         'consent_given_at',
-        'gender', 'birth_date', 'avatar_url',
+        'gender', 'birth_date', 'avatar_url', 'photo_token',
         'height_cm', 'weight_kg', 'fitness_level', 'prior_experience',
         'medical_notes', 'sport_ids', 'experience_level', 'years_experience',
         'competed', 'primary_goal', 'weekly_frequency', 'preferred_time',
         'payment_method', 'status', 'total_amount', 'notes',
         'subscription_started_at', 'subscription_ends_at',
     ];
+
+    /** The portal's registrations table shows the applicant's photo. */
+    protected $appends = ['avatar_url'];
+
+    /**
+     * The photo sent with the application. Reads over the legacy `avatar_url`
+     * column, which no client ever filled with a reachable URL.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return ProfilePhoto::urlFor($this->photo_token);
+    }
 
     protected function casts(): array
     {

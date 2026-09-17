@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import { PageHeader, Button, FormPage, FormPageActions, FormField, Input, TextArea, useIsMobile, getAvatarColor } from '../../components/CrudTable';
+import { PageHeader, Button, FormPage, FormPageActions, FormField, Input, TextArea, useIsMobile, getAvatarColor, Avatar } from '../../components/CrudTable';
 import { useTranslation } from 'react-i18next';
 
 const labelMono = {
@@ -94,12 +94,7 @@ function GroupCard({ group, index, onEdit, onDelete, navigate }) {
                   transition: 'border-color 0.15s ease',
                 }}
               >
-                <div style={{
-                  width: 26, height: 26, borderRadius: '50%', background: getAvatarColor(`${s.first_name} ${s.last_name}`).bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 500, color: getAvatarColor(`${s.first_name} ${s.last_name}`).text,
-                  fontFamily: 'var(--font-body)', letterSpacing: '-0.02em',
-                }}>{`${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase()}</div>
+                <Avatar src={s.avatar_url} name={`${s.first_name} ${s.last_name}`} size={26} fontSize={10} />
                 <span style={{ color: '#1D1D1F', fontSize: 13, fontWeight: 500 }}>{s.first_name} {s.last_name}</span>
               </div>
             ))}
@@ -296,8 +291,6 @@ export default function CoachGroups() {
             maxHeight: 300, overflowY: 'auto', background: '#FFFFFF', border: '1px solid #E5E5EA',
           }}>
             {availableSwimmers.length > 0 ? availableSwimmers.map((s, i) => {
-              const ac = getAvatarColor(`${s.first_name} ${s.last_name}`);
-              const initials = `${s.first_name?.[0] || ''}${s.last_name?.[0] || ''}`.toUpperCase();
               return (
                 <div key={s.id}
                   onClick={() => toggleSwimmer(s.id)}
@@ -310,12 +303,7 @@ export default function CoachGroups() {
                     transition: 'background 0.15s',
                   }}
                 >
-                  <div style={{ borderRadius: 10,
-                    width: 28, height: 28, background: ac.bg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 500, color: ac.text,
-                    fontFamily: 'var(--font-body)',
-                  }}>{initials}</div>
+                  <Avatar src={s.avatar_url} name={`${s.first_name} ${s.last_name}`} size={28} radius={10} fontSize={10} />
                   <span style={{ color: '#1D1D1F', fontSize: 13, fontWeight: 500, flex: 1 }}>{s.first_name} {s.last_name}</span>
                   {s.level && (
                     <span style={{

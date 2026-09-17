@@ -18,6 +18,7 @@ export {
   CardInfoRow,
   CardActions,
   getAvatarColor,
+  Avatar,
   MobileCardWrapper,
   DataTable,
   PageHeader,

@@ -75,7 +75,7 @@ class SwimmerAwardController extends Controller
             Log::warning('SwimmerAwarded broadcast failed: '.$e->getMessage());
         }
 
-        $award->load('swimmer:id,first_name,last_name', 'awardedBy:id,name');
+        $award->load('swimmer:id,first_name,last_name,photo_token', 'awardedBy:id,name');
 
         return response()->json([
             'message' => 'Award given',
@@ -89,7 +89,7 @@ class SwimmerAwardController extends Controller
     public function recent(Request $request): JsonResponse
     {
         $awards = SwimmerAward::where('club_id', $request->user()->club_id)
-            ->with('swimmer:id,first_name,last_name,user_id', 'swimmer.user:id,avatar')
+            ->with('swimmer:id,first_name,last_name,photo_token')
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->limit(30)
@@ -110,7 +110,7 @@ class SwimmerAwardController extends Controller
 
         $unseen = SwimmerAward::where('club_id', $user->club_id)
             ->whereDoesntHave('views', fn ($q) => $q->where('viewer_user_id', $user->id))
-            ->with('swimmer:id,first_name,last_name,user_id', 'swimmer.user:id,avatar')
+            ->with('swimmer:id,first_name,last_name,photo_token')
             ->orderBy('created_at')
             ->orderBy('id')
             ->limit(10)
@@ -145,7 +145,7 @@ class SwimmerAwardController extends Controller
             'award_id' => $award->id,
             'swimmer_id' => $award->swimmer_id,
             'swimmer_name' => trim(($swimmer?->first_name ?? '').' '.($swimmer?->last_name ?? '')),
-            'swimmer_avatar_url' => $swimmer?->user?->avatar,
+            'swimmer_avatar_url' => $swimmer?->avatar_url,
             'award_type' => $award->award_type,
             'xp_value' => $award->xp_value,
             'awarded_by' => $award->relationLoaded('awardedBy') ? $award->awardedBy?->name : null,
