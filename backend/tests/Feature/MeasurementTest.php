@@ -394,26 +394,73 @@ class MeasurementTest extends TestCase
         $this->record(['time_seconds' => 45, 'stroke_skill_id' => $backstroke->id])->assertStatus(201);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/v1/swimmer/measurements/progress')
+            ->getJson('/api/v1/swimmer/measurements/progress?period=week')
             ->assertOk()
-            ->assertJsonPath('weeks.0.start', '2026-09-07')
-            ->assertJsonPath('weeks.1.start', '2026-09-14')
-            ->assertJsonCount(2, 'weeks');
+            ->assertJsonPath('period', 'week')
+            ->assertJsonPath('points.0.start', '2026-09-07')
+            ->assertJsonPath('points.1.start', '2026-09-14')
+            ->assertJsonCount(2, 'points');
 
         $strokes = collect($response->json('strokes'))->pluck('name')->all();
         $this->assertSame(['Backstroke', 'Freestyle'], $strokes);
 
         $freestyleId = $this->freestyle->id;
-        $week1 = collect($response->json('weeks.0.entries'))->firstWhere('stroke_id', $freestyleId);
+        $week1 = collect($response->json('points.0.entries'))->firstWhere('stroke_id', $freestyleId);
         $this->assertSame(2, $week1['count']);
         $this->assertEqualsWithDelta(37.0, $week1['avg_pace'], 0.001);
 
-        $week2Free = collect($response->json('weeks.1.entries'))->firstWhere('stroke_id', $freestyleId);
-        $week2Back = collect($response->json('weeks.1.entries'))->firstWhere('stroke_id', $backstroke->id);
+        $week2Free = collect($response->json('points.1.entries'))->firstWhere('stroke_id', $freestyleId);
+        $week2Back = collect($response->json('points.1.entries'))->firstWhere('stroke_id', $backstroke->id);
         $this->assertEqualsWithDelta(33.0, $week2Free['avg_pace'], 0.001);
         $this->assertEqualsWithDelta(45.0, $week2Back['avg_pace'], 0.001);
 
         \Carbon\Carbon::setTestNow();
+    }
+
+    public function test_progress_buckets_by_day_and_by_month(): void
+    {
+        $user = $this->swimmerUser();
+
+        $sepA = $this->makeSession($this->club, $this->group, 'Completed');
+        $sepA->update(['date' => '2026-09-14']);
+        $sepB = $this->makeSession($this->club, $this->group, 'Completed');
+        $sepB->update(['date' => '2026-09-16']);
+        $aug = $this->makeSession($this->club, $this->group, 'Completed');
+        $aug->update(['date' => '2026-08-20']);
+
+        $this->record(['time_seconds' => 30], $sepA)->assertStatus(201); // 2026-09-14
+        $this->record(['time_seconds' => 34], $sepB)->assertStatus(201); // 2026-09-16
+        $this->record(['time_seconds' => 40], $aug)->assertStatus(201);  // 2026-08-20
+
+        // By day: three separate points, ascending.
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress?period=day')
+            ->assertOk()
+            ->assertJsonPath('period', 'day')
+            ->assertJsonCount(3, 'points')
+            ->assertJsonPath('points.0.start', '2026-08-20')
+            ->assertJsonPath('points.1.start', '2026-09-14')
+            ->assertJsonPath('points.2.start', '2026-09-16');
+
+        // By month: August (one) and September (two → avg 32), anchored to the 1st.
+        $month = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress?period=month')
+            ->assertOk()
+            ->assertJsonPath('period', 'month')
+            ->assertJsonCount(2, 'points')
+            ->assertJsonPath('points.0.start', '2026-08-01')
+            ->assertJsonPath('points.1.start', '2026-09-01');
+
+        $sepEntry = collect($month->json('points.1.entries'))->firstWhere('stroke_id', $this->freestyle->id);
+        $this->assertSame(2, $sepEntry['count']);
+        $this->assertEqualsWithDelta(32.0, $sepEntry['avg_pace'], 0.001);
+    }
+
+    public function test_progress_rejects_an_unknown_period(): void
+    {
+        $this->actingAs($this->swimmerUser(), 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress?period=fortnight')
+            ->assertStatus(422);
     }
 
     public function test_progress_is_empty_without_measurements_and_rides_on_the_skills_feature(): void
@@ -423,7 +470,8 @@ class MeasurementTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/v1/swimmer/measurements/progress')
             ->assertOk()
-            ->assertJsonCount(0, 'weeks')
+            ->assertJsonPath('period', 'week')
+            ->assertJsonCount(0, 'points')
             ->assertJsonCount(0, 'strokes');
 
         ClubFeature::where('club_id', $this->club->id)->update(['skills_enabled' => false]);
