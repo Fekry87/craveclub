@@ -374,6 +374,64 @@ class MeasurementTest extends TestCase
             ->assertJsonPath('total', 0);
     }
 
+    public function test_progress_averages_pace_per_50m_by_iso_week_and_stroke(): void
+    {
+        $user = $this->swimmerUser();
+        $backstroke = Skill::create(['club_id' => $this->club->id, 'name' => 'Backstroke', 'type' => 'SWIM_TYPE']);
+        $hundred = Skill::create(['club_id' => $this->club->id, 'name' => '100m', 'type' => 'DISTANCE', 'numeric_value' => 100]);
+
+        // Monday-anchored weeks around a fixed date.
+        \Carbon\Carbon::setTestNow('2026-09-18 12:00:00'); // a Friday; week starts 2026-09-14
+        $thisWeek = $this->makeSession($this->club, $this->group, 'Completed');
+        $lastWeek = $this->makeSession($this->club, $this->group, 'Completed');
+        $lastWeek->update(['date' => '2026-09-09']); // Wednesday of the week starting 2026-09-07
+
+        // Last week: 50m in 36.00 (pace 36) and 100m in 76.00 (pace 38) → avg 37.
+        $this->record(['time_seconds' => 36], $lastWeek)->assertStatus(201);
+        $this->record(['time_seconds' => 76, 'distance_skill_id' => $hundred->id], $lastWeek)->assertStatus(201);
+        // This week, faster: 50m in 33.00 → avg 33. And one backstroke, kept apart.
+        $this->record(['time_seconds' => 33])->assertStatus(201);
+        $this->record(['time_seconds' => 45, 'stroke_skill_id' => $backstroke->id])->assertStatus(201);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress')
+            ->assertOk()
+            ->assertJsonPath('weeks.0.start', '2026-09-07')
+            ->assertJsonPath('weeks.1.start', '2026-09-14')
+            ->assertJsonCount(2, 'weeks');
+
+        $strokes = collect($response->json('strokes'))->pluck('name')->all();
+        $this->assertSame(['Backstroke', 'Freestyle'], $strokes);
+
+        $freestyleId = $this->freestyle->id;
+        $week1 = collect($response->json('weeks.0.entries'))->firstWhere('stroke_id', $freestyleId);
+        $this->assertSame(2, $week1['count']);
+        $this->assertEqualsWithDelta(37.0, $week1['avg_pace'], 0.001);
+
+        $week2Free = collect($response->json('weeks.1.entries'))->firstWhere('stroke_id', $freestyleId);
+        $week2Back = collect($response->json('weeks.1.entries'))->firstWhere('stroke_id', $backstroke->id);
+        $this->assertEqualsWithDelta(33.0, $week2Free['avg_pace'], 0.001);
+        $this->assertEqualsWithDelta(45.0, $week2Back['avg_pace'], 0.001);
+
+        \Carbon\Carbon::setTestNow();
+    }
+
+    public function test_progress_is_empty_without_measurements_and_rides_on_the_skills_feature(): void
+    {
+        $user = $this->swimmerUser();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress')
+            ->assertOk()
+            ->assertJsonCount(0, 'weeks')
+            ->assertJsonCount(0, 'strokes');
+
+        ClubFeature::where('club_id', $this->club->id)->update(['skills_enabled' => false]);
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements/progress')
+            ->assertForbidden();
+    }
+
     /* ─── Options (the Skills page) ─── */
 
     public function test_a_distance_skill_is_created_with_its_meters_and_offered_to_the_coach(): void

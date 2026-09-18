@@ -188,6 +188,67 @@ class MeasurementController extends Controller
     }
 
     /**
+     * The swimmer's progress for the chart: weekly averages of **pace per
+     * 50m** (time / meters x 50 — a 100m in 70s and a 50m in 35s are the same
+     * pace), grouped by ISO week (Monday, like the weekly report) and split
+     * by stroke so the app can filter. The app inverts the axis: a falling
+     * pace draws a rising bar.
+     */
+    public function progressForSwimmerSelf(Request $request): JsonResponse
+    {
+        $profile = SwimmerProfile::where('user_id', $request->user()->id)
+            ->where('club_id', app('current_club_id'))
+            ->first();
+        if (! $profile) {
+            return response()->json(['message' => 'Swimmer profile not found'], 404);
+        }
+
+        $rows = Measurement::where('measurements.swimmer_id', $profile->id)
+            ->join('training_sessions', 'training_sessions.id', '=', 'measurements.session_id')
+            ->join('skills as stroke', 'stroke.id', '=', 'measurements.stroke_skill_id')
+            ->join('skills as distance', 'distance.id', '=', 'measurements.distance_skill_id')
+            ->whereNotNull('distance.numeric_value')
+            ->get([
+                'measurements.time_seconds',
+                'training_sessions.date as session_date',
+                'stroke.id as stroke_id',
+                'stroke.name as stroke_name',
+                'distance.numeric_value as meters',
+            ]);
+
+        $weeks = [];
+        $strokes = [];
+        foreach ($rows as $row) {
+            $meters = (float) $row->meters;
+            if ($meters <= 0) {
+                continue;
+            }
+            $pace = (float) $row->time_seconds / $meters * 50;
+            $week = \Carbon\Carbon::parse($row->session_date)->startOfWeek(\Carbon\Carbon::MONDAY)->toDateString();
+
+            $weeks[$week][$row->stroke_id]['count'] = ($weeks[$week][$row->stroke_id]['count'] ?? 0) + 1;
+            $weeks[$week][$row->stroke_id]['sum_pace'] = ($weeks[$week][$row->stroke_id]['sum_pace'] ?? 0) + $pace;
+            $strokes[$row->stroke_id] = $row->stroke_name;
+        }
+        ksort($weeks);
+        asort($strokes);
+
+        return response()->json([
+            'strokes' => collect($strokes)
+                ->map(fn (string $name, int $id) => ['id' => $id, 'name' => $name])
+                ->values(),
+            'weeks' => collect($weeks)->map(fn (array $byStroke, string $start) => [
+                'start' => $start,
+                'entries' => collect($byStroke)->map(fn (array $agg, int $strokeId) => [
+                    'stroke_id' => $strokeId,
+                    'count' => $agg['count'],
+                    'avg_pace' => round($agg['sum_pace'] / $agg['count'], 2),
+                ])->values(),
+            ])->values(),
+        ]);
+    }
+
+    /**
      * A measurement as its swimmer reads it: the event and the time — not who
      * recorded it. `$withSession` adds the session it was swum in.
      */
