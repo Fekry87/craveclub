@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\ScopesSessionTabs;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\DailyEvaluation;
@@ -18,6 +19,8 @@ use Illuminate\Http\Request;
 
 class SwimmerApiController extends Controller
 {
+    use ScopesSessionTabs;
+
     /**
      * Coach-only fields on a training session.
      *
@@ -313,7 +316,7 @@ class SwimmerApiController extends Controller
         }
 
         $groupIds = $profile->groups()->pluck('groups.id');
-        $today = $this->swimmerToday($request);
+        $today = $this->deviceToday($request);
         $scope = $request->input('scope');
 
         $base = TrainingSession::whereIn('group_id', $groupIds);
@@ -322,17 +325,11 @@ class SwimmerApiController extends Controller
             $q->where('swimmer_id', $profile->id);
         }]);
 
-        match ($scope) {
-            'upcoming' => $this->scopeUpcoming($query, $today)->orderBy('date')->orderBy('start_time'),
-            'completed' => $this->scopeCompleted($query, $today)->orderByDesc('date')->orderByDesc('start_time'),
-            'today' => $query->whereDate('date', $today)->orderBy('start_time'),
-            'all' => $query
-                ->orderByRaw('CASE WHEN date >= ? THEN 0 ELSE 1 END', [$today])
-                ->orderByRaw('CASE WHEN date >= ? THEN date END ASC', [$today])
-                ->orderByRaw('CASE WHEN date < ? THEN date END DESC', [$today])
-                ->orderBy('start_time'),
-            default => $query->orderBy('date', 'desc'),
-        };
+        if ($scope === 'today') {
+            $query->whereDate('date', $today)->orderBy('start_time');
+        } elseif (! $this->applySessionTab($query, $scope, $today)) {
+            $query->orderBy('date', 'desc');
+        }
 
         $sessions = $query->paginate((int) $request->input('per_page', 15));
 
@@ -348,50 +345,9 @@ class SwimmerApiController extends Controller
 
         $payload = $sessions->toArray();
         $payload['today'] = $today;
-        $payload['counts'] = [
-            'all' => (clone $base)->count(),
-            'upcoming' => $this->scopeUpcoming(clone $base, $today)->count(),
-            'completed' => $this->scopeCompleted(clone $base, $today)->count(),
-        ];
+        $payload['counts'] = $this->sessionTabCounts($base, $today);
 
         return response()->json($payload);
-    }
-
-    private function scopeUpcoming($query, string $today)
-    {
-        return $query->where(fn ($q) => $q
-            ->where('status', 'Live')
-            ->orWhere(fn ($q) => $q
-                ->whereDate('date', '>=', $today)
-                ->whereIn('status', ['Scheduled', 'Cancelled'])));
-    }
-
-    private function scopeCompleted($query, string $today)
-    {
-        return $query->where(fn ($q) => $q
-            ->where('status', 'Completed')
-            ->orWhere(fn ($q) => $q
-                ->where('status', 'Cancelled')
-                ->whereDate('date', '<', $today)));
-    }
-
-    /**
-     * The swimmer's local date: the device's, when it is within a day of the
-     * server's UTC date, otherwise the server's.
-     */
-    private function swimmerToday(Request $request): string
-    {
-        $server = now()->startOfDay();
-        $claimed = $request->input('today');
-
-        if ($claimed) {
-            $device = \Carbon\Carbon::createFromFormat('Y-m-d', $claimed)->startOfDay();
-            if (abs($device->diffInDays($server)) <= 1) {
-                return $device->toDateString();
-            }
-        }
-
-        return $server->toDateString();
     }
 
     /**

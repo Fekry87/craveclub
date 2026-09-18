@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\SessionCompleted;
 use App\Events\SessionStarted;
+use App\Http\Controllers\Api\Concerns\ScopesSessionTabs;
 use App\Http\Controllers\Controller;
 use App\Jobs\RecalculateSwimmerXp;
 use App\Jobs\SendGuardianSMSJob;
@@ -28,6 +29,8 @@ use Illuminate\Validation\Rule;
 
 class CoachApiController extends Controller
 {
+    use ScopesSessionTabs;
+
     private function coachGroupIds(Request $request): \Illuminate\Support\Collection
     {
         return Group::where('coach_user_id', $request->user()->id)->pluck('id');
@@ -170,8 +173,23 @@ class CoachApiController extends Controller
 
     // ─── SESSION CRUD ─────────────────────────────────────────────
 
+    /**
+     * The coach's sessions.
+     *
+     * With `scope` (all | upcoming | completed, plus the device's `today`) this
+     * is one tab of the app's Sessions screen, filtered, sorted and paginated
+     * here, and `counts` carries the badge of every tab — see ScopesSessionTabs
+     * for the rules and for why the app must not split pages itself. Without a
+     * scope it is the older listing the portal and the app's calendar use:
+     * newest first, filtered by `status` / `from` / `to`.
+     */
     public function sessionIndex(Request $request): JsonResponse
     {
+        $request->validate([
+            'scope' => 'nullable|in:all,upcoming,completed',
+            'today' => 'nullable|date_format:Y-m-d',
+        ]);
+
         $groupIds = $this->coachGroupIds($request);
 
         // Always compute status counts from ALL sessions (unfiltered except group)
@@ -208,12 +226,21 @@ class CoachApiController extends Controller
             $query->where('date', '<=', $to);
         }
 
-        $sessions = $query->orderBy('date', 'desc')
-            ->orderBy('start_time')
-            ->paginate($request->input('per_page', 50));
+        $scope = $request->input('scope');
+        $today = $this->deviceToday($request);
+
+        if (! $this->applySessionTab($query, $scope, $today)) {
+            $query->orderBy('date', 'desc')->orderBy('start_time');
+        }
+
+        $sessions = $query->paginate($request->input('per_page', 50));
 
         $result = $sessions->toArray();
         $result['status_counts'] = $statusCounts;
+        if ($scope) {
+            $result['today'] = $today;
+            $result['counts'] = $this->sessionTabCounts($baseQuery, $today);
+        }
 
         return response()->json($result);
     }
