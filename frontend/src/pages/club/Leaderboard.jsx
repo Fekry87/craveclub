@@ -101,18 +101,25 @@ export default function Leaderboard() {
   const [tierModal, setTierModal] = useState(null);
   const [tierForm, setTierForm] = useState({ name: '', xp_threshold: '', color: '#0071E3', icon: '' });
   const [tierError, setTierError] = useState('');
+  const [awardTypes, setAwardTypes] = useState([]);
+  const [awardTypesOriginal, setAwardTypesOriginal] = useState([]);
+  const [savingAwards, setSavingAwards] = useState(false);
   const isMobile = useIsMobile();
 
   const fetchAll = async () => {
     setLoadError('');
     try {
-      const [settingsRes, overviewRes] = await Promise.all([
+      const [settingsRes, overviewRes, awardTypesRes] = await Promise.all([
         api.get('/club/leaderboard/settings'),
         api.get('/club/leaderboard/overview'),
+        api.get('/club/award-types'),
       ]);
       setSettings(settingsRes.data.settings);
       setTiers(settingsRes.data.tiers);
       setOverview(overviewRes.data);
+      const types = (awardTypesRes.data.data || []).map(tp => ({ id: tp.id, name: tp.name, xp_value: tp.xp_value }));
+      setAwardTypes(types);
+      setAwardTypesOriginal(types);
     } catch (err) {
       const status = err.response?.status;
       const msg = err.response?.data?.message || err.message || 'Unknown error';
@@ -142,14 +149,52 @@ export default function Leaderboard() {
         attendance_xp: settings.attendance_xp,
         streak_bonus_xp: settings.streak_bonus_xp,
         streak_threshold: settings.streak_threshold,
-        award_day_xp: settings.award_day_xp,
-        award_week_xp: settings.award_week_xp,
-        award_month_xp: settings.award_month_xp,
       });
       showToast('XP settings saved');
       fetchAll();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const updateAwardType = (index, patch) =>
+    setAwardTypes(list => list.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+
+  const addAwardType = () =>
+    setAwardTypes(list => [...list, { name: '', xp_value: 0 }]);
+
+  const removeAwardType = (index) =>
+    setAwardTypes(list => list.filter((_, i) => i !== index));
+
+  const handleSaveAwardTypes = async () => {
+    // A title with no name would save an empty award; refuse before any request.
+    if (awardTypes.some(row => !row.name.trim())) {
+      showToast(t('awards.points.nameRequired'));
+      return;
+    }
+    setSavingAwards(true);
+    try {
+      const keptIds = new Set(awardTypes.filter(r => r.id).map(r => r.id));
+      const removed = awardTypesOriginal.filter(r => !keptIds.has(r.id));
+      await Promise.all(removed.map(r => api.delete(`/club/award-types/${r.id}`)));
+
+      for (const row of awardTypes) {
+        const payload = { name: row.name.trim(), xp_value: parseInt(row.xp_value) || 0 };
+        if (!row.id) {
+          await api.post('/club/award-types', payload);
+        } else {
+          const before = awardTypesOriginal.find(o => o.id === row.id);
+          if (!before || before.name !== payload.name || before.xp_value !== payload.xp_value) {
+            await api.put(`/club/award-types/${row.id}`, payload);
+          }
+        }
+      }
+      showToast(t('awards.points.saved'));
+      fetchAll();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to save awards');
+    } finally {
+      setSavingAwards(false);
     }
   };
 
@@ -458,7 +503,7 @@ export default function Leaderboard() {
               </div>
             </div>
 
-            {/* Award XP (Man of the Day / Week / Month) */}
+            {/* Award XP — the club's own award titles */}
             <div style={{ borderRadius: 16,
               padding: '18px',
               background: '#FFFFFF',
@@ -477,26 +522,61 @@ export default function Leaderboard() {
                     color: '#1D1D1F', fontSize: 15, fontFamily: 'var(--font-display)', fontWeight: 600,
                     letterSpacing: '-0.02em', lineHeight: 1,
                   }}>{t('awards.points.title')}</div>
-                  <div style={{ ...monoLabel, marginTop: 6 }}>{t('awards.points.description')}</div>
+                  <div style={{ ...monoLabel, marginTop: 6 }}>{t('awards.points.descriptionCustom')}</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {['day', 'week', 'month'].map((key) => (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ ...monoLabel, minWidth: 120 }}>{t(`awards.points.${key}`)}</span>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {awardTypes.map((row, index) => (
+                  <div key={row.id ?? `new-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="text"
+                      maxLength={60}
+                      aria-label={t('awards.points.nameLabel')}
+                      placeholder={t('awards.points.namePlaceholder')}
+                      value={row.name}
+                      onChange={e => updateAwardType(index, { name: e.target.value })}
+                      style={{ ...numberInputStyle, flex: 1, minWidth: 0, textAlign: 'start', paddingInline: 12, fontFamily: 'var(--font-body)' }}
+                      {...numberFocusProps}
+                    />
                     <input
                       type="number"
                       min="0"
-                      max="9999"
-                      aria-label={t(`awards.points.${key}`)}
-                      value={settings[`award_${key}_xp`] ?? 0}
-                      onChange={e => setSettings({ ...settings, [`award_${key}_xp`]: parseInt(e.target.value) || 0 })}
-                      style={{ ...numberInputStyle, width: 80 }}
+                      max="100000"
+                      aria-label={t('awards.points.xpLabel')}
+                      value={row.xp_value}
+                      onChange={e => updateAwardType(index, { xp_value: e.target.value })}
+                      style={{ ...numberInputStyle, width: 78 }}
                       {...numberFocusProps}
                     />
-                    <span style={monoLabel}>{t('awards.points.perAward')}</span>
+                    <span style={{ ...monoLabel, whiteSpace: 'nowrap' }}>{t('awards.points.xpShort')}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAwardType(index)}
+                      aria-label={t('awards.points.remove')}
+                      title={t('awards.points.remove')}
+                      style={{
+                        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                        border: '1px solid #E5E5EA', background: '#FFFFFF', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C7362F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /></svg>
+                    </button>
                   </div>
                 ))}
+                {awardTypes.length === 0 && (
+                  <div style={{ ...monoLabel, padding: '8px 0' }}>{t('awards.points.empty')}</div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+                <button type="button" onClick={addAwardType} className="pl-btn pl-btn-secondary pl-btn-sm">
+                  + {t('awards.points.add')}
+                </button>
+                <button type="button" onClick={handleSaveAwardTypes} disabled={savingAwards} className="pl-btn pl-btn-primary pl-btn-sm">
+                  {savingAwards ? t('loading.saving') : t('awards.points.save')}
+                </button>
               </div>
             </div>
 

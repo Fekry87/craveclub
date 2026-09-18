@@ -38,7 +38,7 @@ class SwimmerAwarded implements ShouldBroadcast
             'award_id' => $this->award->id,
             'swimmer_id' => $this->award->swimmer_id,
             'swimmer_name' => trim($this->award->swimmer?->first_name.' '.$this->award->swimmer?->last_name),
-            'award_type' => $this->award->award_type,
+            'award_name' => $this->award->award_name,
             'xp_value' => $this->award->xp_value,
             'awarded_at' => $this->award->created_at?->toIso8601String(),
         ];

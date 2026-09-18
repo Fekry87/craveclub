@@ -569,7 +569,18 @@
       "day": "Man of the Day",
       "week": "Man of the Week",
       "month": "Man of the Month",
-      "perAward": "XP per award"
+      "perAward": "XP per award",
+      "descriptionCustom": "Name each award and set the XP it grants. Add or remove as you like.",
+      "nameLabel": "Award name",
+      "namePlaceholder": "Award name",
+      "xpLabel": "XP per award",
+      "xpShort": "XP",
+      "add": "Add award",
+      "save": "Save awards",
+      "remove": "Remove",
+      "empty": "No awards yet — add one below.",
+      "nameRequired": "Every award needs a name.",
+      "saved": "Awards saved"
     }
   }
 }

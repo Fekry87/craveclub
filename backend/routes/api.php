@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountDeletionController;
 use App\Http\Controllers\Api\ApiDocController;
 use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AwardTypeController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ClubBrandingController;
 use App\Http\Controllers\Api\ClubController;
@@ -432,7 +433,13 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/leaderboard/tiers/{tier}', [LeaderboardController::class, 'leaderboardDestroyTier']);
                 Route::post('/leaderboard/tiers/reset', [LeaderboardController::class, 'leaderboardResetTiers']);
 
-                // Awards (Man of the Day / Week / Month): manager may award any swimmer
+                // Award titles: the club names, prices, adds and removes them.
+                Route::get('/award-types', [AwardTypeController::class, 'index']);
+                Route::post('/award-types', [AwardTypeController::class, 'store']);
+                Route::put('/award-types/{awardType}', [AwardTypeController::class, 'update'])->whereNumber('awardType');
+                Route::delete('/award-types/{awardType}', [AwardTypeController::class, 'destroy'])->whereNumber('awardType');
+
+                // Awards: manager may award any swimmer
                 Route::post('/awards', [SwimmerAwardController::class, 'store']);
                 Route::get('/awards/recent', [SwimmerAwardController::class, 'recent']);
             });
@@ -507,6 +514,7 @@ Route::prefix('v1')->group(function () {
 
             // Awards: coach may award swimmers in groups they coach only
             Route::middleware('feature:leaderboard')->group(function () {
+                Route::get('/award-types', [AwardTypeController::class, 'index']);
                 Route::post('/awards', [SwimmerAwardController::class, 'store']);
                 Route::get('/awards/recent', [SwimmerAwardController::class, 'recent']);
             });
