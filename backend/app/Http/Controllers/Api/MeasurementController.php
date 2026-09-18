@@ -11,6 +11,7 @@ use App\Models\SwimmerProfile;
 use App\Models\TrainingSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -135,6 +136,86 @@ class MeasurementController extends Controller
     public function forClubSwimmer(Request $request, int $swimmer): JsonResponse
     {
         return $this->history($request, SwimmerProfile::findOrFail($swimmer));
+    }
+
+    /**
+     * The signed-in swimmer's own times, one entry per training day (newest
+     * first), each holding that day's measurements — what the app's
+     * Measurements tab lists as cards. Paginated by day, so a day is never
+     * split across two pages.
+     */
+    public function forSwimmerSelf(Request $request): JsonResponse
+    {
+        $request->validate(['per_page' => 'nullable|integer|min:1|max:50']);
+
+        $profile = SwimmerProfile::where('user_id', $request->user()->id)
+            ->where('club_id', app('current_club_id'))
+            ->first();
+        if (! $profile) {
+            return response()->json(['message' => 'Swimmer profile not found'], 404);
+        }
+
+        // The day is the session's, not the row's created_at: a time added to
+        // yesterday's session belongs to yesterday's training.
+        $days = Measurement::where('measurements.swimmer_id', $profile->id)
+            ->join('training_sessions', 'training_sessions.id', '=', 'measurements.session_id')
+            ->selectRaw('date(training_sessions.date) as day, count(*) as total')
+            ->groupBy('day')
+            ->orderByDesc('day')
+            ->paginate((int) $request->input('per_page', 15));
+
+        $dayKeys = collect($days->items())->pluck('day')->all();
+
+        $rows = Measurement::where('measurements.swimmer_id', $profile->id)
+            ->join('training_sessions', 'training_sessions.id', '=', 'measurements.session_id')
+            ->whereIn(DB::raw('date(training_sessions.date)'), $dayKeys)
+            ->with(['strokeSkill:id,name', 'distanceSkill:id,name,numeric_value', 'session:id,title,type'])
+            ->orderBy('measurements.created_at')
+            ->orderBy('measurements.id')
+            ->get(['measurements.*', DB::raw('date(training_sessions.date) as day')])
+            ->groupBy('day');
+
+        $payload = $days->toArray();
+        $payload['data'] = collect($dayKeys)->map(fn (string $day) => [
+            'date' => $day,
+            'count' => ($rows->get($day) ?? collect())->count(),
+            'measurements' => ($rows->get($day) ?? collect())
+                ->map(fn (Measurement $m) => self::swimmerRow($m, true))
+                ->values(),
+        ])->values();
+
+        return response()->json($payload);
+    }
+
+    /**
+     * A measurement as its swimmer reads it: the event and the time — not who
+     * recorded it. `$withSession` adds the session it was swum in.
+     */
+    public static function swimmerRow(Measurement $measurement, bool $withSession = false): array
+    {
+        $row = [
+            'id' => $measurement->id,
+            'session_id' => $measurement->session_id,
+            'time_seconds' => $measurement->time_seconds,
+            'created_at' => $measurement->created_at,
+            'stroke_skill' => $measurement->strokeSkill
+                ? ['id' => $measurement->strokeSkill->id, 'name' => $measurement->strokeSkill->name]
+                : null,
+            'distance_skill' => $measurement->distanceSkill ? [
+                'id' => $measurement->distanceSkill->id,
+                'name' => $measurement->distanceSkill->name,
+                'numeric_value' => $measurement->distanceSkill->numeric_value,
+            ] : null,
+        ];
+
+        if ($withSession) {
+            $row['session'] = $measurement->session ? [
+                'id' => $measurement->session->id,
+                'title' => $measurement->session->title ?: $measurement->session->type,
+            ] : null;
+        }
+
+        return $row;
     }
 
     private function history(Request $request, SwimmerProfile $profile): JsonResponse

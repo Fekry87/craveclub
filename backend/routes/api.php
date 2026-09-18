@@ -538,6 +538,9 @@ Route::prefix('v1')->group(function () {
             // Weekly Report
             Route::get('/weekly-report', [SwimmerReportController::class, 'swimmerSelf']);
 
+            // القياس — the swimmer's own times, grouped by training day.
+            Route::get('/measurements', [MeasurementController::class, 'forSwimmerSelf'])->middleware('feature:skills');
+
             // Feature-gated: Evaluations
             Route::middleware('feature:evaluations')->group(function () {
                 Route::get('/evaluations', [SwimmerApiController::class, 'evaluations']);
