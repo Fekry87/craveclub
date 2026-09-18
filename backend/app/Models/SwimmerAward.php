@@ -19,9 +19,14 @@ class SwimmerAward extends Model
 
     const TYPES = [self::TYPE_DAY, self::TYPE_WEEK, self::TYPE_MONTH];
 
-    protected $fillable = ['club_id', 'swimmer_id', 'award_type', 'xp_value', 'awarded_by'];
+    protected $fillable = ['club_id', 'swimmer_id', 'award_type_id', 'award_name', 'award_type', 'xp_value', 'awarded_by'];
 
     protected $casts = ['xp_value' => 'integer'];
+
+    public function awardType(): BelongsTo
+    {
+        return $this->belongsTo(AwardType::class, 'award_type_id');
+    }
 
     public function swimmer(): BelongsTo
     {

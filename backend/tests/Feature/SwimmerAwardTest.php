@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Events\SwimmerAwarded;
+use App\Models\AwardType;
 use App\Models\Club;
 use App\Models\ClubFeature;
 use App\Models\CoachProfile;
@@ -82,10 +83,23 @@ class SwimmerAwardTest extends TestCase
         ]);
     }
 
+    private const NAME = ['day' => 'Man of the Day', 'week' => 'Man of the Week', 'month' => 'Man of the Month'];
+
+    /** The seeded award type for this club by its legacy key. */
+    private function type(string $key, ?int $clubId = null): AwardType
+    {
+        return AwardType::where('club_id', $clubId ?? $this->club->id)->where('name', self::NAME[$key])->firstOrFail();
+    }
+
     private function award(User $giver, string $prefix, SwimmerProfile $swimmer, string $type = 'day')
     {
+        $clubId = $prefix === 'club' && $giver->role === UserRole::CLUB_MANAGER ? $giver->club_id : $this->club->id;
+
         return $this->actingAs($giver, 'sanctum')
-            ->postJson("/api/v1/{$prefix}/awards", ['swimmer_id' => $swimmer->id, 'award_type' => $type]);
+            ->postJson("/api/v1/{$prefix}/awards", [
+                'swimmer_id' => $swimmer->id,
+                'award_type_id' => $this->type($type, $giver->club_id)->id,
+            ]);
     }
 
     // ── Who may give an award ──────────────────────────────────────────
@@ -95,14 +109,14 @@ class SwimmerAwardTest extends TestCase
         $this->award($this->manager, 'club', $this->otherSwimmer, 'week')
             ->assertStatus(201)
             ->assertJsonPath('award.swimmer_id', $this->otherSwimmer->id)
-            ->assertJsonPath('award.award_type', 'week')
+            ->assertJsonPath('award.award_name', 'Man of the Week')
             ->assertJsonPath('award.swimmer_name', 'Omar Ali')
             ->assertJsonPath('award.awarded_by', 'Manager');
 
         $this->assertDatabaseHas('swimmer_awards', [
             'club_id' => $this->club->id,
             'swimmer_id' => $this->otherSwimmer->id,
-            'award_type' => 'week',
+            'award_name' => 'Man of the Week',
             'awarded_by' => $this->manager->id,
         ]);
     }
@@ -133,17 +147,26 @@ class SwimmerAwardTest extends TestCase
             ->assertJsonValidationErrors(['swimmer_id']);
     }
 
-    public function test_award_type_must_be_day_week_or_month(): void
+    public function test_award_type_id_must_belong_to_the_club(): void
     {
-        $this->award($this->manager, 'club', $this->mySwimmer, 'year')
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['award_type']);
+        // Missing / non-numeric
+        $this->actingAs($this->manager, 'sanctum')
+            ->postJson('/api/v1/club/awards', ['swimmer_id' => $this->mySwimmer->id])
+            ->assertStatus(422)->assertJsonValidationErrors(['award_type_id']);
+
+        // A type from another club is not this club's to give
+        $otherClub = Club::create(['name' => 'Elsewhere', 'slug' => 'elsewhere-award', 'is_active' => true, 'max_branches' => 5]);
+        $foreignType = AwardType::create(['club_id' => $otherClub->id, 'name' => 'Star', 'xp_value' => 10, 'position' => 0]);
+
+        $this->actingAs($this->manager, 'sanctum')
+            ->postJson('/api/v1/club/awards', ['swimmer_id' => $this->mySwimmer->id, 'award_type_id' => $foreignType->id])
+            ->assertStatus(422)->assertJsonValidationErrors(['award_type_id']);
     }
 
     public function test_swimmers_cannot_give_awards(): void
     {
         $this->actingAs($this->mySwimmerUser, 'sanctum')
-            ->postJson('/api/v1/club/awards', ['swimmer_id' => $this->otherSwimmer->id, 'award_type' => 'day'])
+            ->postJson('/api/v1/club/awards', ['swimmer_id' => $this->otherSwimmer->id, 'award_type_id' => $this->type('day')->id])
             ->assertStatus(403);
     }
 
@@ -151,7 +174,9 @@ class SwimmerAwardTest extends TestCase
 
     public function test_award_grants_the_club_configured_xp_for_its_type(): void
     {
-        LeaderboardSetting::forClub($this->club->id)->update(['award_day_xp' => 70, 'award_week_xp' => 200, 'award_month_xp' => 900]);
+        $this->type('day')->update(['xp_value' => 70]);
+        $this->type('week')->update(['xp_value' => 200]);
+        $this->type('month')->update(['xp_value' => 900]);
 
         $this->award($this->manager, 'club', $this->mySwimmer, 'day')->assertJsonPath('award.xp_value', 70);
         $this->award($this->manager, 'club', $this->mySwimmer, 'week')->assertJsonPath('award.xp_value', 200);
@@ -167,10 +192,10 @@ class SwimmerAwardTest extends TestCase
 
     public function test_award_xp_is_a_snapshot_that_survives_later_setting_changes(): void
     {
-        LeaderboardSetting::forClub($this->club->id)->update(['award_day_xp' => 50]);
+        $this->type('day')->update(['xp_value' => 50]);
         $this->award($this->manager, 'club', $this->mySwimmer, 'day');
 
-        LeaderboardSetting::forClub($this->club->id)->update(['award_day_xp' => 5]);
+        $this->type('day')->update(['xp_value' => 5]);
         app(XpCalculationService::class)->invalidateCache($this->mySwimmer->id, $this->club->id);
 
         $xp = app(XpCalculationService::class)->computeForSwimmer(
@@ -192,7 +217,6 @@ class SwimmerAwardTest extends TestCase
 
     public function test_award_xp_ranks_swimmers_in_get_top_swimmers(): void
     {
-        LeaderboardSetting::forClub($this->club->id)->update(['award_month_xp' => 400]);
         $this->award($this->manager, 'club', $this->otherSwimmer, 'month');
 
         $top = app(XpCalculationService::class)->getTopSwimmers($this->club->id, 5);
@@ -236,7 +260,7 @@ class SwimmerAwardTest extends TestCase
             return $channels->contains('private-club.'.$this->club->id.'.members')
                 && $payload['swimmer_id'] === $this->mySwimmer->id
                 && $payload['swimmer_name'] === 'Sara Ali'
-                && $payload['award_type'] === 'day';
+                && $payload['award_name'] === 'Man of the Day';
         });
     }
 
@@ -282,7 +306,7 @@ class SwimmerAwardTest extends TestCase
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.swimmer_name', 'Far Away');
 
         $this->actingAs($otherViewer, 'sanctum')->getJson('/api/v1/swimmer/awards/recent')
-            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.award_type', 'month');
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.award_name', 'Man of the Month');
 
         // A foreign viewer cannot dismiss (or even see) our award
         $this->actingAs($otherViewer, 'sanctum')->postJson("/api/v1/swimmer/awards/{$ourAwardId}/seen")->assertStatus(404);
@@ -300,8 +324,8 @@ class SwimmerAwardTest extends TestCase
 
         $recent = $this->actingAs($this->mySwimmerUser, 'sanctum')->getJson('/api/v1/swimmer/awards/recent')->assertOk();
         $this->assertCount(2, $recent->json('data'));
-        $this->assertSame('week', $recent->json('data.0.award_type'));
-        $this->assertSame('day', $recent->json('data.1.award_type'));
+        $this->assertSame('Man of the Week', $recent->json('data.0.award_name'));
+        $this->assertSame('Man of the Day', $recent->json('data.1.award_name'));
 
         // Managers and coaches read the same feed
         $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/club/awards/recent')->assertOk()->assertJsonCount(2, 'data');

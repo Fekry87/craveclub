@@ -6,8 +6,8 @@ use App\Enums\UserRole;
 use App\Events\SwimmerAwarded;
 use App\Http\Controllers\Controller;
 use App\Jobs\RecalculateSwimmerXp;
+use App\Models\AwardType;
 use App\Models\Group;
-use App\Models\LeaderboardSetting;
 use App\Models\SwimmerAward;
 use App\Models\SwimmerAwardView;
 use App\Models\SwimmerProfile;
@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Man of the Day / Week / Month.
+ * Swimmer awards — the club's own award titles.
  *
  * Giving: a manager may award any swimmer in the club; a coach only swimmers in
  * groups they coach. Receiving: every swimmer in the club sees each award once
@@ -39,10 +39,14 @@ class SwimmerAwardController extends Controller
                 'required', 'integer',
                 Rule::exists('swimmer_profiles', 'id')->where('club_id', $clubId)->whereNull('deleted_at'),
             ],
-            'award_type' => ['required', Rule::in(SwimmerAward::TYPES)],
+            'award_type_id' => [
+                'required', 'integer',
+                Rule::exists('award_types', 'id')->where('club_id', $clubId),
+            ],
         ]);
 
         $swimmer = SwimmerProfile::where('club_id', $clubId)->findOrFail($validated['swimmer_id']);
+        $awardType = AwardType::where('club_id', $clubId)->findOrFail($validated['award_type_id']);
 
         if ($user->role === UserRole::COACH) {
             $inOwnGroup = Group::where('coach_user_id', $user->id)
@@ -56,13 +60,13 @@ class SwimmerAwardController extends Controller
             }
         }
 
-        $settings = LeaderboardSetting::forClub($clubId);
-
         $award = SwimmerAward::create([
             'club_id' => $clubId,
             'swimmer_id' => $swimmer->id,
-            'award_type' => $validated['award_type'],
-            'xp_value' => $settings->getAwardXpFor($validated['award_type']),
+            'award_type_id' => $awardType->id,
+            // Snapshot: renaming or deleting the type later must not rewrite this.
+            'award_name' => $awardType->name,
+            'xp_value' => $awardType->xp_value,
             'awarded_by' => $user->id,
         ]);
 
@@ -146,10 +150,22 @@ class SwimmerAwardController extends Controller
             'swimmer_id' => $award->swimmer_id,
             'swimmer_name' => trim(($swimmer?->first_name ?? '').' '.($swimmer?->last_name ?? '')),
             'swimmer_avatar_url' => $swimmer?->avatar_url,
-            'award_type' => $award->award_type,
+            'award_type_id' => $award->award_type_id,
+            // The title, snapshotted at award time; the legacy label for the
+            // few pre-migration rows that somehow lack one.
+            'award_name' => $award->award_name ?? $this->legacyName($award->award_type),
             'xp_value' => $award->xp_value,
             'awarded_by' => $award->relationLoaded('awardedBy') ? $award->awardedBy?->name : null,
             'awarded_at' => $award->created_at?->toIso8601String(),
         ];
+    }
+
+    private function legacyName(?string $type): string
+    {
+        return match ($type) {
+            SwimmerAward::TYPE_WEEK => 'Man of the Week',
+            SwimmerAward::TYPE_MONTH => 'Man of the Month',
+            default => 'Man of the Day',
+        };
     }
 }

@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Club extends Model
 {
+    protected static function booted(): void
+    {
+        // A new club starts with the default award titles (Man of the Day /
+        // Week / Month); the manager renames, re-prices, adds and removes them.
+        static::created(function (self $club) {
+            AwardType::seedDefaults($club->id);
+        });
+    }
+
     use SoftDeletes;
 
     protected $fillable = [
