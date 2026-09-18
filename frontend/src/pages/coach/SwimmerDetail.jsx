@@ -5,6 +5,7 @@ import api from '../../api/axios';
 import { Button, Modal, ModalActions, FormField, TextArea, useIsMobile, Avatar } from '../../components/CrudTable';
 import { Badge } from '../../components/ui/Badge';
 import { AwardModal, AwardButton } from '../../components/AwardModal';
+import { MeasurementHistory } from '../../components/MeasurementHistory';
 
 const levelConfig = {
   'Beginner':     { color: '#FF9500', variant: 'warning' },
@@ -389,6 +390,9 @@ export default function SwimmerDetail() {
           </div>
         )}
       </div>
+
+      {/* القياس — times recorded from the app during live sessions (read-only) */}
+      <MeasurementHistory endpoint={`/coach/swimmers/${id}/measurements`} />
 
       {awardOpen && (
         <AwardModal

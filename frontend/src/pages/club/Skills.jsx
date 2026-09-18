@@ -12,7 +12,7 @@ export default function Skills() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ name: '', type: 'SKILL', description: '' });
+  const [form, setForm] = useState({ name: '', type: 'SKILL', description: '', numeric_value: '' });
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -27,8 +27,10 @@ export default function Skills() {
     setSaving(true);
     setSaveError(null);
     try {
-      if (editId) await updateSkill(editId, form);
-      else await createSkill(form);
+      // Only a distance carries meters; the server clears it for other types.
+      const payload = { ...form, numeric_value: form.type === 'DISTANCE' && form.numeric_value !== '' ? Number(form.numeric_value) : null };
+      if (editId) await updateSkill(editId, payload);
+      else await createSkill(payload);
       setShowModal(false); setEditId(null); load();
     } catch (err) {
       setSaveError(apiErrorMessage(err));
@@ -37,20 +39,36 @@ export default function Skills() {
     }
   };
 
-  const handleEdit = (s) => { setEditId(s.id); setForm({ name: s.name, type: s.type, description: s.description || '' }); setShowModal(true); };
-  const handleDelete = async (s) => { if (confirm('Delete?')) { await deleteSkill(s.id); load(); } };
+  const handleEdit = (s) => { setEditId(s.id); setForm({ name: s.name, type: s.type, description: s.description || '', numeric_value: s.numeric_value != null ? String(Number(s.numeric_value)) : '' }); setSaveError(null); setShowModal(true); };
+  const handleDelete = async (s) => {
+    if (!confirm('Delete?')) return;
+    try {
+      await deleteSkill(s.id);
+      load();
+    } catch (err) {
+      // A stroke or distance with recorded measurements is refused (422).
+      alert(apiErrorMessage(err));
+    }
+  };
+
+  // "DISTANCE · 50m" — the meters are what a distance is.
+  const typeLabel = (r) => {
+    const base = r.type.replace('_', ' ');
+    return r.type === 'DISTANCE' && r.numeric_value != null ? `${base} · ${Number(r.numeric_value)}m` : base;
+  };
 
   const typeColors = {
     SKILL: { variant: 'accent', color: '#0071E3' },
     SWIM_TYPE: { variant: 'info', color: '#515154' },
     TECHNIQUE: { variant: 'warning', color: '#FF9500' },
+    DISTANCE: { variant: 'success', color: '#1E7A3B' },
   };
 
   const columns = [
     { key: 'name', label: 'Name' },
     { key: 'type', label: 'Type', render: r => {
       const tc = typeColors[r.type] || typeColors.SKILL;
-      return <Badge variant={tc.variant} label={r.type.replace('_', ' ')} />;
+      return <Badge variant={tc.variant} label={typeLabel(r)} />;
     }},
     { key: 'description', label: 'Description' },
   ];
@@ -62,7 +80,20 @@ export default function Skills() {
       <FormPage title={editId ? 'Edit Skill' : 'New Skill'} onBack={closeForm}
         icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D1D1F" strokeWidth="1.8" strokeLinecap="round"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>}>
         <FormField label="Name"><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></FormField>
-        <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }]} /></FormField>
+        <FormField label="Type"><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} options={[{ value: 'SKILL', label: 'Skill' }, { value: 'SWIM_TYPE', label: 'Swim Type' }, { value: 'TECHNIQUE', label: 'Technique' }, { value: 'DISTANCE', label: 'Distance' }]} /></FormField>
+        {form.type === 'DISTANCE' && (
+          <FormField label="Distance in meters">
+            <Input type="number" inputMode="decimal" min="1" step="any" placeholder="50"
+              value={form.numeric_value} onChange={e => setForm({ ...form, numeric_value: e.target.value })} />
+          </FormField>
+        )}
+        {(form.type === 'DISTANCE' || form.type === 'SWIM_TYPE') && (
+          <div style={{ color: '#6E6E73', fontSize: 13, lineHeight: 1.45, marginTop: -4, marginBottom: 12 }}>
+            {form.type === 'DISTANCE'
+              ? 'Coaches pick this distance when they record a swimmer\'s time during a session.'
+              : 'Coaches pick this swim type when they record a swimmer\'s time during a session.'}
+          </div>
+        )}
         <FormField label="Description"><TextArea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></FormField>
         {saveError && (
           <div role="alert" style={{
@@ -83,7 +114,7 @@ export default function Skills() {
   return (
     <div>
       <PageHeader title="Skills Library" search={search} onSearch={setSearch} searchPlaceholder="Search skills...">
-        <Button onClick={() => { setEditId(null); setForm({ name: '', type: 'SKILL', description: '' }); setShowModal(true); }}>
+        <Button onClick={() => { setEditId(null); setForm({ name: '', type: 'SKILL', description: '', numeric_value: '' }); setSaveError(null); setShowModal(true); }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           New Skill
         </Button>
@@ -94,6 +125,7 @@ export default function Skills() {
           const typeIcons = {
             SKILL: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tc.color} strokeWidth="1.8" strokeLinecap="round"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>,
             SWIM_TYPE: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tc.color} strokeWidth="1.8" strokeLinecap="round"><path d="M4 20C6.5 17 9 22 12 18C15 14 17 22 20 18" /></svg>,
+            DISTANCE: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tc.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h18v8H3zM7 8v3M11 8v4M15 8v3M19 8v3" /></svg>,
             TECHNIQUE: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tc.color} strokeWidth="1.8" strokeLinecap="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" /></svg>,
           };
           return (
@@ -108,7 +140,7 @@ export default function Skills() {
                     color: '#1D1D1F', fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-display)',
                     letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 8,
                   }}>{row.name}</div>
-                  <Badge variant={tc.variant} label={row.type.replace('_', ' ')} />
+                  <Badge variant={tc.variant} label={typeLabel(row)} />
                 </div>
                 </div>
               {row.description && (

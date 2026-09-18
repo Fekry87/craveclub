@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SkillType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSkillRequest;
 use App\Http\Requests\StoreTrainingPlanRequest;
+use App\Models\Measurement;
 use App\Models\Skill;
 use App\Models\TrainingPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ClubController extends Controller
 {
@@ -118,7 +121,7 @@ class ClubController extends Controller
 
     public function skillStore(StoreSkillRequest $request): JsonResponse
     {
-        $skill = Skill::create($request->only(['name', 'type', 'description']));
+        $skill = Skill::create($this->skillAttributes($request, $request->input('type')));
 
         return response()->json($skill, 201);
     }
@@ -128,11 +131,28 @@ class ClubController extends Controller
         $this->assertOwnership($skill);
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'type' => 'sometimes|in:SKILL,SWIM_TYPE,TECHNIQUE',
+            'type' => 'sometimes|in:SKILL,SWIM_TYPE,TECHNIQUE,DISTANCE',
             'description' => 'nullable|string',
+            'numeric_value' => 'nullable|numeric|min:1|max:9999.99',
         ]);
 
-        $skill->update($request->only(['name', 'type', 'description']));
+        $type = $request->input('type', $skill->type->value);
+
+        // A measurement points at this row as "its stroke" or "its distance";
+        // turning it into another type would rewrite what those times mean.
+        if ($type !== $skill->type->value && $this->measurementsUsing($skill) > 0) {
+            throw ValidationException::withMessages([
+                'type' => 'This option has recorded measurements, so its type cannot change.',
+            ]);
+        }
+
+        $attributes = $this->skillAttributes($request, $type);
+        if ($type === SkillType::DISTANCE->value
+            && ($attributes['numeric_value'] ?? $skill->numeric_value) === null) {
+            throw ValidationException::withMessages(['numeric_value' => 'Enter the distance in meters.']);
+        }
+
+        $skill->update($attributes);
 
         return response()->json($skill);
     }
@@ -140,8 +160,38 @@ class ClubController extends Controller
     public function skillDestroy(Skill $skill): JsonResponse
     {
         $this->assertOwnership($skill);
+
+        // The foreign key would refuse anyway, as a 500. Say why instead.
+        if (($used = $this->measurementsUsing($skill)) > 0) {
+            return response()->json([
+                'message' => "This option is used by {$used} recorded measurement".($used === 1 ? '' : 's').' and cannot be deleted.',
+            ], 422);
+        }
+
         $skill->delete();
 
         return response()->json(['message' => 'Skill deleted']);
+    }
+
+    /** Only a DISTANCE carries meters; any other type clears them. */
+    private function skillAttributes(Request $request, string $type): array
+    {
+        $attributes = $request->only(['name', 'type', 'description']);
+
+        if ($type !== SkillType::DISTANCE->value) {
+            $attributes['numeric_value'] = null;
+        } elseif ($request->filled('numeric_value')) {
+            $attributes['numeric_value'] = $request->input('numeric_value');
+        }
+
+        return $attributes;
+    }
+
+    private function measurementsUsing(Skill $skill): int
+    {
+        return Measurement::where(fn ($q) => $q
+            ->where('stroke_skill_id', $skill->id)
+            ->orWhere('distance_skill_id', $skill->id))
+            ->count();
     }
 }
