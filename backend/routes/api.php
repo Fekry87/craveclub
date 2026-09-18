@@ -540,6 +540,7 @@ Route::prefix('v1')->group(function () {
 
             // القياس — the swimmer's own times, grouped by training day.
             Route::get('/measurements', [MeasurementController::class, 'forSwimmerSelf'])->middleware('feature:skills');
+            Route::get('/measurements/progress', [MeasurementController::class, 'progressForSwimmerSelf'])->middleware('feature:skills');
 
             // Feature-gated: Evaluations
             Route::middleware('feature:evaluations')->group(function () {
