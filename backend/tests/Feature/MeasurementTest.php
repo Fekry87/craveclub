@@ -299,6 +299,81 @@ class MeasurementTest extends TestCase
             ->assertOk();
     }
 
+    /* ─── The swimmer reads their own times ─── */
+
+    private function swimmerUser(): User
+    {
+        $user = $this->makeUser($this->club, UserRole::SWIMMER, 'laila@measure.test');
+        $this->swimmer->update(['user_id' => $user->id]);
+
+        return $user;
+    }
+
+    public function test_the_swimmer_sees_their_times_on_the_session_detail(): void
+    {
+        $user = $this->swimmerUser();
+        $teammate = $this->makeSwimmer($this->club, 'Omar', $this->group);
+
+        $this->record(['time_seconds' => 33.10])->assertStatus(201);
+        $this->record(['time_seconds' => 32.45])->assertStatus(201);
+        $this->record(['swimmer_id' => $teammate->id, 'time_seconds' => 40])->assertStatus(201);
+
+        $detail = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/swimmer/sessions/{$this->session->id}")
+            ->assertOk()
+            ->assertJsonCount(2, 'my_measurements')
+            ->assertJsonPath('my_measurements.0.time_seconds', '33.10')
+            ->assertJsonPath('my_measurements.0.stroke_skill.name', 'Freestyle')
+            ->assertJsonPath('my_measurements.0.distance_skill.numeric_value', '50.00');
+
+        // Who held the stopwatch is not the swimmer's business.
+        $this->assertArrayNotHasKey('recorded_by', $detail->json('my_measurements.0'));
+    }
+
+    public function test_the_swimmers_times_are_grouped_by_training_day_newest_first(): void
+    {
+        $user = $this->swimmerUser();
+        $teammate = $this->makeSwimmer($this->club, 'Omar', $this->group);
+
+        $earlier = $this->makeSession($this->club, $this->group, 'Completed');
+        $earlier->update(['date' => now()->subDays(3)->toDateString(), 'title' => 'Speed Day']);
+
+        $this->record(['time_seconds' => 35], $earlier)->assertStatus(201);
+        $this->record(['time_seconds' => 33.10])->assertStatus(201);
+        $this->record(['time_seconds' => 32.45])->assertStatus(201);
+        $this->record(['swimmer_id' => $teammate->id, 'time_seconds' => 40])->assertStatus(201);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 2)
+            ->assertJsonPath('data.0.date', now()->toDateString())
+            ->assertJsonPath('data.0.count', 2)
+            ->assertJsonCount(2, 'data.0.measurements')
+            ->assertJsonPath('data.0.measurements.0.time_seconds', '33.10')
+            ->assertJsonPath('data.1.date', now()->subDays(3)->toDateString())
+            ->assertJsonPath('data.1.count', 1)
+            ->assertJsonPath('data.1.measurements.0.session.title', 'Speed Day');
+
+        // Paginated by day, never splitting one.
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements?per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonCount(2, 'data.0.measurements');
+    }
+
+    public function test_a_swimmer_without_times_gets_an_empty_list(): void
+    {
+        $this->actingAs($this->swimmerUser(), 'sanctum')
+            ->getJson('/api/v1/swimmer/measurements')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('total', 0);
+    }
+
     /* ─── Options (the Skills page) ─── */
 
     public function test_a_distance_skill_is_created_with_its_meters_and_offered_to_the_coach(): void

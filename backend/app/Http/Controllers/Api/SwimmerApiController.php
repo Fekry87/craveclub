@@ -9,6 +9,7 @@ use App\Models\DailyEvaluation;
 use App\Models\GroupEvaluation;
 use App\Models\LeaderboardSetting;
 use App\Models\LevelTier;
+use App\Models\Measurement;
 use App\Models\Registration;
 use App\Models\SwimmerAward;
 use App\Models\SwimmerProfile;
@@ -389,6 +390,14 @@ class SwimmerApiController extends Controller
             ->where('group_id', $model->group_id)
             ->first();
 
+        // القياس: the times the coach recorded for this swimmer in this session.
+        $measurements = Measurement::where('session_id', $model->id)
+            ->where('swimmer_id', $profile->id)
+            ->with(['strokeSkill:id,name', 'distanceSkill:id,name,numeric_value'])
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
         // The session's own coach, or the group's coach when none was set on it.
         $coachUser = $model->coach ?? $model->group?->coach;
 
@@ -432,6 +441,9 @@ class SwimmerApiController extends Controller
                 'rating' => (int) $groupEvaluation->rating,
                 'notes' => $groupEvaluation->notes,
             ] : null,
+            'my_measurements' => $measurements
+                ->map(fn (Measurement $m) => MeasurementController::swimmerRow($m))
+                ->values(),
             'xp' => [
                 'per_attendance' => $perAttendance,
                 // Only settled once the session is over and attendance is taken.
