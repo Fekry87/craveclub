@@ -188,14 +188,17 @@ class MeasurementController extends Controller
     }
 
     /**
-     * The swimmer's progress for the chart: weekly averages of **pace per
-     * 50m** (time / meters x 50 — a 100m in 70s and a 50m in 35s are the same
-     * pace), grouped by ISO week (Monday, like the weekly report) and split
-     * by stroke so the app can filter. The app inverts the axis: a falling
-     * pace draws a rising bar.
+     * The swimmer's progress for the chart: averages of **pace per 50m**
+     * (time / meters x 50 — a 100m in 70s and a 50m in 35s are the same pace),
+     * bucketed by `period` (day, ISO-Monday week, or month) and split by
+     * stroke so the app can filter. The app plots pace with the axis inverted:
+     * a falling pace climbs.
      */
     public function progressForSwimmerSelf(Request $request): JsonResponse
     {
+        $request->validate(['period' => 'nullable|in:day,week,month']);
+        $period = $request->input('period', 'week');
+
         $profile = SwimmerProfile::where('user_id', $request->user()->id)
             ->where('club_id', app('current_club_id'))
             ->first();
@@ -216,7 +219,7 @@ class MeasurementController extends Controller
                 'distance.numeric_value as meters',
             ]);
 
-        $weeks = [];
+        $buckets = [];
         $strokes = [];
         foreach ($rows as $row) {
             $meters = (float) $row->meters;
@@ -224,20 +227,21 @@ class MeasurementController extends Controller
                 continue;
             }
             $pace = (float) $row->time_seconds / $meters * 50;
-            $week = \Carbon\Carbon::parse($row->session_date)->startOfWeek(\Carbon\Carbon::MONDAY)->toDateString();
+            $start = $this->periodStart($row->session_date, $period);
 
-            $weeks[$week][$row->stroke_id]['count'] = ($weeks[$week][$row->stroke_id]['count'] ?? 0) + 1;
-            $weeks[$week][$row->stroke_id]['sum_pace'] = ($weeks[$week][$row->stroke_id]['sum_pace'] ?? 0) + $pace;
+            $buckets[$start][$row->stroke_id]['count'] = ($buckets[$start][$row->stroke_id]['count'] ?? 0) + 1;
+            $buckets[$start][$row->stroke_id]['sum_pace'] = ($buckets[$start][$row->stroke_id]['sum_pace'] ?? 0) + $pace;
             $strokes[$row->stroke_id] = $row->stroke_name;
         }
-        ksort($weeks);
+        ksort($buckets);
         asort($strokes);
 
         return response()->json([
+            'period' => $period,
             'strokes' => collect($strokes)
                 ->map(fn (string $name, int $id) => ['id' => $id, 'name' => $name])
                 ->values(),
-            'weeks' => collect($weeks)->map(fn (array $byStroke, string $start) => [
+            'points' => collect($buckets)->map(fn (array $byStroke, string $start) => [
                 'start' => $start,
                 'entries' => collect($byStroke)->map(fn (array $agg, int $strokeId) => [
                     'stroke_id' => $strokeId,
@@ -246,6 +250,18 @@ class MeasurementController extends Controller
                 ])->values(),
             ])->values(),
         ]);
+    }
+
+    /** The bucket a session's date falls in: the day, the ISO-Monday week, or the month. */
+    private function periodStart(string $date, string $period): string
+    {
+        $carbon = \Carbon\Carbon::parse($date);
+
+        return match ($period) {
+            'day' => $carbon->toDateString(),
+            'month' => $carbon->startOfMonth()->toDateString(),
+            default => $carbon->startOfWeek(\Carbon\Carbon::MONDAY)->toDateString(),
+        };
     }
 
     /**
