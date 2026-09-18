@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CoachScheduleController;
 use App\Http\Controllers\Api\CorporateController;
 use App\Http\Controllers\Api\GroupManagementController;
 use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\MeasurementController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PlatformController;
@@ -341,6 +342,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/swimmers/{swimmer}', [SwimmerManagementController::class, 'swimmerDestroy']);
             Route::post('/swimmers/{swimmer}/reset-password', [SwimmerManagementController::class, 'resetPassword']);
             Route::get('/swimmers/{swimmer}/weekly-report', [SwimmerReportController::class, 'managerSwimmer']);
+            Route::get('/swimmers/{swimmer}/measurements', [MeasurementController::class, 'forClubSwimmer'])->middleware('feature:skills')->whereNumber('swimmer');
 
             Route::get('/groups', [GroupManagementController::class, 'groupIndex']);
             Route::post('/groups', [GroupManagementController::class, 'groupStore']);
@@ -477,6 +479,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/sessions/{session}/attendance', [CoachApiController::class, 'sessionAttendance']);
             Route::patch('/sessions/{session}/attendance/{swimmer}', [CoachApiController::class, 'toggleAttendance']);
             Route::post('/sessions/{session}/cancel', [CoachApiController::class, 'sessionCancel']);
+
+            // القياس — timed swims per swimmer. The options are the club's
+            // SWIM_TYPE and DISTANCE skills, so it rides on the Skills feature.
+            Route::middleware('feature:skills')->group(function () {
+                Route::get('/measurement-options', [MeasurementController::class, 'options']);
+                Route::get('/sessions/{session}/measurements', [MeasurementController::class, 'index'])->whereNumber('session');
+                Route::post('/sessions/{session}/measurements', [MeasurementController::class, 'store'])->whereNumber('session');
+                Route::delete('/sessions/{session}/measurements/{measurement}', [MeasurementController::class, 'destroy'])->whereNumber(['session', 'measurement']);
+                Route::get('/swimmers/{swimmer}/measurements', [MeasurementController::class, 'forCoachSwimmer'])->whereNumber('swimmer');
+            });
 
             // Coach profile/settings
             Route::get('/profile', [CoachApiController::class, 'profile']);
